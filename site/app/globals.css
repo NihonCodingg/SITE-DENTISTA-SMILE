@@ -1,26 +1,41 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-branco: #FFFFFF;
+  --color-creme: #FCF0E4;
+  --color-amarelo: #FCCC24;
+  --color-dourado: #F0B40C;
+  --color-preto: #111111;
+  --color-grafite: #5A5A55;
+  --color-borda: #EBDFCE;
+  --color-borda-forte: #E8DCCA;
+  --color-escuro-linha: #2A2A28;
+  --color-escuro-texto: #B7B7B2;
+  --color-escuro-fraco: #8A8A85;
+
+  --font-titulo: var(--fonte-archivo), sans-serif;
+  --font-rotulo: var(--fonte-jost), sans-serif;
+  --font-corpo: var(--fonte-source), sans-serif;
+  --font-script: var(--fonte-caveat), cursive;
+
+  --radius-bloco: 32px;
+  --radius-card: 24px;
+  --radius-mini: 16px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html { scroll-behavior: smooth; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--color-branco);
+  color: var(--color-preto);
+  font-family: var(--font-corpo);
+  -webkit-font-smoothing: antialiased;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
