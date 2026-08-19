@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+dist/
+.superpowers/
+*.log
+.DS_Store
+Thumbs.db
+
+# vídeos originais: re-baixáveis, pesados. As versões web ficam versionadas.
+VIDEOS/originais/
+
+# relatórios locais do lighthouse
+lh-*.json
