@@ -1,11 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TELEFONE, waLink } from '@/lib/contact';
-import { useCapability } from '@/lib/useCapability';
 import { MobileMenu } from './MobileMenu';
 
 // Âncoras das seções que as Tasks 7 (hero/#tratamentos via Task 10), 12 e 15
@@ -18,38 +14,9 @@ const NAV = [
 ] as const;
 
 export function Header() {
-  const { podeAnimar, montado } = useCapability();
-  const [encolhido, setEncolhido] = useState(false);
-
-  // O header encolhe (padding vertical 10px -> 6px) depois de 80px de scroll.
-  // Isso muda o box do próprio elemento sticky, então não dá para expressar
-  // só com transform sem deixar um vão fantasma; é uma troca consciente e
-  // registrada no relatório da task — o elemento é único (não é lista/bulk),
-  // então o custo de reflow é desprezível. Desligado sob reduced-motion:
-  // "encolher ao rolar" é a mesma categoria de "parallax/translate/scale" que
-  // o guia manda remover, não uma transição de cor/opacidade a preservar.
-  useEffect(() => {
-    if (!montado || !podeAnimar) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const trigger = ScrollTrigger.create({
-      trigger: document.body,
-      start: 'top top-=80',
-      onEnter: () => setEncolhido(true),
-      onLeaveBack: () => setEncolhido(false),
-    });
-    return () => trigger.kill();
-  }, [montado, podeAnimar]);
-
   return (
     <header className="sticky top-0 z-50 border-b border-[#F1E7DB] bg-branco/94 backdrop-blur-[8px]">
-      <div
-        className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 md:px-8"
-        style={{
-          paddingTop: encolhido ? 6 : 10,
-          paddingBottom: encolhido ? 6 : 10,
-          transition: 'padding-top 260ms var(--ease-movimento), padding-bottom 260ms var(--ease-movimento)',
-        }}
-      >
+      <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-[10px] md:px-8">
         <a href="#" className="shrink-0">
           <Image src="/img/logo.png" alt="Smile Ipiranga" width={82} height={46} priority className="h-[46px] w-auto" />
         </a>

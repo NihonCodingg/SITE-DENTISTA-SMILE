@@ -8,7 +8,7 @@ import { useCapability } from '@/lib/useCapability';
  * O FAB só aparece depois que a pessoa rolou cerca de uma viewport de altura —
  * uma aproximação de "o hero saiu de tela" que não depende do Hero existir
  * (esta task roda antes da Task 7, que cria o Hero). Um sentinel invisível de
- * 1x1px, posicionado a `100vh` do topo do documento, é observado via
+ * 1x1px, posicionado a `100dvh` do topo do documento, é observado via
  * IntersectionObserver: enquanto ele ainda não foi ultrapassado o CTA do hero
  * está por perto e o FAB não compete com ele; assim que some por cima da
  * viewport, o FAB entra.
@@ -46,7 +46,7 @@ export function WhatsAppFab() {
   return (
     <>
       {/* Sentinel invisível: 1 viewport de altura a partir do topo do documento */}
-      <div ref={sentinelaRef} aria-hidden="true" style={{ position: 'absolute', top: '100vh', left: 0, width: 1, height: 1 }} />
+      <div ref={sentinelaRef} aria-hidden="true" style={{ position: 'absolute', top: '100dvh', left: 0, width: 1, height: 1 }} />
 
       <div
         className={

@@ -14,6 +14,18 @@ type Item = { rotulo: string; href: string };
 // intenção: entrada e saída do drawer do menu mobile.
 const EASE_GAVETA: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
+// Mesma curva de --ease-saida (globals.css) — feedback de toque nos itens do
+// drawer. Não pode depender da classe CSS .pressable ali: a Motion escreve o
+// transform de entrada como estilo inline no elemento assentado
+// ("transform: translateX(0px)"), e estilo inline sempre vence regra de
+// classe, com ou sem pseudo-classe — o :active de .pressable nunca ganharia.
+// whileTap injeta o scale no MESMO sistema que já é dono do transform desses
+// itens, então compõe corretamente em vez de perder a corrida de cascata — mas
+// só compõe de verdade se o transform de entrada TAMBÉM estiver nesse sistema
+// (ver o comentário em variantesItem, mais abaixo, sobre por que ele usa `x`
+// em vez do literal `transform: 'translateX()'`).
+const EASE_SAIDA: [number, number, number, number] = [0.23, 1, 0.32, 1];
+
 const FOCAVEIS_SELETOR = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 function travarScroll(lenis: Lenis | null) {
@@ -127,10 +139,21 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
         aberto: { transform: 'translateX(0%)', opacity: 1, transition: { duration: 0.2 } },
       };
 
+  // Único lugar do projeto onde a entrada usa o atalho `x` da Motion em vez do
+  // `transform` literal que o resto do código prefere (ver COPY/guia de
+  // craft). Comprovado ao vivo no navegador que a mistura quebra o whileTap
+  // abaixo: quando a entrada escreve `transform: 'translateX(...)'` como
+  // string crua, a Motion trata isso como um valor opaco e não sabe compor
+  // scale (do whileTap) com ele — o pointerdown disparava normalmente
+  // (onTapStart chegava a rodar) mas o estilo nunca ganhava o scale(0.97).
+  // Trocar para `x` bota a translação no MESMO sistema de valores compostos
+  // que o `scale` do whileTap usa, e os dois passam a se combinar num único
+  // `transform` corretamente. Sem essa troca não existe jeito de dar
+  // feedback de toque nesses itens.
   const variantesItem = podeAnimar
     ? {
-        fechado: { opacity: 0, transform: 'translateX(16px)' },
-        aberto: { opacity: 1, transform: 'translateX(0px)', transition: { duration: 0.22, ease: EASE_GAVETA } },
+        fechado: { opacity: 0, x: 16 },
+        aberto: { opacity: 1, x: 0, transition: { duration: 0.22, ease: EASE_GAVETA } },
       }
     : {
         fechado: { opacity: 0 },
@@ -195,6 +218,7 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
                 href={item.href}
                 onClick={fechar}
                 variants={variantesItem}
+                whileTap={{ scale: 0.97, transition: { duration: 0.16, ease: EASE_SAIDA } }}
                 className="pressable flex min-h-[56px] items-center gap-4 border-b border-borda font-rotulo text-[15px] uppercase tracking-[.1em] text-preto"
               >
                 <span className="font-rotulo text-[12px] text-dourado">{String(i + 1).padStart(2, '0')}</span>
