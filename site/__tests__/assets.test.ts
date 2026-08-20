@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { statSync, existsSync } from 'node:fs';
 
 const IMGS = [
-  'hero-foto.jpg','clinica-interior.png','fachada.jpg','dr-vinicius.jpg',
+  'hero-foto.jpg','clinica-interior.jpg','fachada.jpg','dr-vinicius.jpg',
   'logo.png','logo-branco.png','sorriso-arco.png',
   'retrato-1.jpg','retrato-2.jpg','retrato-3.jpg','retrato-4.jpg',
   'retrato-5.jpg','retrato-6.jpg','retrato-7.jpg','retrato-8.jpg',
