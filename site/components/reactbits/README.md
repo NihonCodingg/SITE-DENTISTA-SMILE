@@ -90,3 +90,32 @@ Em vez disso, `site/components/ui/Silk.tsx` é uma implementação própria com 
 leve que o orçamento de performance desta task já previa), reaproveitando a mesma matemática de
 ruído do shader original do React Bits (GLSL, MIT + Commons Clause) — só o motor de render mudou.
 Detalhes e o porquê no `task-8-report.md`.
+
+### `ScrollVelocity` — **não vendorizado**
+
+O brief (Task 9) pedia o `ScrollVelocity` do React Bits
+(`src/ts-tailwind/TextAnimations/ScrollVelocity/ScrollVelocity.tsx`) para a faixa de tratamentos
+abaixo do Hero. Foi lido inteiro antes de decidir — sem `matchMedia` próprio, sem chamada de rede,
+sem dependência nova (usa só `motion/react`, já no projeto) — mas **não foi trazido**:
+
+1. **Não pausa fora da viewport nem com a aba oculta.** Monta seis hooks do `motion/react`
+   (`useScroll` + `useVelocity` + `useSpring` + `useTransform` + `useMotionValue` +
+   `useAnimationFrame`) que ficam ativos pra sempre enquanto o componente está montado — nenhum
+   deles verifica visibilidade. Essa é uma exigência dura desta task ("Um ticker que roda para
+   sempre é o candidato número um a queimar bateria"), e não dava pra cumprir sem reescrever a
+   peça central do componente (o loop de `useAnimationFrame`), o que não é mais "vendorizar com
+   modificação pontual" (o que foi feito em `SplitText.tsx`/`Magnet.tsx`) — é reescrever o
+   componente por dentro.
+2. **`design-guidance.md` nomeia "ticker" explicitamente** como candidato a preferir CSS/JS direto
+   a Motion: *"Para o que é predeterminado (reveal, hover, ticker), prefira CSS. Guarde o Motion
+   para o que é dinâmico e interrompível (lightbox, drawer)."* Um texto correndo em looping infinito
+   com velocidade reativa ao scroll é exatamente o caso descrito.
+
+Em vez disso, `site/components/sections/Ticker.tsx` implementa a trilha à mão: um `rAF` que escreve
+`element.style.transform` diretamente (nunca uma custom property no elemento pai — mesma regra de
+performance do `design-guidance.md`), com pausa por `IntersectionObserver` + `document.hidden`
+**no mesmo padrão exato do `Silk.tsx`** (Task 8), e aceleração vinda do `velocity` que o próprio
+Lenis já calcula a cada evento de `scroll` (`lib/motion.tsx`) — em vez de recalcular a velocidade
+de novo com `useScroll`/`useVelocity` do `motion/react`, reaproveita o Lenis como fonte única sobre
+o estado do scroll (o mesmo Lenis que já move a página inteira). Detalhes e o porquê no
+`task-9-report.md`.
