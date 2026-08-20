@@ -95,7 +95,7 @@ export function Hero({ onAbrirVideo }: Props) {
               Facetas • Implantes • Próteses
             </p>
             <p className="max-w-[32ch] font-corpo text-[15px] text-grafite">
-              Consultório de cadeira única: atenção inteira, sem correria entre um paciente e
+              Consultório de cadeira única — aqui você não é encaixado entre um paciente e
               outro.
             </p>
             <div className="font-corpo text-[14px] text-grafite">
