@@ -5,13 +5,25 @@ import { waLink } from '@/lib/contact';
 import { useCapability } from '@/lib/useCapability';
 
 /**
- * O FAB só aparece depois que a pessoa rolou cerca de uma viewport de altura —
- * uma aproximação de "o hero saiu de tela" que não depende do Hero existir
- * (esta task roda antes da Task 7, que cria o Hero). Um sentinel invisível de
- * 1x1px, posicionado a `100dvh` do topo do documento, é observado via
- * IntersectionObserver: enquanto ele ainda não foi ultrapassado o CTA do hero
- * está por perto e o FAB não compete com ele; assim que some por cima da
- * viewport, o FAB entra.
+ * O FAB só aparece depois que a pessoa rola para além do hero, para não
+ * competir com o CTA de lá.
+ *
+ * Task 6 (quando este componente foi criado) aproximava isso com um sentinel
+ * de 1px a `100dvh` do topo do documento, porque o Hero (Task 7) ainda não
+ * existia. Verificado agora que o Hero existe de verdade: a altura real dele
+ * diverge bastante de 100dvh — no mobile ele passa de uma viewport inteira
+ * (sobretítulo + arco + h1 + as 3 colunas empilhadas), no desktop ele é bem
+ * mais curto que uma viewport (colunas lado a lado numa única linha). Com a
+ * aproximação antiga o FAB apareceria tarde demais no celular e cedo demais
+ * — competindo com o próprio CTA do hero — em telas largas.
+ *
+ * Correção: observar o próprio `<section id="hero">` (Hero.tsx) em vez do
+ * sentinel de altura fixa. `isIntersecting` vira `false` exatamente quando
+ * 0% do hero está visível, então "saiu da tela" passa a ser a altura real da
+ * seção, não um palpite. O sentinel de 1px é mantido só como fallback --
+ * cenário defensivo (e o que os testes deste componente, que renderizam
+ * `<WhatsAppFab />` isolado sem `#hero` no DOM, exercitam) para quando a
+ * página não tem a seção Hero.
  *
  * A entrada é de mão única (uma vez visível, continua visível mesmo se a
  * pessoa rolar de volta ao topo) — decisão deliberada, não uma sobra de
@@ -27,25 +39,25 @@ export function WhatsAppFab() {
     if (!montado) return;
     if (typeof IntersectionObserver === 'undefined') return; // ambiente sem suporte (ex.: teste)
 
-    const sentinela = sentinelaRef.current;
-    if (!sentinela) return;
+    const alvo = document.getElementById('hero') ?? sentinelaRef.current;
+    if (!alvo) return;
 
     const observer = new IntersectionObserver(
       ([entrada]) => {
-        if (entrada.isIntersecting) return; // sentinel ainda em tela: hero por perto, não mexe
-        if (entrada.boundingClientRect.top >= 0) return; // sentinel abaixo da viewport: ainda não chegou lá
+        if (entrada.isIntersecting) return; // alvo ainda em tela: hero por perto, não mexe
+        if (entrada.boundingClientRect.top >= 0) return; // alvo abaixo da viewport: ainda não chegou lá
         setVisivel(true);
         observer.disconnect(); // decisão de mão única — ver nota acima
       },
       { threshold: 0 }
     );
-    observer.observe(sentinela);
+    observer.observe(alvo);
     return () => observer.disconnect();
   }, [montado]);
 
   return (
     <>
-      {/* Sentinel invisível: 1 viewport de altura a partir do topo do documento */}
+      {/* Fallback: só é observado se #hero não existir na página (ver nota acima) */}
       <div ref={sentinelaRef} aria-hidden="true" style={{ position: 'absolute', top: '100dvh', left: 0, width: 1, height: 1 }} />
 
       <div
