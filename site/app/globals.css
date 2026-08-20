@@ -35,6 +35,21 @@ body {
   font-family: var(--font-corpo);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Feedback de toque compartilhado por todo elemento pressionável do site (CTA,
+   botão de telefone, hambúrguer, itens do drawer, FAB). scale(0.97) é a
+   assinatura tátil da marca: sem ele o botão não parece ter ouvido o toque.
+   Sob prefers-reduced-motion o reset global abaixo comprime a duração para
+   .01ms, mas o estado pressionado continua sendo aplicado — é feedback, não
+   decoração, e por isso não é removido, só deixa de ser suave. */
+.pressable {
+  transition: transform 160ms var(--ease-saida), background-color 200ms ease,
+    border-color 200ms ease, color 200ms ease;
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
