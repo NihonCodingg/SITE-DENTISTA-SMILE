@@ -10,6 +10,20 @@ type Props = {
   onAbrirVideo: (slug: string) => void;
 };
 
+// O GradualBlur vendorizado tem z-index:1000 por padrão (components/
+// reactbits/GradualBlur.tsx) — pensado para um componente sozinho na tela,
+// não para uma faixa decorativa dentro de uma seção que fica atrás de
+// overlays reais do site. Sem override, essas faixas vazavam visualmente por
+// cima do fundo escurecido do Lightbox (achado de review, Task 12: o fundo
+// pintado de vermelho revelou as duas faixas por cima dele). `1` é seguro
+// porque este blur é decoração só dentro do próprio scroller — nunca precisa
+// competir com nada fora da seção. Exportada (não só um literal inline nas
+// duas instâncias abaixo) para o teste de regressão em
+// __tests__/depoimentos.test.tsx comparar contra `Z_INDEX_BACKDROP`
+// (importado de components/ui/Lightbox.tsx) sem repetir nenhum dos dois
+// números — os dois lados da comparação vêm da fonte real.
+export const Z_INDEX_BLUR_BORDA = 1;
+
 /**
  * Seção "Depoimentos" (Task 12). São vídeos reais, gravados na clínica — sem
  * nome de paciente, sem número, sem avaliação inventada (ux-guidance.md: "os
@@ -52,9 +66,12 @@ export function Depoimentos({ onAbrirVideo }: Props) {
 
           {/* Decorativo: só indica "tem mais pra rolar". pointer-events:none
               já vem do próprio GradualBlur (nenhum hoverIntensity passado),
-              então nunca atrapalha o arraste por toque no scroller. */}
-          <GradualBlur position="left" width="56px" divCount={4} className="rounded-l-[24px]" />
-          <GradualBlur position="right" width="56px" divCount={4} className="rounded-r-[24px]" />
+              então nunca atrapalha o arraste por toque no scroller.
+              zIndex explícito e baixo (ver Z_INDEX_BLUR_BORDA acima) — sem
+              ele, o default de 1000 do componente vaza por cima do fundo
+              escurecido do Lightbox. */}
+          <GradualBlur position="left" width="56px" divCount={4} zIndex={Z_INDEX_BLUR_BORDA} className="rounded-l-[24px]" />
+          <GradualBlur position="right" width="56px" divCount={4} zIndex={Z_INDEX_BLUR_BORDA} className="rounded-r-[24px]" />
         </div>
       </div>
     </section>

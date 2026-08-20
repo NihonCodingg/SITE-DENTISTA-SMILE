@@ -22,6 +22,19 @@ const EASE_SAIDA: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
 const FOCAVEIS_SELETOR = 'a[href], button:not([disabled]), video[controls], [tabindex]:not([tabindex="-1"])';
 
+// Exportada — ao contrário de EASE_SAIDA acima, este valor NÃO é só estética
+// local: qualquer elemento decorativo com z-index próprio (ex.: GradualBlur
+// nas bordas do carrossel de Depoimentos, Task 12) precisa ficar abaixo do
+// fundo escurecido do lightbox para não vazar por cima dele visualmente —
+// bug real, encontrado por review empírica (screenshot com o fundo pintado
+// de vermelho). Um número duplicado nos dois arquivos poderia divergir sem
+// nenhum teste acusando; importar esta constante (em vez de repetir "85")
+// é o que faz o teste de regressão provar contra o valor real, não uma
+// cópia dele. Aplicada via `style` abaixo, não via classe Tailwind
+// `z-[85]` — só assim ela é garantidamente a MESMA fonte que o CSS
+// renderizado usa, sem risco de a classe e a constante divergirem.
+export const Z_INDEX_BACKDROP = 85;
+
 // Mesmo padrão de MobileMenu.tsx: com Lenis (podeAnimar), stop()/start() trava e
 // destrava o scroll suave. Sem Lenis (reduced-motion, onde o MotionProvider nem
 // chega a criar a instância), a trava usa position:fixed no scroll atual em vez de
@@ -186,7 +199,8 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
             animate="aberto"
             exit="fechado"
             variants={variantesFundo}
-            className="fixed inset-0 z-[85] bg-preto/78"
+            style={{ zIndex: Z_INDEX_BACKDROP }}
+            className="fixed inset-0 bg-preto/78"
           />
         )}
       </AnimatePresence>
