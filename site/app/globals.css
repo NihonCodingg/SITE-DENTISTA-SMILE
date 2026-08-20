@@ -58,3 +58,36 @@ body {
     transition-duration: .01ms !important;
   }
 }
+
+/* Reflexo diagonal nas linhas de Tratamentos (Task 10). O GlareHover do
+   React Bits (src/ts-tailwind/Animations/GlareHover) NÃO foi vendorizado —
+   decisão registrada em components/reactbits/README.md. Resumo: ele anima
+   `background-position` (fora da regra "só transform e opacity" deste
+   projeto) e força seu próprio container `grid place-items-center` com
+   `border`, incompatível com o grid `auto auto 1fr auto` da linha.
+   Implementado à mão em puro CSS, sem nenhum JS: `pointer:fine` já exclui
+   touch estruturalmente (toque não tem essa media feature), e o reset de
+   `prefers-reduced-motion` acima já derruba `transition-duration` para
+   .01ms — não precisa de `useCapability()` para um efeito que só existe
+   atrás de :hover. */
+.linha-tratamento {
+  position: relative;
+  overflow: hidden;
+}
+.linha-tratamento::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg) translateX(-140%);
+  transition: transform 550ms var(--ease-movimento);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .linha-tratamento:hover::after {
+    transform: skewX(-20deg) translateX(360%);
+  }
+}
