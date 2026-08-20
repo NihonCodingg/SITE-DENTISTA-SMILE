@@ -1,4 +1,5 @@
 import { Archivo_Black, Jost, Source_Sans_3, Caveat } from 'next/font/google';
+import { MotionProvider } from '@/lib/motion';
 import './globals.css';
 
 const archivo = Archivo_Black({ subsets: ['latin'], weight: '400', variable: '--fonte-archivo', display: 'swap' });
@@ -9,7 +10,9 @@ const caveat = Caveat({ subsets: ['latin'], weight: '600', variable: '--fonte-ca
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${archivo.variable} ${jost.variable} ${source.variable} ${caveat.variable}`}>
-      <body>{children}</body>
+      <body>
+        <MotionProvider>{children}</MotionProvider>
+      </body>
     </html>
   );
 }
