@@ -6,7 +6,7 @@ export const PILARES = [
 ] as const;
 
 const TRAT = [
-  ['Facetas', 'facetas', 'Correção de forma, cor e alinhamento dos dentes da frente. Um caminho estético para quem quer harmonizar o sorriso.', '/img/trat-facetas.jpg'],
+  ['Facetas', 'facetas', 'Correção de forma, cor e alinhamento dos dentes da frente. Um caminho estético para quem quer harmonizar o sorriso.', '/img/trat-facetas.webp'],
   ['Implantes', 'implantes', 'Substituição do dente perdido de forma segura, fixa e com aparência natural.', '/img/trat-implantes.jpg'],
   ['Protocolo de implante', 'protocolo', 'Solução para quem perdeu todos os dentes de uma arcada. Mais estabilidade, conforto e qualidade na mastigação.', '/img/trat-protocolo.jpg'],
   ['Próteses', 'proteses', 'Reabilitação de dentes ausentes ou comprometidos, devolvendo função e estética.', '/img/trat-proteses.jpg'],

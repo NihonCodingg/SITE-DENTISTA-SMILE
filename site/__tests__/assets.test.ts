@@ -8,6 +8,8 @@ const IMGS = [
   'retrato-5.jpg','retrato-6.jpg','retrato-7.jpg','retrato-8.jpg',
   'antes-depois-1.jpg','antes-depois-2.jpg','antes-depois-3.jpg',
   'antes-depois-4.jpg','antes-depois-5.jpg',
+  'trat-facetas.webp','trat-implantes.jpg','trat-protocolo.jpg',
+  'trat-proteses.jpg','trat-ortodontia.jpg','trat-limpeza.jpg',
 ];
 const PREVIEWS = ['tour-clinica','caso-protese','facetas-resina','facetas-transformacao','recepcao'];
 

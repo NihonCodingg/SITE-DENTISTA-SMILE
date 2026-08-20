@@ -13,13 +13,14 @@ const STAGGER_MAX = 5;
 const STAGGER_STEP = 0.06; // 60ms — dentro da janela de 30-80ms
 
 /**
- * As 7 imagens `trat-*.jpg` não existem em `public/img` (o cliente ainda não
- * entregou) e não vão existir nesta task. Checar em disco no servidor — em
- * vez de tentar carregar a imagem no cliente e reagir a um erro depois —
- * evita qualquer flash do ícone de imagem quebrada do navegador antes do
- * fallback aparecer: a decisão já está pronta no primeiro HTML que o
- * servidor manda, sem estado de cliente nenhum. Funciona sem nenhuma
- * modificação no dia em que o cliente entregar as fotos de verdade.
+ * 6 das 7 imagens `trat-*` já existem em `public/img` (entregues pelo
+ * cliente). `trat-clareamento.jpg` continua sem existir e não deve ser
+ * criada — não há foto real para esse tratamento ainda. Checar em disco no
+ * servidor — em vez de tentar carregar a imagem no cliente e reagir a um
+ * erro depois — evita qualquer flash do ícone de imagem quebrada do
+ * navegador antes do fallback aparecer: a decisão já está pronta no primeiro
+ * HTML que o servidor manda, sem estado de cliente nenhum. Funciona sem
+ * nenhuma modificação no dia em que o cliente entregar a foto que falta.
  *
  * `Tratamentos` não tem 'use client' — é puro Server Component, e por isso
  * pode ler o disco aqui.
