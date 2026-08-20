@@ -88,6 +88,47 @@ describe('Header', () => {
     render(<Header />);
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
+
+  it('reabre acessivel mesmo fechando e reabrindo rapido, antes da saida terminar', async () => {
+    // Regressão achada pela review com 3 cliques reais a 60ms de intervalo:
+    // fechar() marca aria-hidden/inert direto no nó do painel (necessário
+    // porque a AnimatePresence segura o nó fora do ciclo normal de render
+    // durante a saída de ~220ms). Se a pessoa reabrir antes disso terminar,
+    // a AnimatePresence reaproveita o MESMO nó — sem abrir() limpar
+    // simetricamente o que fechar() setou, o painel reabre com
+    // aria-expanded="true" no botão mas inert/aria-hidden presos, e
+    // .focus() em qualquer item interno vira no-op silencioso.
+    //
+    // A consulta ao painel é refeita via document.querySelector (não uma
+    // referência guardada de antes do fechar/reabrir): cobre tanto o caso
+    // de a AnimatePresence reaproveitar o nó quanto o de criar um novo —
+    // o que importa é o estado observável depois do ciclo, não qual nó é.
+    render(<Header />);
+    const hamburguer = screen.getByRole('button', { name: 'Abrir menu' });
+
+    fireEvent.click(hamburguer);
+    await waitFor(() => {
+      expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    });
+
+    fireEvent.click(hamburguer); // fecha
+    fireEvent.click(hamburguer); // reabre antes dos ~220ms de saída terminarem
+
+    const painel = document.querySelector('[role="dialog"]') as HTMLElement | null;
+    expect(painel).not.toBeNull();
+    expect(painel!.inert).toBe(false);
+    expect(painel).not.toHaveAttribute('aria-hidden', 'true');
+
+    // Prova adicional do sintoma relatado: o efeito de foco inicial
+    // (dispara em toda transição de "aberto") precisa ter conseguido focar
+    // de verdade — um painel preso em inert faria isso ser um no-op e o
+    // foco continuaria fora dele (ex.: ainda no próprio hambúrguer, que
+    // por sinal também tem aria-label "Fechar menu" nesse estado — por
+    // isso a checagem é de CONTAINMENT no painel, não de rótulo).
+    await waitFor(() => {
+      expect(painel!.contains(document.activeElement)).toBe(true);
+    });
+  });
 });
 
 describe('WhatsAppFab', () => {

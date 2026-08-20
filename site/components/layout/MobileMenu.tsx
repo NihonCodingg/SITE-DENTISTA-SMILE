@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { waLink } from '@/lib/contact';
 import { useCapability } from '@/lib/useCapability';
@@ -59,7 +60,7 @@ function destravarScroll(lenis: Lenis | null) {
 
 export function MobileMenu({ items }: { items: readonly Item[] }) {
   const [aberto, setAberto] = useState(false);
-  const { podeAnimar } = useCapability();
+  const { podeAnimar, montado } = useCapability();
   const lenis = useLenis();
   const painelId = useId();
   const botaoRef = useRef<HTMLButtonElement>(null);
@@ -85,6 +86,16 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
   const abrir = () => {
     setAberto(true);
     travarScroll(lenis);
+    // Espelha o fechar() acima: se a pessoa reabrir antes da saída (~220ms)
+    // terminar, a AnimatePresence reaproveita o MESMO nó DOM que fechar()
+    // acabou de marcar aria-hidden/inert — sem isso o painel reabre preso
+    // (foco vira no-op silencioso, some de leitor de tela) mesmo com
+    // aria-expanded="true" no botão. Achado pela review com 3 cliques reais
+    // a 60ms de intervalo.
+    if (painelRef.current) {
+      painelRef.current.removeAttribute('aria-hidden');
+      painelRef.current.inert = false;
+    }
   };
 
   // Escape fecha, Tab/Shift+Tab prende o foco dentro do painel, e o foco
@@ -186,101 +197,121 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
       </button>
 
       {/*
-        Backdrop e painel só existem no DOM enquanto abertos (ou saindo), via
-        AnimatePresence (preserva a animação de saída — 300ms entrando/220ms
-        saindo, --ease-gaveta — antes de remover). Isso já resolve o estado
-        de repouso (drawer fechado = nada extra no DOM), mas não bastava
-        sozinho: um elemento fixed com transform:translateX(100%) conta para
-        document.scrollWidth mesmo fora da viewport visível ENQUANTO ainda
-        está montado — e ele passa um instante montado nesse exato estado
-        bem no início de toda abertura (initial="fechado" = translateX(100%)
-        no primeiro frame) e bem no fim de todo fechamento (exit anima de
-        volta pra lá antes de sair). Comprovado ao vivo: mesmo só com o
-        AnimatePresence, document.documentElement.scrollWidth ainda batia
-        695px (375 + os 320px do painel) no instante seguinte ao clique de
-        abrir.
+        Backdrop e painel são renderizados via portal em document.body, e só
+        existem no DOM enquanto abertos (ou saindo), via AnimatePresence
+        (preserva a animação de saída — 300ms entrando/220ms saindo,
+        --ease-gaveta — antes de remover).
 
-        Por isso o painel entra também num container de recorte:
-        `.absolute` dentro de um wrapper `.fixed.inset-0.overflow-hidden`
-        (em vez de `.fixed` direto). Um `position:fixed` normalmente ESCAPA
-        do overflow:hidden de um ancestral (só é clipado se o ancestral tiver
-        transform/filter/etc, o que não é o caso aqui) — mas um
-        `position:absolute` É clipado pelo overflow do ancestral mais
-        próximo que tem posição definida, que é exatamente este wrapper.
-        Com isso, qualquer transform entre 0% e 100% (incluindo o instante
-        inicial/final da animação) fica cortado pelo wrapper e nunca
-        extrapola a largura do viewport, dentro ou fora da transição.
+        Dois problemas de containing block, achados um depois do outro:
+
+        1) Um elemento fixed com transform:translateX(100%) conta para
+           document.scrollWidth mesmo fora da viewport visível ENQUANTO
+           ainda está montado — e ele passa um instante montado nesse
+           estado bem no início/fim de toda abertura/fechamento (a
+           AnimatePresence não evita isso sozinha). Corrigido com um
+           wrapper de recorte: painel em `.absolute` dentro de um
+           `.fixed.inset-0.overflow-hidden` (em vez de `.fixed` direto) —
+           um `position:fixed` normalmente ESCAPA do overflow:hidden de um
+           ancestral (só é clipado se o ancestral tiver
+           transform/filter/etc.), mas `position:absolute` É clipado pelo
+           ancestral posicionado mais próximo.
+
+        2) Esse MESMO wrapper, quando renderizado dentro do <Header>,
+           colapsava para ~66px: `backdrop-blur-[8px]` no <header>
+           estabelece containing block para descendentes fixed/absolute
+           (comportamento padrão do CSS), então o `inset-0` do wrapper
+           passava a se referenciar ao <header> (a altura dele), não à
+           viewport. Confirmado por hit-test real: com o drawer aberto,
+           `document.elementFromPoint(200, 400)` retornava um elemento da
+           página por trás em vez do link "Tratamentos" — só a faixa de
+           66px do topo ficava clicável, o resto do menu inacessível a
+           mouse/toque (teclado não pegava porque focus()/eventos de
+           teclado ignoram clipping visual).
+
+           Corrigido tirando backdrop+painel de dentro do <header> via
+           `createPortal` para `document.body`, que escapa de QUALQUER
+           containing block estabelecido por ancestrais — não só do
+           backdrop-filter deste header, mas de qualquer transform/filter
+           que apareça ali no futuro. `montado` (useCapability) evita
+           montar o portal antes do cliente confirmar (SSR não tem
+           document.body do jeito que o cliente vai hidratar).
       */}
-      <AnimatePresence>
-        {aberto && (
-          <motion.div
-            key="drawer-fundo"
-            onClick={fechar}
-            initial="fechado"
-            animate="aberto"
-            exit="fechado"
-            variants={variantesFundo}
-            className="fixed inset-0 z-[65] bg-preto/40"
-          />
-        )}
-      </AnimatePresence>
+      {montado &&
+        createPortal(
+          <>
+            <AnimatePresence>
+              {aberto && (
+                <motion.div
+                  key="drawer-fundo"
+                  onClick={fechar}
+                  initial="fechado"
+                  animate="aberto"
+                  exit="fechado"
+                  variants={variantesFundo}
+                  className="fixed inset-0 z-[65] bg-preto/40"
+                />
+              )}
+            </AnimatePresence>
 
-      <div className="pointer-events-none fixed inset-0 z-[70] overflow-hidden">
-        <AnimatePresence>
-          {aberto && (
-            <motion.div
-              key="drawer-painel"
-              ref={painelRef}
-              id={painelId}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Menu"
-              initial="fechado"
-              animate="aberto"
-              exit="fechado"
-              variants={variantesPainel}
-              className="pointer-events-auto absolute right-0 top-0 flex h-dvh w-[min(320px,86vw)] flex-col justify-between bg-creme px-6 py-6 shadow-[-12px_0_30px_rgba(17,17,17,0.14)]"
-            >
-              <div>
-                <div className="mb-8 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={fechar}
-                    aria-label="Fechar menu"
-                    className="pressable flex h-11 w-11 items-center justify-center rounded-full border border-borda-forte text-preto"
+            <div className="pointer-events-none fixed inset-0 z-[70] overflow-hidden">
+              <AnimatePresence>
+                {aberto && (
+                  <motion.div
+                    key="drawer-painel"
+                    ref={painelRef}
+                    id={painelId}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Menu"
+                    initial="fechado"
+                    animate="aberto"
+                    exit="fechado"
+                    variants={variantesPainel}
+                    className="pointer-events-auto absolute right-0 top-0 flex h-dvh w-[min(320px,86vw)] flex-col justify-between bg-creme px-6 py-6 shadow-[-12px_0_30px_rgba(17,17,17,0.14)]"
                   >
-                    <FecharIcon />
-                  </button>
-                </div>
+                    <div>
+                      <div className="mb-8 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={fechar}
+                          aria-label="Fechar menu"
+                          className="pressable flex h-11 w-11 items-center justify-center rounded-full border border-borda-forte text-preto"
+                        >
+                          <FecharIcon />
+                        </button>
+                      </div>
 
-                <nav className="flex flex-col">
-                  {items.map((item, i) => (
-                    <motion.a
-                      key={item.href}
-                      href={item.href}
+                      <nav className="flex flex-col">
+                        {items.map((item, i) => (
+                          <motion.a
+                            key={item.href}
+                            href={item.href}
+                            onClick={fechar}
+                            variants={variantesItem}
+                            whileTap={{ scale: 0.97, transition: { duration: 0.16, ease: EASE_SAIDA } }}
+                            className="pressable flex min-h-[56px] items-center gap-4 border-b border-borda font-rotulo text-[15px] uppercase tracking-[.1em] text-preto"
+                          >
+                            <span className="font-rotulo text-[12px] text-dourado">{String(i + 1).padStart(2, '0')}</span>
+                            {item.rotulo}
+                          </motion.a>
+                        ))}
+                      </nav>
+                    </div>
+
+                    <a
+                      href={waLink()}
                       onClick={fechar}
-                      variants={variantesItem}
-                      whileTap={{ scale: 0.97, transition: { duration: 0.16, ease: EASE_SAIDA } }}
-                      className="pressable flex min-h-[56px] items-center gap-4 border-b border-borda font-rotulo text-[15px] uppercase tracking-[.1em] text-preto"
+                      className="pressable flex min-h-11 items-center justify-center rounded-full bg-amarelo px-6 font-rotulo text-[13px] font-medium uppercase tracking-[.08em] text-preto"
                     >
-                      <span className="font-rotulo text-[12px] text-dourado">{String(i + 1).padStart(2, '0')}</span>
-                      {item.rotulo}
-                    </motion.a>
-                  ))}
-                </nav>
-              </div>
-
-              <a
-                href={waLink()}
-                onClick={fechar}
-                className="pressable flex min-h-11 items-center justify-center rounded-full bg-amarelo px-6 font-rotulo text-[13px] font-medium uppercase tracking-[.08em] text-preto"
-              >
-                Agendar avaliação
-              </a>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                      Agendar avaliação
+                    </a>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </>,
+          document.body
+        )}
     </div>
   );
 }
