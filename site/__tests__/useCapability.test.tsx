@@ -106,4 +106,49 @@ describe('useCapability', () => {
 
     expect(mql.removeEventListener).toHaveBeenCalledWith('change', handler);
   });
+
+  /**
+   * `pontoFino` consulta `(pointer: fine)`, uma media query independente de
+   * `(prefers-reduced-motion: reduce)`. Este mock devolve um MediaQueryList
+   * diferente por consulta (ao contrário de `mockMatchMedia`, que ignora o
+   * argumento) para provar que as duas fontes não se confundem.
+   */
+  function mockMatchMediaPorConsulta(reduzido: boolean, ponteiroFino: boolean) {
+    const mqls: Record<string, { matches: boolean; addEventListener: ReturnType<typeof vi.fn>; removeEventListener: ReturnType<typeof vi.fn> }> = {
+      '(prefers-reduced-motion: reduce)': { matches: reduzido, addEventListener: vi.fn(), removeEventListener: vi.fn() },
+      '(pointer: fine)': { matches: ponteiroFino, addEventListener: vi.fn(), removeEventListener: vi.fn() },
+    };
+    vi.stubGlobal('matchMedia', (q: string) => mqls[q]);
+    return mqls;
+  }
+
+  it('reconhece ponteiro fino (mouse/trackpad) independente de reduced-motion', () => {
+    mockMatchMediaPorConsulta(false, true);
+    vi.stubGlobal('navigator', { deviceMemory: 8, hardwareConcurrency: 8, connection: { saveData: false } });
+    const { result } = renderHook(() => useCapability());
+    expect(result.current.pontoFino).toBe(true);
+  });
+
+  it('reconhece ausência de ponteiro fino (touch) mesmo com reduced-motion desligado', () => {
+    mockMatchMediaPorConsulta(false, false);
+    vi.stubGlobal('navigator', { deviceMemory: 8, hardwareConcurrency: 8, connection: { saveData: false } });
+    const { result } = renderHook(() => useCapability());
+    expect(result.current.podeAnimar).toBe(true);
+    expect(result.current.pontoFino).toBe(false);
+  });
+
+  it('reage em tempo real quando o ponteiro muda entre touch e mouse', () => {
+    const mqls = mockMatchMediaPorConsulta(false, false);
+    vi.stubGlobal('navigator', { deviceMemory: 8, hardwareConcurrency: 8, connection: { saveData: false } });
+    const { result } = renderHook(() => useCapability());
+    expect(result.current.pontoFino).toBe(false);
+
+    const handler = mqls['(pointer: fine)'].addEventListener.mock.calls[0][1] as () => void;
+    act(() => {
+      mqls['(pointer: fine)'].matches = true;
+      handler();
+    });
+
+    expect(result.current.pontoFino).toBe(true);
+  });
 });

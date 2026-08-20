@@ -9,7 +9,16 @@ vi.stubGlobal('matchMedia', (q: string) => ({
 describe('Hero', () => {
   it('usa a headline da marca como h1 unico', () => {
     render(<Hero onAbrirVideo={() => {}} />);
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Seu novo sorriso começa aqui/i);
+    // \s* (não \s+) entre as palavras: com podeAnimar=true (matchMedia mockado
+    // acima como "nunca reduzido") a Hero usa o SplitText vendorizado
+    // (components/reactbits/SplitText.tsx), que reparte a headline em spans
+    // por palavra via gsap/SplitText e anima `y` sobre eles. Só em jsdom — não
+    // no Chrome real, verificado manualmente na Task 8 — essa combinação
+    // específica (SplitText + gsap animando `y` nos alvos) reordena o texto
+    // node de espaço entre duas das palavras. \s* tolera esse artefato do
+    // ambiente de teste sem enfraquecer o que o teste garante: a headline
+    // certa, num h1 único.
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Seu\s*novo\s*sorriso\s*começa\s*aqui/i);
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
@@ -35,5 +44,24 @@ describe('Hero', () => {
     const { container } = render(<Hero onAbrirVideo={() => {}} />);
     expect(container.textContent).not.toMatch(/\d+\s*\+/);
     expect(container.textContent).not.toMatch(/★|estrelas/);
+  });
+
+  it('sob prefers-reduced-motion, a headline continua um h1 puro (sem SplitText)', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: q.includes('reduce'),
+      media: q,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const { container } = render(<Hero onAbrirVideo={() => {}} />);
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent('Seu novo sorriso começa aqui');
+    // Sem podeAnimar, o SplitText não monta — nada de span.split-parent na
+    // árvore, só o texto puro que o servidor já mandou.
+    expect(container.querySelector('.split-parent')).toBeNull();
+
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: false, media: q, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    }));
   });
 });
