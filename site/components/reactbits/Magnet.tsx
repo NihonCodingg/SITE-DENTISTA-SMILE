@@ -23,10 +23,12 @@ export default function Magnet({
   magnetStrength = 2,
   // Curvas nativas trocadas pelos tokens da marca (design-guidance.md: "as
   // curvas embutidas do CSS são fracas demais"). --ease-movimento enquanto o
-  // cursor puxa o elemento, --ease-saida quando ele solta e o elemento volta
-  // — mesma lógica de entrada/saída assimétrica usada no resto do site.
+  // cursor puxa o elemento (200ms), --ease-saida quando ele solta e o
+  // elemento volta (150ms) — a saída tem que ser mais rápida que a entrada
+  // (design-guidance.md: "a saída é sempre mais rápida que a entrada"), as
+  // duas dentro do teto de 300ms para qualquer coisa que a pessoa aciona.
   activeTransition = 'transform 0.2s var(--ease-movimento)',
-  inactiveTransition = 'transform 0.4s var(--ease-saida)',
+  inactiveTransition = 'transform 0.15s var(--ease-saida)',
   wrapperClassName = '',
   innerClassName = '',
   ...props

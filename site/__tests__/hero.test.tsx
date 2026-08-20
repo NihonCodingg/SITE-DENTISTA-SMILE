@@ -8,17 +8,24 @@ vi.stubGlobal('matchMedia', (q: string) => ({
 
 describe('Hero', () => {
   it('usa a headline da marca como h1 unico', () => {
-    render(<Hero onAbrirVideo={() => {}} />);
-    // \s* (não \s+) entre as palavras: com podeAnimar=true (matchMedia mockado
-    // acima como "nunca reduzido") a Hero usa o SplitText vendorizado
-    // (components/reactbits/SplitText.tsx), que reparte a headline em spans
-    // por palavra via gsap/SplitText e anima `y` sobre eles. Só em jsdom — não
-    // no Chrome real, verificado manualmente na Task 8 — essa combinação
-    // específica (SplitText + gsap animando `y` nos alvos) reordena o texto
-    // node de espaço entre duas das palavras. \s* tolera esse artefato do
-    // ambiente de teste sem enfraquecer o que o teste garante: a headline
-    // certa, num h1 único.
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Seu\s*novo\s*sorriso\s*começa\s*aqui/i);
+    const { container } = render(<Hero onAbrirVideo={() => {}} />);
+    // Com podeAnimar=true (matchMedia mockado acima como "nunca reduzido") a
+    // Hero usa o SplitText vendorizado (components/reactbits/SplitText.tsx),
+    // que reparte a headline em spans por palavra via gsap/SplitText e anima
+    // `y` sobre eles. Só em jsdom — não no Chrome real, confirmado manualmente
+    // na Task 8 — essa combinação específica (SplitText + gsap animando `y`
+    // nos alvos) reordena o texto node de espaço entre duas das palavras, e
+    // `heading.textContent` sai sem esse espaço.
+    //
+    // O GSAP escreve `aria-label` no `.split-parent` com o texto ORIGINAL
+    // antes de fatiar (node_modules/gsap/SplitText.js) — imune ao artefato,
+    // porque não depende dos nós de texto que o split rearranja. Testar por
+    // aria-label (igualdade exata, não regex frouxa) mantém o teste
+    // protegendo contra qualquer regressão real de espaçamento, sem tocar
+    // em código de produção para contornar uma lacuna só do jsdom.
+    const splitParent = container.querySelector('.split-parent');
+    expect(splitParent).not.toBeNull();
+    expect(splitParent).toHaveAttribute('aria-label', 'Seu novo sorriso começa aqui');
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 

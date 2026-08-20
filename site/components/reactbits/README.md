@@ -63,9 +63,13 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   consertar.
 - **Só `transform`:** já animava só `transform: translate3d(...)` — dentro da regra.
 - **Modificações:**
-  1. Os defaults de `activeTransition`/`inactiveTransition` trocaram `ease-out`/`ease-in-out`
-     (curvas nativas do CSS) pelos tokens da marca `var(--ease-movimento)`/`var(--ease-saida)` —
-     `design-guidance.md` veta curva nativa em qualquer lugar do site.
+  1. Os defaults de `activeTransition`/`inactiveTransition` trocaram `ease-out 0.3s`/`ease-in-out
+     0.5s` (curvas nativas do CSS, valores do React Bits) pelos tokens da marca
+     `var(--ease-movimento)` (entrada, puxado pelo cursor, 200ms) e `var(--ease-saida)` (saída,
+     solta e volta, 150ms) — `design-guidance.md` veta curva nativa em qualquer lugar do site, e
+     manda a saída mais rápida que a entrada ("a saída é sempre mais rápida que a entrada"). Numa
+     primeira versão inverti sem querer a duração (entrada 200ms, saída 400ms — saída mais lenta
+     que a entrada, direção errada); corrigido na review da Task 8.
   2. O ramo `disabled` do efeito original chamava `setPosition({x:0,y:0})` de forma síncrona
      dentro do corpo do efeito — a regra `set-state-in-effect` do eslint-plugin-react-hooks do
      Next 16 reprova isso (mesma regra documentada em `lib/motion.tsx`). Troquei por: o efeito só
