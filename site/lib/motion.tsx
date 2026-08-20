@@ -72,8 +72,34 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
     const loop = (t: number) => { l.raf(t); raf.current = requestAnimationFrame(loop); };
     raf.current = requestAnimationFrame(loop);
 
+    // Links de âncora (`href="#clinica"` etc., no Header/MobileMenu/Hero) não
+    // passam pelo Lenis por padrão: um clique nativo dispara o jump-to-anchor
+    // do próprio browser, que anima `scrollTop` por fora do rAF do Lenis.
+    // O `scroll-behavior: smooth` do CSS (globals.css) até deixa esse jump
+    // suave, mas o Lenis continua escrevendo sua própria posição alvo a cada
+    // frame sem saber que o scroll nativo está em andamento — as duas
+    // animações competem pela mesma `scrollTop`, e o resultado é a página
+    // tremer ou voltar para trás no meio do scroll (guia de UX: "Lenis
+    // intercepta o scroll nativo e scroll-behavior:smooth sozinho pode não
+    // bastar"). Interceptar o clique e delegar para `lenis.scrollTo()`
+    // mantém o Lenis como única fonte de verdade sobre a posição da página.
+    const ALTURA_HEADER_FALLBACK = 80;
+    const aoClicarAncora = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const alvo = (e.target as HTMLElement).closest('a[href^="#"]');
+      if (!alvo) return;
+      const href = alvo.getAttribute('href');
+      if (!href || href === '#' || !document.querySelector(href)) return;
+      e.preventDefault();
+      const header = document.querySelector('header');
+      const alturaHeader = header ? header.getBoundingClientRect().height : ALTURA_HEADER_FALLBACK;
+      l.scrollTo(href, { offset: -(alturaHeader + 16) });
+    };
+    document.addEventListener('click', aoClicarAncora);
+
     return () => {
       cancelAnimationFrame(raf.current);
+      document.removeEventListener('click', aoClicarAncora);
       l.destroy();
       ScrollTrigger.getAll().forEach((s) => s.kill());
       store.set(null);

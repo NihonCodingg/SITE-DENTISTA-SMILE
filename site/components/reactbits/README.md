@@ -78,6 +78,52 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      dentro do efeito.
   3. Adicionado `'use client'` no topo, mesma razão do `SplitText.tsx`.
 
+### `GradualBlur.tsx`
+
+- **Origem:** `src/ts-tailwind/Animations/GradualBlur/GradualBlur.tsx`
+- **Usado em:** Task 12 (bordas do carrossel de Depoimentos, indicando que o scroller continua)
+- **Dependências que arrasta:** nenhuma além de React.
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** o componente não consulta nada por conta própria. Não precisou
+  de gate por `useCapability()` na chamada (Depoimentos.tsx): nesta task ele é usado sem a prop
+  `animated`, então nada nele anima — é uma máscara de `backdrop-filter` estática, mesma categoria
+  de custo do `backdrop-blur-[8px]` que o Header (Task 6) e o botão do tour do Hero (Task 8) já usam
+  sem gate. Se uma task futura ligar `animated`/`hoverIntensity`, revisitar essa decisão.
+- **Cleanup:** os dois efeitos com listener (`useResponsiveDimension` para redimensionar,
+  `useIntersectionObserver` para o modo `animated="scroll"`) já tinham `return` de limpeza
+  corretos no original. Nenhum dos dois chega a registrar listener no uso desta task
+  (`responsive`/`animated` não são passados), mas o cleanup foi mantido intacto para quem vier a
+  usar essas variantes depois.
+- **Só `transform`/`opacity` quando anima:** o componente pode animar `backdrop-filter` e `opacity`
+  quando a prop `animated` está ligada — não usado nesta task (ver acima). O `opacity` que ele usa
+  (para o modo `animated="scroll"`) está dentro da regra; `backdrop-filter` não é `transform`, mas
+  só entra em transição com `animated` ligado, o que este projeto não aciona.
+- **Modificações:**
+  1. Removidos todos os `any` do arquivo original (`@typescript-eslint/no-explicit-any` é erro
+     neste projeto — `eslint.config.mjs` via `eslint-config-next/typescript`). O uso mais
+     específico (`useResponsiveDimension` concatenando `'mobile' + Cap(key)` como string dinâmica
+     tipada `any`) virou uma tabela fechada `RESPONSIVE_FIELDS: Record<'height'|'width', {...}>`
+     com as três chaves (`mobileHeight`/`tabletHeight`/`desktopHeight` e as três de `width`)
+     explícitas — mesmo comportamento, sem indexação dinâmica não tipada. O
+     `(config as any)` do destructuring de `hoverIntensity`/`animated`/`onAnimationComplete`/
+     `duration` foi removido puro e simples: `config` já é `Required<GradualBlurProps>`, o cast
+     era desnecessário.
+  2. Removidos os dois `(GradualBlurMemo as any).PRESETS = ...` / `.CURVE_FUNCTIONS = ...`
+     (propriedades estáticas anexadas ao componente memoizado para consumidores avançados da lib
+     original). Não usados em lugar nenhum deste projeto; exigiam `any` para existir.
+  3. **Removida a função `injectStyles()` e sua chamada em escopo de módulo** (o original injeta
+     `<style id="gradual-blur-styles">{'.gradual-blur{pointer-events:none;transition:opacity .3s
+     ease-out}'}</style>` em `document.head` na primeira vez que o arquivo é importado no
+     cliente). Dois motivos: (a) é um efeito colateral de import — muta o DOM global fora do ciclo
+     de vida de qualquer componente, sem relação com o React de quem está lendo o arquivo; a classe
+     `.gradual-blur` já recebe `pointer-events:none` inline via `containerStyle` quando
+     `hoverIntensity` não está setado (nosso caso), tornando a regra CSS redundante; (b) a
+     transição injetada usa `ease-out` nativo do CSS em TODO elemento `.gradual-blur` da página,
+     incondicionalmente — `design-guidance.md` proíbe curva nativa em qualquer lugar do site. Como
+     este projeto nunca liga `animated`, essa transição nunca dispararia de verdade, mas remover a
+     injeção evita uma folha de estilo global "invisível" (fora do Tailwind, fora de qualquer
+     arquivo `.css` rastreado) que um mantenedor futuro precisaria descobrir sozinho.
+
 ### `Silk` — **não vendorizado**
 
 O brief pedia o `Silk` do React Bits para o fundo do Hero. Não foi trazido: toda variante do
