@@ -3,6 +3,7 @@ import { PaginaComVideo } from '@/components/sections/PaginaComVideo';
 import { Ticker } from '@/components/sections/Ticker';
 import { Pilares } from '@/components/sections/Pilares';
 import { Tratamentos } from '@/components/sections/Tratamentos';
+import { Sorrisos } from '@/components/sections/Sorrisos';
 import { WhatsAppFab } from '@/components/layout/WhatsAppFab';
 
 export default function Home() {
@@ -13,14 +14,17 @@ export default function Home() {
         {/* Hero, Clínica e Depoimentos precisam do mesmo estado "qual vídeo
             está aberto" e de um único <Lightbox> — PaginaComVideo é a
             fronteira 'use client' que segura isso (Task 12), recebendo
-            Ticker/Pilares/Tratamentos (Server Components, sem estado de
-            vídeo) já prontos por prop para manter a ordem certa da página
-            sem importar um módulo server dentro de um arquivo client. */}
-        <PaginaComVideo ticker={<Ticker />} pilares={<Pilares />} tratamentos={<Tratamentos />} />
-        {/* A ordem final da página tem Sorrisos e Profissional entre Clínica
-            e Depoimentos — essas duas seções ainda não existem, então
-            Depoimentos fica logo após Clínica por enquanto (brief da Task
-            12). Demais seções chegam nas Tasks 13-15. */}
+            Ticker/Pilares/Tratamentos/Sorrisos (Server Components, sem
+            estado de vídeo) já prontos por prop para manter a ordem certa
+            da página sem importar um módulo server dentro de um arquivo
+            client. Sorrisos (Task 13) entra entre Clínica e Depoimentos —
+            "Profissional" (Task 14/15) ainda não existe. */}
+        <PaginaComVideo
+          ticker={<Ticker />}
+          pilares={<Pilares />}
+          tratamentos={<Tratamentos />}
+          sorrisos={<Sorrisos />}
+        />
       </main>
       <WhatsAppFab />
     </>

@@ -22,6 +22,7 @@ type Props = {
   ticker: ReactNode;
   pilares: ReactNode;
   tratamentos: ReactNode;
+  sorrisos: ReactNode;
 };
 
 /**
@@ -32,17 +33,19 @@ type Props = {
  * precisa ser visto por três seções em pontos diferentes da árvore, então a
  * fronteira sobe para envolvê-las todas em vez de cada uma ter a sua.
  *
- * `app/page.tsx` continua Server Component: Ticker/Pilares/Tratamentos (que
- * não precisam do estado de vídeo) são renderizados lá e chegam aqui já
- * prontos via prop — é o padrão documentado do Next.js para intercalar
- * Server Components dentro da árvore de um Client Component sem importar um
- * módulo server dentro de um arquivo 'use client' (o que quebra o build).
+ * `app/page.tsx` continua Server Component: Ticker/Pilares/Tratamentos/
+ * Sorrisos (que não precisam do estado de vídeo) são renderizados lá e
+ * chegam aqui já prontos via prop — é o padrão documentado do Next.js para
+ * intercalar Server Components dentro da árvore de um Client Component sem
+ * importar um módulo server dentro de um arquivo 'use client' (o que quebra
+ * o build). `Sorrisos` (Task 13) é Server Component ela mesma — só a
+ * decisão WebGL/fallback dentro dela (`SorrisosGaleria.tsx`) é cliente.
  *
  * O `<Lightbox>` só precisa existir uma vez porque ele mesmo já se portala
  * para `document.body` (Task 11) — a posição dele nesta árvore não afeta
  * onde ele aparece na página, só quem controla seu estado.
  */
-export function PaginaComVideo({ ticker, pilares, tratamentos }: Props) {
+export function PaginaComVideo({ ticker, pilares, tratamentos, sorrisos }: Props) {
   const [videoAberto, setVideoAberto] = useState<string | null>(null);
 
   return (
@@ -52,6 +55,7 @@ export function PaginaComVideo({ ticker, pilares, tratamentos }: Props) {
       {pilares}
       {tratamentos}
       <Clinica onAbrirVideo={setVideoAberto} />
+      {sorrisos}
       <Depoimentos onAbrirVideo={setVideoAberto} />
 
       <Lightbox

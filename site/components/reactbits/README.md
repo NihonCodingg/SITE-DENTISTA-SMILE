@@ -124,6 +124,99 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      injeção evita uma folha de estilo global "invisível" (fora do Tailwind, fora de qualquer
      arquivo `.css` rastreado) que um mantenedor futuro precisaria descobrir sozinho.
 
+### `CircularGallery.tsx`
+
+- **Origem:** `src/ts-tailwind/Components/CircularGallery/CircularGallery.tsx`
+- **Usado em:** Task 13 (seção "Sorrisos feitos aqui" — os 9 retratos de pacientes reais)
+- **Dependências que arrasta:** `ogl` (já no projeto desde a Task 8, para o `Silk`). Nenhuma
+  dependência nova.
+- **Rede:** o original **fazia** uma chamada de rede — `loadFontFromStylesheet()` buscava
+  `https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&display=swap` toda vez que o
+  componente montava, para desenhar a legenda de cada item em canvas. **Removida** (ver
+  modificação nº1 abaixo) — a política deste projeto veta chamada de rede em componente
+  vendorizado, e a Task 13 não tem texto nenhum pra desenhar (não existe nome de paciente
+  confirmado; inventar está fora de questão).
+- **`matchMedia`/reduced-motion:** o componente não consulta nada por conta própria — quem decide
+  se ele deve existir na árvore é `SorrisosGaleria.tsx`, via `useCapability().podePesado`, no mesmo
+  padrão que `HeroBackdrop.tsx` (Task 8) já usa para o `Silk`. Fonte única preservada.
+- **Cleanup:** o `destroy()` original cancelava o `rAF` e removia os listeners de
+  window/canvas — mas **nunca** liberava o contexto WebGL (`WEBGL_lose_context`) nem pausava o
+  loop de render fora da viewport ou com a aba oculta. As duas são exigências duras desta task
+  (mesmo padrão que `components/ui/Silk.tsx`, Task 8) — corrigidas nas modificações nº2 e nº4
+  abaixo.
+- **Só `transform`/`opacity`:** o componente inteiro é desenhado em WebGL (shader), não CSS — a
+  regra "só transform e opacity" do `design-guidance.md` fala de propriedades CSS animadas fora do
+  canvas, então não se aplica ao desenho interno do shader.
+- **Modificações:**
+  1. **Removido todo o sistema de legenda em canvas** — a classe `Title`, `createTextTexture()`,
+     `getFontSize()`, `DEFAULT_FONT`/`DEFAULT_FONT_URL`, e as quatro funções de carregamento de
+     fonte (`loadFontFromStylesheet`, `loadFontFromFile`, `loadCustomFont`, `resolveFont`,
+     `deriveFontFamilyFromUrl`). Três motivos: (a) a chamada de rede ao Google Fonts, vetada pela
+     política de vendorização; (b) não existe texto nenhum pra desenhar — os 9 itens de
+     `SORRISOS` (`lib/content.ts`) não têm nome de paciente, e inventar um está fora de questão;
+     (c) efeito colateral: cada item também deixa de criar uma segunda textura/mesh (a do texto),
+     o que reduz o número de objetos WebGL por retrato de 2 para 1. `Media`/`MediaProps` perderam
+     os campos `text`/`textColor`/`font` (não usados mais), e `App`/`AppConfig` os campos
+     `font`/`fontUrl`/`textColor` correspondentes.
+  2. **O loop de render (`App.update`) agora pausa fora da viewport e com a aba oculta.** O
+     original chamava `renderer.render(...)` a cada `requestAnimationFrame`, incondicionalmente,
+     pra sempre enquanto o componente estivesse montado — o mesmo problema que
+     `reactbits-vendoring.md` já registrou pro `ScrollVelocity` (Task 9) e que este README explica
+     acima. Adicionado um `IntersectionObserver` no container (`visivel`) e uma checagem de
+     `document.hidden`, exatamente como `components/ui/Silk.tsx` (Task 8): o `rAF` continua sendo
+     reagendado a cada quadro (retomar precisa ser instantâneo), mas o corpo pesado (`lerp`,
+     `media.update`, `renderer.render`) só roda quando a seção está visível e a aba em primeiro
+     plano. Provado por teste com `rAF`/`IntersectionObserver` mockados —
+     `__tests__/circularGallery.test.tsx`.
+  3. **Redimensionamento trocou de `window.resize` para `ResizeObserver` no container** — mesmo
+     padrão de `Silk.tsx`. Reage à seção mudando de tamanho (ex.: rotação de tela, sidebar) sem
+     depender só do viewport inteiro mudar.
+  4. **`destroy()` agora libera o contexto WebGL** (`gl.getExtension('WEBGL_lose_context')?.
+     loseContext()`), que o original não fazia — cleanup incompleto era exatamente o tipo de bug
+     que esta task pede pra consertar antes de aceitar o componente. Provado por teste
+     (`__tests__/circularGallery.test.tsx`: "libera o contexto WebGL... no unmount").
+  5. **Gestos de arraste/roda começam só no container, não em `window` inteiro.** O original
+     registrava `mousedown`/`wheel`/`touchstart` no `window`: rolar a página em qualquer lugar do
+     site, ou clicar em qualquer elemento, empurrava o `scroll.target` da galeria mesmo com ela
+     fora da tela — desperdício de trabalho e um bug sutil (a galeria já chegaria "deslocada" na
+     primeira vez que entrasse na viewport). Agora `wheel`/`mousedown`/`touchstart` ficam no
+     container; `mousemove`/`mouseup`/`touchmove`/`touchend` continuam em `window` de propósito
+     (padrão padrão de arraste: se o cursor sair da caixa no meio do gesto, o arraste não pode
+     travar ali).
+  6. **`new App(...)` entra em `try/catch`**, com uma prop `onError?: (falhou: boolean) => void`
+     nova. `useCapability().podePesado` prevê memória/núcleos/rede, mas não prevê uma GPU
+     bloqueada ou WebGL desligado por política do navegador — casos em que o `ogl` real não lança
+     (só faz `console.error` e deixa `gl` nulo/quebrado internamente), mas o código deste arquivo
+     que lê `this.gl.clearColor(...)` logo em seguida lançaria um `TypeError`. Sem o catch, esse
+     erro derrubaria a árvore de React inteira (não há Error Boundary por perto) — e a exigência
+     do brief ("ninguém pode ficar sem ver os pacientes") quebraria justo no pior caso. Quem chama
+     (`SorrisosGaleria.tsx`) usa `onError` pra trocar pro scroller de fallback. Provado por teste
+     (mock do `ogl` lançando na construção do `Renderer`).
+  7. **Removidos `role="region"`, `tabIndex={0}`, o `aria-label` em inglês e a navegação por
+     `ArrowLeft`/`ArrowRight`** (`onKeyDown`, `boundOnKeyDown`). O host do canvas agora só tem
+     `aria-hidden="true"`: o WebGL não é acessível a leitor de tela (a task pediu para pensar
+     nisso explicitamente), e um elemento focável com `aria-hidden="true"` é um anti-padrão de
+     acessibilidade (cria um "buraco negro" de foco pra quem navega por teclado com leitor de
+     tela). O equivalente textual dos 9 retratos — o que a task pede como mínimo de
+     acessibilidade — vive em `SorrisosGaleria.tsx`, fora deste arquivo: um parágrafo `sr-only`
+     que descreve a galeria, presente no DOM sempre que o canvas está ativo. Nenhum conteúdo se
+     perde: os 9 retratos já estão todos visíveis no anel da galeria (a interação de
+     arraste/scroll só gira o anel pra explorar, não revela itens escondidos), então um usuário de
+     teclado sem mouse não perde nenhuma informação por não conseguir focar o canvas — só a
+     animação decorativa, que já está marcada como tal.
+  8. Todos os `any` implícitos do original (`debounce<T extends (...args: any[]) => void>`,
+     `autoBind(instance: any)`) desapareceram junto com o código que os usava — a função `autoBind`
+     inteira era só para a classe `Title`, removida no item 1. Nada precisou de tipagem `any` no
+     restante do arquivo.
+  9. `items` mudou de `{ image: string; text: string }[]` para `{ image: string }[]` (sem `text`,
+     consistente com o item 1). Os 9 itens de `SORRISOS` (`lib/content.ts`) viram
+     `{ image: s.img }` em `SorrisosGaleria.tsx`.
+- **Custo real registrado para a Task 17 medir:** o original (mantido) duplica a lista de itens
+  (`galleryItems.concat(galleryItems)`) para o loop parecer contínuo — 9 retratos viram 18 planos
+  com textura própria na GPU. A rede não dobra (mesma URL, cache do navegador serve a segunda
+  cópia), mas a memória de GPU sim. É o preço de um "loop circular" com poucos itens; não foi
+  alterado porque removê-lo quebraria o efeito que a task pediu.
+
 ### `Silk` — **não vendorizado**
 
 O brief pedia o `Silk` do React Bits para o fundo do Hero. Não foi trazido: toda variante do
