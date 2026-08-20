@@ -119,3 +119,27 @@ Lenis já calcula a cada evento de `scroll` (`lib/motion.tsx`) — em vez de rec
 de novo com `useScroll`/`useVelocity` do `motion/react`, reaproveita o Lenis como fonte única sobre
 o estado do scroll (o mesmo Lenis que já move a página inteira). Detalhes e o porquê no
 `task-9-report.md`.
+
+### `GlareHover` — **não vendorizado**
+
+O brief da Task 10 pedia `GlareHover` do React Bits
+(`src/ts-tailwind/Animations/GlareHover/GlareHover.tsx`) para o reflexo de hover nas linhas de
+Tratamentos. Lido inteiro (109 linhas, mesmo commit fixado acima) antes de decidir — sem
+dependência nova, sem chamada de rede, sem `matchMedia` interno, esses três pontos estavam OK —
+mas **não foi trazido**:
+
+1. **Anima `background-position`**, não `transform`/`opacity` — viola direto a regra deste projeto
+   ("só transform e opacity animam", repetida em `design-guidance.md` e no brief da própria task).
+2. **Força seu próprio container** (`className="relative grid place-items-center overflow-hidden
+   border cursor-pointer ..."`) com `border` sempre visível e `display:grid;place-items:center` —
+   incompatível com o grid `auto auto 1fr auto` que a linha de tratamento precisa (a linha tem 4
+   colunas com papéis distintos: número, miniatura, texto, seta; o `GlareHover` espera um
+   único filho centralizado num box de dimensão fixa).
+
+Em vez disso, `.linha-tratamento`/`.linha-tratamento::after` em `site/app/globals.css` implementam
+o reflexo à mão em CSS puro: uma faixa de luz diagonal (`skewX(-20deg)`) que translada de fora da
+linha pra fora do outro lado, só `transform` na transição (550ms, `var(--ease-movimento)`), atrás
+de `@media (hover: hover) and (pointer: fine)` — `pointer:fine` já exclui touch estruturalmente
+(toque não tem essa media feature), e o reset global de `prefers-reduced-motion` já deixa a
+transição praticamente instantânea sob esse modo, sem precisar de `useCapability()` para um efeito
+que só existe atrás de `:hover`. Detalhes e o porquê no `task-10-report.md`.

@@ -49,22 +49,44 @@ describe('Header', () => {
     // MobileMenu usava o ramo reduced-motion dos variants (opacity:0 em
     // "fechado"). Se o ramo animado voltar a esquecer de fixar opacity:1 nos
     // dois estados, esse 0 herdado fica preso para sempre e o painel nunca
-    // aparece — mesmo com aria-hidden e inert corretamente removidos.
+    // aparece. O painel só existe no DOM enquanto aberto (AnimatePresence —
+    // ver nota de scrollWidth em MobileMenu.tsx), então "encontrável pelo
+    // role" já prova que não está aria-hidden; falta só provar que a Motion
+    // não deixou opacity presa em 0.
     render(<Header />);
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
 
-    // As duas condições ficam dentro do MESMO waitFor de propósito:
-    // aria-hidden é um atributo React comum, muda em sincronia com o clique;
-    // opacity é escrito pela Motion via rAF, um passo depois. Checar opacity
-    // fora do waitFor corre atrás do estado errado sob carga (o "aria-hidden
-    // já virou false" pode resolver antes do rAF da Motion rodar) — foi
-    // exatamente esse timing que fez esse teste ficar instável ao rodar a
-    // suíte inteira, mesmo com o componente correto.
+    // getByRole (não queryByRole) dentro do waitFor: se o painel ainda não
+    // tiver montado, a asserção relança e o waitFor tenta de novo — e depois
+    // que monta, opacity ainda pode estar em 0 por um instante (a Motion
+    // escreve via rAF, um passo depois do React commitar o elemento). As
+    // duas coisas represento no mesmo waitFor de propósito: checar opacity
+    // fora dele corre atrás do estado errado sob carga, e foi exatamente
+    // esse timing que fez esse teste ficar instável ao rodar a suíte
+    // inteira, mesmo com o componente correto.
     await waitFor(() => {
       const el = screen.getByRole('dialog', { name: 'Menu' });
-      expect(el).toHaveAttribute('aria-hidden', 'false');
       expect(el.style.opacity).not.toBe('0');
     });
+  });
+
+  it('nao deixa nada no DOM com transform quando o drawer esta fechado', () => {
+    // Regressão do bug de overflow horizontal: um elemento fixed com
+    // transform:translateX(100%) conta para document.scrollWidth mesmo fora
+    // da viewport visível — mesmo estando aria-hidden (dois revisores
+    // confirmaram ao vivo: 375px virava 695px). jsdom não faz layout de
+    // verdade, então não dá pra medir scrollWidth aqui; a garantia real é
+    // sobre a própria existência do nó no DOM.
+    //
+    // Importante: a consulta usa document.querySelector cru, NÃO
+    // screen.queryByRole. queryByRole já filtra elementos aria-hidden por
+    // padrão — o padrão antigo (painel sempre montado, só alternando
+    // aria-hidden) passaria por queryByRole mesmo com o bug presente, porque
+    // teria sumido da árvore de acessibilidade sem sumir do DOM. Só a
+    // consulta crua distingue "não está montado" (correto) de "está montado
+    // mas escondido de leitor de tela" (o próprio bug).
+    render(<Header />);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 });
 
