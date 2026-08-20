@@ -12,3 +12,10 @@ VIDEOS/originais/
 
 # relatórios locais do lighthouse
 lh-*.json
+
+# backups de assets locais: uteis pra comparacao na maquina, mas nao
+# precisam viver no historico do git (o arquivo anterior ja fica no commit
+# anterior de qualquer forma)
+*.local-fallback
+*.frame-video
+*.claude-design-artefatos.*

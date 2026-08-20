@@ -4,9 +4,9 @@
     {
       "name": "smile",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "-p", "3900"],
+      "runtimeArgs": ["run", "dev"],
       "cwd": "site",
-      "port": 3900
+      "port": 3000
     }
   ]
 }
