@@ -28,6 +28,17 @@ const TRANSFORMS_FALLBACK = [
   'rotate-[-1deg] translate-y-1',
 ];
 
+// Hospedado em escopo de módulo (não recalculado dentro do componente): SORRISOS
+// é um `const` importado, nunca muda em tempo de execução, então mapear uma vez
+// aqui dá a mesma referência estável pra sempre. Correção pós-review: antes isto
+// era `SORRISOS.map(...)` dentro do corpo de SorrisosGaleria — uma referência
+// NOVA a cada render. Como `items` está nas deps do `useEffect` que cria o
+// contexto WebGL em CircularGallery.tsx, qualquer re-render futuro do pai
+// destruiria e recriaria o contexto inteiro. Mesmo raciocínio que já vale para
+// `onError` (comentário em CircularGallery.tsx): identidade estável evita
+// recriar o WebGL à toa.
+const ITENS_WEBGL = SORRISOS.map((s) => ({ image: s.img }));
+
 /**
  * Decide QUAL veículo mostra os 9 retratos (lib/content.ts → SORRISOS):
  * galeria WebGL com inércia (`CircularGallery`, React Bits vendorizado) ou
@@ -53,11 +64,10 @@ export function SorrisosGaleria() {
   const mostrarWebgl = montado && podePesado && !webglFalhou;
 
   if (mostrarWebgl) {
-    const itens = SORRISOS.map((s) => ({ image: s.img }));
     return (
       <>
         <div className="relative h-[min(70vh,640px)] w-full">
-          <CircularGallery items={itens} onError={setWebglFalhou} />
+          <CircularGallery items={ITENS_WEBGL} onError={setWebglFalhou} />
         </div>
         <p className="sr-only">
           Galeria com {SORRISOS.length} fotos de pacientes reais da Smile Ipiranga sorrindo, resultado dos

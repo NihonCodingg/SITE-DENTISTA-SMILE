@@ -197,13 +197,20 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      `aria-hidden="true"`: o WebGL não é acessível a leitor de tela (a task pediu para pensar
      nisso explicitamente), e um elemento focável com `aria-hidden="true"` é um anti-padrão de
      acessibilidade (cria um "buraco negro" de foco pra quem navega por teclado com leitor de
-     tela). O equivalente textual dos 9 retratos — o que a task pede como mínimo de
-     acessibilidade — vive em `SorrisosGaleria.tsx`, fora deste arquivo: um parágrafo `sr-only`
-     que descreve a galeria, presente no DOM sempre que o canvas está ativo. Nenhum conteúdo se
-     perde: os 9 retratos já estão todos visíveis no anel da galeria (a interação de
-     arraste/scroll só gira o anel pra explorar, não revela itens escondidos), então um usuário de
-     teclado sem mouse não perde nenhuma informação por não conseguir focar o canvas — só a
-     animação decorativa, que já está marcada como tal.
+     tela).
+     **Correção pós-review — a justificativa abaixo estava errada numa versão anterior deste
+     documento, que afirmava que os 9 retratos ficam todos visíveis ao mesmo tempo no anel.** É
+     falso: com `bend=2`, FOV 45° e câmera em `z=20`, a conta de `App.onResize()` dá só ~4 dos 18
+     planos (9 retratos duplicados) dentro da viewport a cada instante — arrastar É necessário pra
+     ver a maioria dos retratos. Remover o foco do teclado deixa uma barreira real: quem navega só
+     por teclado (com ou sem leitor de tela) não consegue girar o anel pra ver os outros. A decisão
+     de marcar como decorativo mesmo assim se sustenta por outro motivo — não por "nada se perde":
+     nenhuma das 9 fotos tem `alt` individual distinto nem no fallback (todas usam o mesmo
+     "Paciente da Smile sorrindo" — não existe nome nem tratamento por foto pra diferenciar uma da
+     outra). O parágrafo `sr-only` que `SorrisosGaleria.tsx` mantém ao lado do canvas transmite
+     exatamente a mesma informação que a galeria transmite visualmente: existem 9 fotos reais de
+     pacientes sorrindo. Expor o canvas ao foco não acrescentaria nenhum detalhe a mais — só
+     trocaria "sem informação por foto" por "sem informação por foto, e ainda focável", que é pior.
   8. Todos os `any` implícitos do original (`debounce<T extends (...args: any[]) => void>`,
      `autoBind(instance: any)`) desapareceram junto com o código que os usava — a função `autoBind`
      inteira era só para a classe `Title`, removida no item 1. Nada precisou de tipagem `any` no
@@ -211,6 +218,13 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   9. `items` mudou de `{ image: string; text: string }[]` para `{ image: string }[]` (sem `text`,
      consistente com o item 1). Os 9 itens de `SORRISOS` (`lib/content.ts`) viram
      `{ image: s.img }` em `SorrisosGaleria.tsx`.
+  10. **Três defaults numéricos mudaram do original para valores mais calmos** (julgamento de
+      craft, não correção de bug — `design-guidance.md`: a marca é "quente, cuidadoso, pessoal",
+      não uma agência): `bend` 3→2 (anel menos curvado), `scrollEase` 0.05→0.06 (lerp um pouco
+      mais amortecido, menos nervoso) e **`borderRadius` 0.05→0.04** (cantos levemente menos
+      arredondados nos planos). Os três aparecem nos defaults de `App`'s `AppConfig` e do
+      `CircularGallery` exportado. Nenhum dos três foi validado contra uma referência visual do
+      parceiro — ver `task-13-report.md`, seção "Concerns".
 - **Custo real registrado para a Task 17 medir:** o original (mantido) duplica a lista de itens
   (`galleryItems.concat(galleryItems)`) para o loop parecer contínuo — 9 retratos viram 18 planos
   com textura própria na GPU. A rede não dobra (mesma URL, cache do navegador serve a segunda

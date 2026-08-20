@@ -504,11 +504,28 @@ export default function CircularGallery({
     return () => app?.destroy();
   }, [items, bend, borderRadius, scrollSpeed, scrollEase, onError]);
 
-  // aria-hidden: o WebGL não é acessível a leitor de tela. O equivalente
-  // textual dos 9 retratos vive em SorrisosGaleria.tsx (sr-only), fora deste
-  // componente — é o que torna correto marcar isto como puramente
-  // decorativo em vez de expor um `role`/`tabIndex` que não levaria a nada
-  // perceptível para quem usa leitor de tela.
+  // aria-hidden: o WebGL não é acessível a leitor de tela — nenhum
+  // `role`/`aria-label` faria um leitor de tela "ver" as fotos dentro do
+  // canvas. CORRIGIDO APÓS REVIEW: uma versão anterior deste comentário
+  // dizia que os 9 retratos ficam todos visíveis ao mesmo tempo no anel, o
+  // que é falso — com bend=2, FOV 45° e câmera em z=20, a conta de
+  // onResize() abaixo dá só ~4 dos 18 planos (9 retratos duplicados) dentro
+  // da viewport a cada instante. Arrastar É necessário pra ver a maioria
+  // dos retratos, então remover o foco do teclado deixa uma barreira real:
+  // quem navega só por teclado (com ou sem leitor de tela) não consegue
+  // girar o anel pra ver os outros.
+  //
+  // A decisão de marcar como decorativo mesmo assim se sustenta por outro
+  // motivo — não por "nada se perde", que seria falso: nenhuma das 9 fotos
+  // tem `alt` individual distinto nem no fallback (todas usam o mesmo
+  // "Paciente da Smile sorrindo" — não existe nome nem tratamento por foto
+  // pra diferenciar uma da outra). O resumo `sr-only` que
+  // SorrisosGaleria.tsx mantém ao lado do canvas transmite exatamente a
+  // mesma informação que a galeria transmite visualmente: existem 9 fotos
+  // reais de pacientes sorrindo. Expor o canvas ao foco não acrescentaria
+  // nenhum detalhe a mais — só trocaria "sem informação por foto" por "sem
+  // informação por foto, e ainda focável", que é pior (canvas com
+  // `aria-hidden="true"` focável é o anti-padrão "buraco negro de foco").
   return (
     <div
       ref={containerRef}
