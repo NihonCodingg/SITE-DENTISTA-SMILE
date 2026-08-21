@@ -90,10 +90,17 @@ function LinhaProgresso() {
  * tratamento", sem sobretítulo aprovado — mesmo caso de AntesDepois.tsx
  * (mesma razão para importar `TITULO_TAMANHO_PADRAO`/`TITULO_TRACKING` de
  * SectionHeading.tsx em vez de repetir os literais aqui).
+ *
+ * `bg-branco`, não `bg-creme` (Task 18, C): Profissional → Depoimentos →
+ * Antes/Depois → Como Funciona → Localização eram cinco seções seguidas em
+ * creme (~3470px no mobile) logo depois do pico preto de Sorrisos. Esta é a
+ * mais utilitária do bloco e fica entre dois cremes — trocá-la para branco
+ * quebra o trecho ao meio. Contraste sobre branco: preto (#111) 18,9:1 e
+ * grafite (#5A5A55) 6,9:1 — AA com folga (e melhor que sobre creme).
  */
 export function ComoFunciona() {
   return (
-    <section id="como-funciona" className="bg-creme px-4 py-16 md:px-8 md:py-24">
+    <section id="como-funciona" className="bg-branco px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1080px]">
         <Reveal
           as="h2"
@@ -107,7 +114,7 @@ export function ComoFunciona() {
             um novo contexto de empilhamento — um z-index negativo dentro
             dele sobe até o ancestral mais próximo que cria um (nenhum,
             neste caso), e a linha acaba pintada atrás de TUDO, inclusive do
-            `bg-creme` da própria seção (achado de review visual em 375px:
+            fundo da própria seção (achado de review visual em 375px:
             a linha simplesmente não aparecia). `isolate` (isolation:
             isolate) fecha um contexto de empilhamento aqui, prendendo o
             z-index negativo dentro deste wrapper — a linha fica atrás dos

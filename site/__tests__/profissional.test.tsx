@@ -136,4 +136,16 @@ describe('ComoFunciona', () => {
     expect(linha).not.toBeNull();
     expect(linha?.getAttribute('aria-hidden')).toBe('true');
   });
+
+  // Task 18 (C): ritmo da página. Profissional, Depoimentos, Antes/Depois,
+  // Como Funciona e Localização eram cinco seções seguidas em creme; esta é
+  // a que quebra o bloco ao meio, em branco. Se voltar a creme, o trecho
+  // inteiro volta a ser monótono — e ninguém além deste teste percebe.
+  it('fica em bg-branco para quebrar o bloco de cinco secoes em creme', () => {
+    const { container } = render(<ComoFunciona />);
+    const secao = container.querySelector('section#como-funciona');
+    expect(secao).not.toBeNull();
+    expect(secao?.className).toMatch(/\bbg-branco\b/);
+    expect(secao?.className).not.toMatch(/\bbg-creme\b/);
+  });
 });
