@@ -117,8 +117,16 @@ export default function SplitText({
       if (!targets.length) targets = self.chars || self.words || self.lines;
     };
 
+    // `aria: 'hidden'` (Task 18, A1): o default do GSAP é `aria: 'auto'`, que
+    // escreve `aria-label` com o texto original no PRÓPRIO elemento fatiado —
+    // um <span> sem role, onde `aria-label` é proibido (axe:
+    // aria-prohibited-attr, WCAG 4.1.2). Com 'hidden' os filhos fatiados
+    // ficam aria-hidden e nenhum aria-label é escrito aqui; o nome acessível
+    // vai para o heading que envolve o split (components/sections/Hero.tsx),
+    // onde é válido.
     const splitInstance = new GSAPSplitText(el, {
       type: splitType,
+      aria: 'hidden',
       smartWrap: true,
       autoSplit: splitType === 'lines',
       reduceWhiteSpace: false,

@@ -49,6 +49,16 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      código — corrigido pela mesma razão do padrão já estabelecido no projeto.
   5. Adicionado `'use client'` no topo (o original não declara; como só é importado por Client
      Components neste projeto, é redundante, mas mantém o padrão explícito do resto do código).
+  6. **`aria: 'hidden'` passado ao construtor de `GSAPSplitText`** (Task 18, A1). O original
+     deixa o default do GSAP (`aria: 'auto'`), que escreve `aria-label` com o texto original no
+     próprio elemento fatiado — aqui um `<span class="split-parent">` sem role, onde `aria-label`
+     é proibido (axe `aria-prohibited-attr`, WCAG 4.1.2; reprovava o Lighthouse de acessibilidade
+     em mobile e desktop). Com `'hidden'`, os filhos fatiados ficam `aria-hidden` e nenhum
+     `aria-label` é escrito no span; o nome acessível vai para o heading que envolve o split
+     (`Hero.tsx` → `SectionHeading` prop `tituloAriaLabel`, só no ramo `podeAnimar`), onde é
+     válido — o leitor de tela lê a frase inteira uma vez, em vez de palavra por palavra.
+     `__tests__/hero.test.tsx` trava as duas pontas (atributo no `<h1>`, ausente no
+     `.split-parent`).
 
 ### `Magnet.tsx`
 

@@ -52,6 +52,11 @@ export function Hero({ onAbrirVideo }: Props) {
             align="center"
             sobretitulo="Odontologia integrada no Ipiranga"
             titulo={titulo}
+            // Só no ramo em que o SplitText monta: o GSAP (aria:'hidden', ver
+            // reactbits/SplitText.tsx) esconde as palavras fatiadas do leitor
+            // de tela, e o nome volta pelo heading, onde aria-label é válido
+            // (Task 18, A1). No ramo de texto puro o conteúdo já é o nome.
+            tituloAriaLabel={podeAnimar ? HEADLINE : undefined}
             className="mx-auto"
             tituloClassName="mx-auto max-w-[14ch] text-[clamp(42px,7.6vw,104px)]"
           >

@@ -17,15 +17,19 @@ describe('Hero', () => {
     // nos alvos) reordena o texto node de espaço entre duas das palavras, e
     // `heading.textContent` sai sem esse espaço.
     //
-    // O GSAP escreve `aria-label` no `.split-parent` com o texto ORIGINAL
-    // antes de fatiar (node_modules/gsap/SplitText.js) — imune ao artefato,
-    // porque não depende dos nós de texto que o split rearranja. Testar por
-    // aria-label (igualdade exata, não regex frouxa) mantém o teste
-    // protegendo contra qualquer regressão real de espaçamento, sem tocar
-    // em código de produção para contornar uma lacuna só do jsdom.
+    // Task 18 (A1): o GSAP SplitText é instanciado com `aria: 'hidden'` — os
+    // spans fatiados ficam aria-hidden e NENHUM aria-label é escrito no
+    // `.split-parent` (um <span> sem role, onde aria-label é proibido — axe
+    // `aria-prohibited-attr`, WCAG 4.1.2). O nome acessível vai para o
+    // próprio <h1>, onde é válido. Igualdade exata (não regex frouxa): o
+    // texto original fica imune ao artefato de espaçamento do jsdom, e o
+    // teste trava que o atributo está no lugar certo E não no errado.
     const splitParent = container.querySelector('.split-parent');
     expect(splitParent).not.toBeNull();
-    expect(splitParent).toHaveAttribute('aria-label', 'Seu novo sorriso começa aqui');
+    expect(splitParent).not.toHaveAttribute('aria-label');
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveAttribute('aria-label', 'Seu novo sorriso começa aqui');
+    expect(screen.getByRole('heading', { level: 1, name: 'Seu novo sorriso começa aqui' })).toBe(h1);
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
@@ -66,6 +70,8 @@ describe('Hero', () => {
     // Sem podeAnimar, o SplitText não monta — nada de span.split-parent na
     // árvore, só o texto puro que o servidor já mandou.
     expect(container.querySelector('.split-parent')).toBeNull();
+    // E sem SplitText o aria-label seria redundante — o texto já é o nome.
+    expect(heading).not.toHaveAttribute('aria-label');
 
     vi.stubGlobal('matchMedia', (q: string) => ({
       matches: false, media: q, addEventListener: vi.fn(), removeEventListener: vi.fn(),

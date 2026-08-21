@@ -16,6 +16,10 @@ type Props = {
    *  um componente novo porque o resto do padrão (fonte, tracking, gap) é idêntico
    *  nos dois casos; só a cor muda. */
   tema?: 'claro' | 'escuro';
+  /** Nome acessível do título, quando o conteúdo visível não serve de nome
+   *  (Task 18, A1: a Hero fatia a headline em spans via SplitText — o
+   *  `aria-label` vai no heading, único lugar onde é válido). */
+  tituloAriaLabel?: string;
 };
 
 const CORES_TEMA = {
@@ -67,6 +71,7 @@ export function SectionHeading({
   className,
   tituloClassName,
   tema = 'claro',
+  tituloAriaLabel,
 }: Props) {
   const alinhamento = align === 'center' ? 'items-center text-center' : 'items-start text-left';
   const cores = CORES_TEMA[tema];
@@ -77,6 +82,7 @@ export function SectionHeading({
       <p className={`font-rotulo text-[13px] uppercase tracking-[.34em] ${cores.sobretitulo}`}>{sobretitulo}</p>
       {children}
       <Tag
+        aria-label={tituloAriaLabel}
         className={`font-titulo uppercase leading-[0.96]${tracking} text-balance ${cores.titulo} ${
           tituloClassName ?? TITULO_TAMANHO_PADRAO
         }`}
