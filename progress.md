@@ -6,11 +6,11 @@
 **FASE 2 — Referências & Moodboard:** concluída (paleta fechada; tipografia definida por características, escolha final no Claude Design)
 **FASE 3 — Design:** concluída — `Smile Ipiranga.dc.html` aprovado no Claude Design
 **FASE 4 — Arquitetura técnica:** concluída — stack decidida, plano escrito
-**FASE 5+ — Build:** EM ANDAMENTO — 5 de 18 tasks completas, Task 6 em correção
+**FASE 5+ — Build:** EM ANDAMENTO — 16 de 18 tasks completas + 2 extras. Task 19 implementada, pendente de review.
   Execução por subagente, ledger em `.superpowers/sdd/2026-08-19-site-smile-ipiranga/progress.md`
   **Ao retomar, leia o ledger primeiro** — ele tem o estado exato e o que não pode se perder.
-  Branch `feat/site`, último commit b120400, working tree limpo.
-  Retomada: falta a re-review escopada do fix da Task 6, depois segue para a Task 7 (Hero).
+  Branch `feat/site`, 40 commits, working tree limpo, 217 testes.
+  **Retomada: review da Task 19 (range 5920512..c36436d), depois Task 17 (performance), 18 (QA) e review final.**
 **Tier do projeto:** 2 — site institucional de uma página, motion moderado
 
 ## Feito
