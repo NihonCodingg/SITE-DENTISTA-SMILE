@@ -4,6 +4,7 @@ import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCapability } from './useCapability';
+import { registrarEaseGaveta } from './easeGaveta';
 
 /**
  * Lenis vive fora do React (é uma instância de classe presa ao DOM/rAF), então a
@@ -110,6 +111,9 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!montado) return;
     gsap.registerPlugin(ScrollTrigger);
+    // Curva --ease-gaveta disponível para o GSAP como 'gaveta' (Task 18, B):
+    // registrada aqui, no mesmo lugar do ScrollTrigger, uma vez por app.
+    registrarEaseGaveta();
 
     // Navegação direta para uma URL que JÁ chega com hash (link de bio/story
     // do Instagram, reload, back/forward do navegador) nunca dispara nenhum

@@ -320,6 +320,19 @@ está em `task-19-report.md`.
       var no elemento pai — não recalcula estilo de irmãos, dentro da regra de performance do
       `design-guidance.md`.
   11. **Cleanup incondicional no unmount** — ver acima.
+  12. **Tempos e curva refeitos pela régua do projeto (Task 18, B).** No original a abertura
+      levava ~1,3s até o último item assentar (camadas `0.5s power4.out` a cada 0,07s; painel
+      `0.55s power4.out` entrando em 0,15s; itens `0.8s power4.out` com stagger 0,06s começando
+      em 0,23s) e o fechamento era `0.28s power3.in` — 4× o teto de 300ms que `design-guidance.md`
+      fixa para o drawer, com a curva `ease-in` que ele proíbe em UI. Agora: painel **0,3s**,
+      fechamento **0,22s** (saída mais rápida que a entrada), itens 0,28s com stagger **0,04s**,
+      camadas 0,22s/0,26s — tudo partindo de t=0 (as camadas chegam antes por serem mais curtas,
+      mantendo o rastro colorido à frente do painel), último item assentado em 0,40s (≤ 0,45s).
+      A curva é a `--ease-gaveta` do `globals.css`, registrada no GSAP como `'gaveta'` via
+      `CustomEase` (`lib/easeGaveta.ts`, gratuito no GSAP ≥ 3.13) — CSS e GSAP na mesma curva, o
+      token deixa de ser órfão. Os números vivem em `MOTION_GAVETA` (exportado) e
+      `__tests__/staggeredMenu.test.ts` os trava contra os tetos e contra o token do CSS.
+      Sob `reducedMotion` nada disso roda (inalterado: só opacity, sem stagger).
 
 ### `Silk.tsx`
 

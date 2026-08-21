@@ -77,10 +77,52 @@
  * - `--sm-num-opacity` continua sendo uma custom property por ITEM
  *   (`.sm-panel-item`), não numa var no elemento pai — não recalcula estilo
  *   de irmãos, dentro da regra de performance do design-guidance.md.
+ * - **Tempos e curva (Task 18, B).** O original abria em ~1,3s (camadas
+ *   0,5s a cada 0,07s, painel 0,55s entrando em 0,15s, itens 0,8s com
+ *   stagger 0,06s começando em 0,23s) e fechava em 0,28s com `power3.in` —
+ *   4× o teto de 300ms que design-guidance.md fixa para este componente, e
+ *   com a curva que ele proíbe. Agora: painel 0,3s, fechamento 0,22s, itens
+ *   0,28s com stagger 0,04s, tudo partindo de t=0 (último item assenta em
+ *   0,40s ≤ 0,45s), curva `--ease-gaveta` registrada no GSAP como 'gaveta'
+ *   (`lib/easeGaveta.ts`) — CSS e GSAP na mesma curva. Os números são
+ *   exportados (`MOTION_GAVETA`) e travados por `__tests__/staggeredMenu.test.ts`.
  */
 
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import { EASE_GAVETA_ID, registrarEaseGaveta } from '@/lib/easeGaveta';
+
+/**
+ * Régua de motion do drawer (design-guidance.md, "Menu mobile — checklist de
+ * craft": 300ms abrindo, 220ms fechando, stagger ~40ms, curva --ease-gaveta;
+ * saída mais rápida que a entrada). Em segundos, a unidade do GSAP.
+ * Exportada para o teste travar os números contra os tetos sem mockar o GSAP.
+ */
+export const MOTION_GAVETA = {
+  /** painel principal deslizando para dentro */
+  abertura: 0.3,
+  /** saída — quem fecha já decidiu, não faça esperar */
+  fechamento: 0.22,
+  /** cada rótulo de item (yPercent 140 → 0, rotate 8 → 0) */
+  item: 0.28,
+  /** passo entre itens (janela do guia: 30-80ms) */
+  stagger: 0.04,
+  /** contador numérico de cada item (--sm-num-opacity 0 → 1) */
+  numero: 0.28,
+  /** camadas de cor atrás do painel: partem junto, chegam antes (mais curtas) */
+  camadas: [0.22, 0.26],
+} as const;
+
+/** Teto do guia para qualquer coisa que a pessoa aciona. */
+export const TETO_ACIONADO = 0.3;
+/** Teto do brief da Task 18 para o conjunto (último item assentado). */
+export const TETO_CONJUNTO = 0.45;
+
+/** Instante (s) em que o último de `quantidade` itens assenta, contado da abertura. */
+export function tempoUltimoItem(quantidade: number): number {
+  if (quantidade <= 0) return 0;
+  return (quantidade - 1) * MOTION_GAVETA.stagger + Math.max(MOTION_GAVETA.item, MOTION_GAVETA.numero);
+}
 
 export interface StaggeredMenuItem {
   label: string;
@@ -176,30 +218,46 @@ export const StaggeredMenu = forwardRef<HTMLElement, StaggeredMenuProps>(functio
     if (itemEls.length) gsap.set(itemEls, { yPercent: 140, rotate: 8 });
     if (numberEls.length) gsap.set(numberEls, { '--sm-num-opacity': 0 } as gsap.TweenVars);
 
+    registrarEaseGaveta();
     const tl = gsap.timeline({ paused: true });
 
+    // Tudo parte em t=0 (Task 18, B). As camadas de cor são mais curtas que
+    // o painel, então chegam antes e desenham o rastro colorido à frente
+    // dele — o mesmo efeito que o original obtinha atrasando o painel em
+    // 0,15s, sem empurrar o conjunto para além do teto.
     layerStates.forEach((ls, i) => {
-      tl.fromTo(ls.el, { xPercent: ls.start }, { xPercent: 0, duration: 0.5, ease: 'power4.out' }, i * 0.07);
+      tl.fromTo(
+        ls.el,
+        { xPercent: ls.start },
+        { xPercent: 0, duration: MOTION_GAVETA.camadas[i] ?? MOTION_GAVETA.abertura, ease: EASE_GAVETA_ID },
+        0
+      );
     });
 
-    const lastTime = layerStates.length ? (layerStates.length - 1) * 0.07 : 0;
-    const panelInsertTime = lastTime + (layerStates.length ? 0.08 : 0);
-    const panelDuration = 0.55;
-
-    tl.fromTo(panel, { xPercent: offscreen }, { xPercent: 0, duration: panelDuration, ease: 'power4.out' }, panelInsertTime);
+    tl.fromTo(panel, { xPercent: offscreen }, { xPercent: 0, duration: MOTION_GAVETA.abertura, ease: EASE_GAVETA_ID }, 0);
 
     if (itemEls.length) {
-      const itemsStart = panelInsertTime + panelDuration * 0.15;
       tl.to(
         itemEls,
-        { yPercent: 0, rotate: 0, duration: 0.8, ease: 'power4.out', stagger: { each: 0.06, from: 'start' } },
-        itemsStart
+        {
+          yPercent: 0,
+          rotate: 0,
+          duration: MOTION_GAVETA.item,
+          ease: EASE_GAVETA_ID,
+          stagger: { each: MOTION_GAVETA.stagger, from: 'start' }
+        },
+        0
       );
       if (numberEls.length) {
         tl.to(
           numberEls,
-          { duration: 0.5, ease: 'power2.out', '--sm-num-opacity': 1, stagger: { each: 0.06, from: 'start' } } as gsap.TweenVars,
-          itemsStart + 0.08
+          {
+            duration: MOTION_GAVETA.numero,
+            ease: 'power2.out',
+            '--sm-num-opacity': 1,
+            stagger: { each: MOTION_GAVETA.stagger, from: 'start' }
+          } as gsap.TweenVars,
+          0
         );
       }
     }
@@ -224,10 +282,13 @@ export const StaggeredMenu = forwardRef<HTMLElement, StaggeredMenuProps>(functio
     closeTweenRef.current?.kill();
     const offscreen = position === 'left' ? -100 : 100;
 
+    registrarEaseGaveta();
     closeTweenRef.current = gsap.to([...layers, panel], {
       xPercent: offscreen,
-      duration: 0.28,
-      ease: 'power3.in',
+      duration: MOTION_GAVETA.fechamento,
+      // Curva de desaceleração, nunca ease-in (design-guidance.md): ease-in
+      // começa devagar exatamente no instante em que a pessoa está olhando.
+      ease: EASE_GAVETA_ID,
       overwrite: 'auto',
       onComplete: () => {
         const itemEls = Array.from(panel.querySelectorAll('.sm-panel-itemLabel')) as HTMLElement[];
