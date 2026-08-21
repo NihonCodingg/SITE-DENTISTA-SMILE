@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { PaginaComVideo } from '@/components/sections/PaginaComVideo';
@@ -10,10 +11,34 @@ import { Localizacao } from '@/components/sections/Localizacao';
 import { Faq } from '@/components/sections/Faq';
 import { CtaFinal } from '@/components/sections/CtaFinal';
 import { WhatsAppFab } from '@/components/layout/WhatsAppFab';
+import { dentistJsonLd } from '@/lib/jsonld';
+
+// Título e descrição focados em busca local — "dentista Ipiranga" é o termo
+// que o briefing pede pra disputar, com os tratamentos de maior intenção de
+// busca (facetas, implantes) logo no título. metadataBase vem do layout
+// raiz, então a imagem do Open Graph pode usar caminho relativo.
+export const metadata: Metadata = {
+  title: 'Smile — Dentista no Ipiranga, São Paulo | Facetas, Implantes e Próteses',
+  description:
+    'Consultório odontológico no Ipiranga, São Paulo. Facetas, implantes, próteses, ortodontia e clareamento com atendimento humanizado. Agende sua avaliação pelo WhatsApp.',
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: '/',
+    title: 'Smile — Seu novo sorriso começa aqui',
+    description: 'Odontologia integrada no Ipiranga, São Paulo. Atendimento humanizado e sorriso com propósito.',
+    images: [{ url: '/img/hero-foto.jpg', width: 944, height: 1122 }],
+  },
+  alternates: { canonical: '/' },
+};
 
 export default function Home() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(dentistJsonLd()) }}
+      />
       <Header />
       <main className="bg-branco">
         {/* Hero, Clínica e Depoimentos precisam do mesmo estado "qual vídeo
