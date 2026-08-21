@@ -4,6 +4,7 @@ import { useRef, useState, type MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { FAQ } from '@/lib/content';
 import { useCapability } from '@/lib/useCapability';
+import { TITULO_TRACKING } from '@/components/ui/SectionHeading';
 
 // Mesma curva de --ease-saida (globals.css), no formato de array que a
 // Motion aceita — abertura/fechamento do conteúdo da pergunta.
@@ -91,22 +92,22 @@ function ItemFaq({ pergunta, resposta }: { pergunta: string; resposta: string })
  * cliente e não entram aqui. `FAQ` já é a fonte única da Task 4; esta seção
  * só renderiza o que existir nela, sem hardcoded extra.
  *
- * O `<h2>` abaixo não define tamanho de fonte explícito, de propósito: é o
- * MESMO padrão (bug pré-existente, achado em review de browser desta task —
- * ver task-15-report.md) de todo outro `<h2>` do site (Clinica, Depoimentos,
- * Sorrisos, Profissional, AntesDepois, ComoFunciona) — sem uma classe
- * `text-[...]`, o preflight do Tailwind v4 reseta `font-size` do heading
- * para `inherit`, e ele acaba em ~16px em vez de um tamanho de destaque. Só
- * a Hero foge disso porque passa `tituloClassName` com um `clamp()`
- * explícito. Corrigir isso aqui sozinho deixaria este título maior que o de
- * ComoFunciona logo acima, no meio do mesmo scroll — o conserto certo é uma
- * correção única para todos os `<h2>` do site, não seção por seção.
+ * O `<h2>` abaixo tem tamanho próprio (`clamp(26px,4vw,40px)`, do design
+ * aprovado) menor que o default das outras seções — o FAQ é uma lista longa
+ * de perguntas, então um título grande aqui competiria pela atenção com o
+ * conteúdo real da seção. `TITULO_TRACKING` vem de SectionHeading.tsx (não
+ * repetido como literal) pela mesma razão de todo outro `<h2>` cru do site
+ * (ver fix-titulos-report.md).
  */
 export function Faq() {
   return (
     <section id="faq" className="bg-branco px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[820px]">
-        <h2 className="font-titulo uppercase leading-[0.96] text-balance text-preto">Perguntas frequentes</h2>
+        <h2
+          className={`font-titulo uppercase leading-[0.96] ${TITULO_TRACKING} text-balance text-preto text-[clamp(26px,4vw,40px)]`}
+        >
+          Perguntas frequentes
+        </h2>
 
         <div className="mt-8 md:mt-10">
           {FAQ.map((item) => (

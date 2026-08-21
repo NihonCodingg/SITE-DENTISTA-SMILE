@@ -6,6 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { PASSOS } from '@/lib/content';
 import { Reveal } from '@/components/ui/Reveal';
 import { useCapability } from '@/lib/useCapability';
+import { TITULO_TAMANHO_PADRAO, TITULO_TRACKING } from '@/components/ui/SectionHeading';
 
 // 60ms — teto da janela de 30-80ms do guia de craft (correção pós-review:
 // o brief original pedia i*0.1 = 100ms, acima do teto; alinhado aqui com o
@@ -86,13 +87,18 @@ function LinhaProgresso() {
  * cliente.
  *
  * Sem sobretítulo: COPY.md §9 só dá "Título: Da primeira mensagem ao seu
- * tratamento", sem sobretítulo aprovado — mesmo caso de AntesDepois.tsx.
+ * tratamento", sem sobretítulo aprovado — mesmo caso de AntesDepois.tsx
+ * (mesma razão para importar `TITULO_TAMANHO_PADRAO`/`TITULO_TRACKING` de
+ * SectionHeading.tsx em vez de repetir os literais aqui).
  */
 export function ComoFunciona() {
   return (
     <section id="como-funciona" className="bg-creme px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1080px]">
-        <Reveal as="h2" className="font-titulo uppercase leading-[0.96] text-balance text-preto">
+        <Reveal
+          as="h2"
+          className={`font-titulo uppercase leading-[0.96] ${TITULO_TRACKING} text-balance text-preto ${TITULO_TAMANHO_PADRAO}`}
+        >
           Da primeira mensagem ao seu tratamento
         </Reveal>
 

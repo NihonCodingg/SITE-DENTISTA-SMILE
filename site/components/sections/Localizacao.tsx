@@ -111,13 +111,10 @@ export function Localizacao() {
     <section id="localizacao" className="bg-creme px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto grid max-w-[1080px] grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] items-center gap-[clamp(32px,6vw,80px)]">
         <Reveal className="flex flex-col gap-6">
-          {/* Sem `tituloClassName`, de propósito — mesma convenção (bug
-              pré-existente de tamanho de fonte, ver Faq.tsx e
-              task-15-report.md) que Clinica/Depoimentos/Sorrisos/
-              Profissional já seguem: sem uma classe `text-[...]` explícita,
-              o preflight do Tailwind v4 reseta o `<h2>` para ~16px. Deixado
-              assim para não destoar do ComoFunciona logo acima no scroll —
-              o conserto é único, para o site inteiro. */}
+          {/* Sem `tituloClassName`, de propósito: esta seção usa o mesmo
+              tamanho default do `SectionHeading` (TITULO_TAMANHO_PADRAO,
+              clamp(28px,4.5vw,48px) — ver fix-titulos-report.md) que
+              Clinica/Depoimentos/AntesDepois/ComoFunciona também usam. */}
           <SectionHeading sobretitulo="Como chegar" titulo="No coração do Ipiranga" />
 
           <div className="flex flex-col gap-2 font-corpo text-[16px] leading-relaxed text-grafite">

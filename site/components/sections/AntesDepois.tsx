@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCapability } from '@/lib/useCapability';
 import { Reveal } from '@/components/ui/Reveal';
 import { ANTES_DEPOIS } from '@/lib/content';
+import { TITULO_TAMANHO_PADRAO, TITULO_TRACKING } from '@/components/ui/SectionHeading';
 
 // Texto EXATO de COPY.md §8 — Resolução CFO-196/2019 + LGPD (pessoas
 // identificáveis): não encurtar, não parafrasear. "Cada caso é único e os
@@ -102,8 +103,11 @@ function ImagemAntesDepois({ img, alt, delay }: { img: string; alt: string; dela
  *
  * Sem sobretítulo: COPY.md §8 só dá "Título: Resultados reais", sem um
  * sobretítulo aprovado — por isso o <h2> não usa <SectionHeading> (que
- * exige a prop), e sim as mesmas classes que ela aplica ao título, para
- * ficar visualmente idêntico ao resto do site.
+ * exige a prop), e sim as mesmas classes que ela aplica ao título — incluindo
+ * `TITULO_TAMANHO_PADRAO`/`TITULO_TRACKING`, importadas de SectionHeading.tsx
+ * em vez de repetidas aqui como literais, para nunca divergir por acidente
+ * (ver fix-titulos-report.md) — para ficar visualmente idêntico ao resto do
+ * site.
  */
 export function AntesDepois() {
   // `!ANTES_DEPOIS.length` (não `=== 0`): o array vem de `as const` em
@@ -117,7 +121,10 @@ export function AntesDepois() {
   return (
     <section id="antes-depois" className="bg-creme px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1360px]">
-        <Reveal as="h2" className="font-titulo uppercase leading-[0.96] text-balance text-preto">
+        <Reveal
+          as="h2"
+          className={`font-titulo uppercase leading-[0.96] ${TITULO_TRACKING} text-balance text-preto ${TITULO_TAMANHO_PADRAO}`}
+        >
           Resultados reais
         </Reveal>
 

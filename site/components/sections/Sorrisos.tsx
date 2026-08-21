@@ -26,7 +26,12 @@ export function Sorrisos() {
     <section id="sorrisos" className="bg-preto py-16 md:py-24">
       <div className="mx-auto max-w-[1360px] px-4 md:px-8">
         <Reveal>
-          <SectionHeading tema="escuro" sobretitulo="Pacientes reais" titulo="Sorrisos feitos aqui" />
+          <SectionHeading
+            tema="escuro"
+            sobretitulo="Pacientes reais"
+            titulo="Sorrisos feitos aqui"
+            tituloClassName="text-[clamp(28px,4.5vw,52px)]"
+          />
         </Reveal>
       </div>
       <div className="mt-10 md:mt-14">

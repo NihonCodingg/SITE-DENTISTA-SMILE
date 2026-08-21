@@ -1,5 +1,6 @@
 import { waLink } from '@/lib/contact';
 import { Reveal } from '@/components/ui/Reveal';
+import { TITULO_TRACKING } from '@/components/ui/SectionHeading';
 
 /**
  * CTA final (Task 15) — COPY.md §12. Bloco amarelo, cantos bem arredondados
@@ -20,14 +21,14 @@ export function CtaFinal() {
           as="div"
           className="flex flex-col items-center gap-6 rounded-[32px] bg-amarelo px-6 py-16 text-center md:px-16 md:py-20"
         >
-          {/* Sem tamanho de fonte explícito aqui também, de propósito — mesmo
-              bug pré-existente de todo `<h2>` do site (ver Faq.tsx e
-              task-15-report.md): sem uma classe `text-[...]`, o preflight do
-              Tailwind v4 reseta o heading para ~16px. `text-[1.18em]` no
-              "sorriso" abaixo é relativo a ESSE tamanho herdado — o conserto
-              correto é único, para o site inteiro (título deste componente
-              incluído), não um valor absoluto só aqui. */}
-          <h2 className="max-w-[16ch] font-titulo uppercase leading-[0.96] text-balance text-preto">
+          {/* Tamanho próprio (clamp(32px,5.5vw,64px), do design aprovado) —
+              o maior `<h2>` do site, de propósito: é o título de fechamento
+              da página. `TITULO_TRACKING` vem de SectionHeading.tsx (ver
+              fix-titulos-report.md). `text-[1.18em]` no "sorriso" abaixo
+              continua relativo a ESSE tamanho — cresce junto com ele. */}
+          <h2
+            className={`max-w-[16ch] font-titulo uppercase leading-[0.96] ${TITULO_TRACKING} text-balance text-preto text-[clamp(32px,5.5vw,64px)]`}
+          >
             Vamos cuidar do seu{' '}
             <span className="font-script text-[1.18em] normal-case">sorriso</span>?
           </h2>

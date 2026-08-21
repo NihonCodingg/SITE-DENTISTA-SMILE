@@ -65,7 +65,11 @@ export function Profissional() {
         </Reveal>
 
         <Reveal delay={0.08} className="flex flex-col gap-5">
-          <SectionHeading sobretitulo="Quem vai te atender" titulo="Dr. Vinicius Aracena" />
+          <SectionHeading
+            sobretitulo="Quem vai te atender"
+            titulo="Dr. Vinicius Aracena"
+            tituloClassName="text-[clamp(28px,4vw,44px)]"
+          />
 
           <p className="font-rotulo text-[15px] tracking-wide text-grafite">
             <span className={PENDENTE}>Ortodontista</span>{' '}
