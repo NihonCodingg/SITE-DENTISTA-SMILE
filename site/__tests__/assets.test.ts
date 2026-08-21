@@ -10,6 +10,7 @@ const IMGS = [
   'antes-depois-4.jpg','antes-depois-5.jpg',
   'trat-facetas.webp','trat-implantes.jpg','trat-protocolo.jpg',
   'trat-proteses.jpg','trat-ortodontia.jpg','trat-limpeza.jpg',
+  'trat-clareamento.jpg',
 ];
 const PREVIEWS = ['tour-clinica','caso-protese','facetas-resina','facetas-transformacao','recepcao'];
 

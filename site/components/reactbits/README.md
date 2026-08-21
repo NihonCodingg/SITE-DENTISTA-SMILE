@@ -231,68 +231,220 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   cópia), mas a memória de GPU sim. É o preço de um "loop circular" com poucos itens; não foi
   alterado porque removê-lo quebraria o efeito que a task pediu.
 
-### `Silk` — **não vendorizado**
+## Task 19 — "maximizar React Bits": os quatro recusados voltaram
 
-O brief pedia o `Silk` do React Bits para o fundo do Hero. Não foi trazido: toda variante do
-componente no repositório (`ts-tailwind`, `tailwind`, `ts-default`, `default` — conferido inclusive
-no commit inicial do arquivo, maio/2025) usa `@react-three/fiber` + `three`, não `ogl`. A política
-deste projeto (`reactbits-vendoring.md`) é explícita: *"se um componente exigir three, pare e
-reporte: three.js num site de clínica não se paga."*
+Os quatro componentes abaixo (`StaggeredMenu`, `Silk`, `ScrollVelocity`, `GlareHover`) tinham sido
+**recusados** nas Tasks 6, 8, 9 e 10 — cada seção deste README documentava, até a Task 19, por que
+cada um não tinha entrado. O parceiro revisou o acumulado desses quatro motivos técnicos e decidiu
+reverter, em 20/08/2026: *"Pode forçar o máximo possível, depois que o projeto finalizar se houver
+muitos custos técnicos podemos resolver."* (registrado em `emenda-reactbits-e-skills.md`). Os
+quatro foram vendorizados na Task 19 — as implementações à mão que os substituíam
+(`components/ui/Silk.tsx`, o `rAF` manual do antigo `Ticker.tsx`, o CSS de
+`.linha-tratamento::after`) foram removidas. O custo medido da troca (KB, chunks, first-load JS)
+está em `task-19-report.md`.
 
-Em vez disso, `site/components/ui/Silk.tsx` é uma implementação própria com `ogl` (a dependência
-leve que o orçamento de performance desta task já previa), reaproveitando a mesma matemática de
-ruído do shader original do React Bits (GLSL, MIT + Commons Clause) — só o motor de render mudou.
-Detalhes e o porquê no `task-8-report.md`.
+### `StaggeredMenu.tsx`
 
-### `ScrollVelocity` — **não vendorizado**
+- **Origem:** `src/ts-tailwind/Components/StaggeredMenu/StaggeredMenu.tsx`
+- **Histórico:** recusado na Task 6 porque o registry do shadcn estava fora do ar (a forma de
+  vendorizar direto do GitHub só foi descoberta na Task 8) — ele nunca chegou a ser avaliado pelo
+  mérito, só ficou de fora por um acidente de disponibilidade. Recuperado na Task 19 por decisão do
+  parceiro.
+- **Usado em:** Task 19 — painel do drawer do menu mobile, dentro de `components/layout/
+  MobileMenu.tsx`.
+- **Dependências que arrasta:** `gsap` (já no projeto desde a Task 8, para o `SplitText`).
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** o componente não consulta nada por conta própria — recebe uma
+  prop `reducedMotion` já resolvida por `useCapability()` em `MobileMenu.tsx`. Quando `true`, a
+  timeline GSAP inteira não roda: o painel abre/fecha só por `opacity` (CSS, sob o reset global de
+  `prefers-reduced-motion` de `globals.css`), sem nenhum deslocamento — os prelayers decorativos
+  nem renderizam, e itens/números já nascem na posição final.
+- **Cleanup:** o original nunca matava `openTlRef`/`closeTweenRef` incondicionalmente no unmount —
+  só em pontos de entrada específicos (`buildOpenTimeline`, `playClose`, o efeito de
+  `reducedMotion`). Corrigido na rodada de correção pós-review: `useEffect` de cleanup dedicado que
+  mata os dois no unmount, incondicional. Hoje isso não corrige um vazamento observado (o
+  componente nunca desmonta neste app — `MobileMenu.tsx` mantém o painel sempre montado, controlado
+  pela prop `open`), mas é o que a política de vendorização exige de qualquer componente que segura
+  referência a timeline/tween do GSAP.
+- **Só `transform`/`opacity`:** a coreografia de abertura anima `xPercent`/`yPercent`/`rotate` via
+  GSAP (equivalentes a `transform`) e a custom property `--sm-num-opacity` (equivalente a
+  `opacity`, lida por uma regra CSS) — dentro da regra.
+- **Modificações** (a versão vendorizada tem 325 linhas contra as 588 do original — o que foi
+  cortado está listado junto com o motivo):
+  1. **`<header>` interno removido** (logo + botão hambúrguer com morph de ícone/texto, e o
+     `gsap.timeline` de ~150 linhas que animava esse morph). `MobileMenu.tsx` já tem seu próprio
+     botão hambúrguer, que já morfa para X — duplicar o controle seria dois triggers para uma coisa
+     só, e nenhuma exigência de acessibilidade estava em jogo nesse código.
+  2. **Virou controlado por uma prop `open`** — o original tinha estado e `onClick` de toggle
+     próprios. `MobileMenu.tsx` continua dono do estado, do foco preso, do `Escape` e da trava de
+     scroll, exatamente como antes da troca; um `useEffect` interno só observa `open` e decide
+     entre `playOpen()`/`playClose()`.
+  3. **`aria-hidden`/`inert` viraram props diretas amarradas a `open`** — o painel nunca desmonta
+     (GSAP anima o mesmo nó para sempre), então não existe a corrida de timing que o
+     `motion.div`+`AnimatePresence` do drawer anterior tinha.
+  4. **Bug corrigido: `busyRef` assimétrico.** O original só fazia `playOpen()` respeitar uma flag
+     "já tem animação em voo" — `playClose()` não. Numa sequência abrir→fechar→abrir rápida (a
+     exigência de reabertura em menos de 220ms desta task), o segundo `playOpen()` podia chegar com
+     `busyRef` ainda `true` (setado pelo close em voo) e virar no-op: o estado React dizia "aberto"
+     mas o GSAP nunca tocava a timeline, painel preso fora da tela. Removida a flag; cada chamada
+     já mata (`.kill()`) a timeline/tween anterior antes de construir a nova, suficiente para
+     reentrância segura.
+  5. **Fallback do contador de números trocou** `var(--sm-num-opacity, 0)` → `var(--sm-num-opacity,
+     1)`: sob reduced motion a variável nunca é tocada por JS, e com fallback `0` os números
+     ficariam invisíveis para sempre.
+  6. **Item do painel (`.sm-panel-item`) ganhou a classe `pressable`** (`globals.css`, escala 0.97
+     no `:active`) para feedback de toque — o GSAP anima só o `<span class="sm-panel-itemLabel">`
+     filho, então os dois transforms (CSS no pai, GSAP no filho) compõem por aninhamento normal,
+     sem competir pela mesma propriedade do mesmo elemento.
+  7. **Paleta placeholder removida** (`#5227FF` roxo, `#ff0000` vermelho de fallback, painel
+     branco) — painel usa `var(--color-creme)`, texto `var(--color-preto)`, accent
+     `var(--color-dourado)`, tudo por prop, sem tocar a lógica.
+  8. **`backdrop-filter` do painel original removido** — o painel de hoje é sólido, sem blur; não
+     tem relação com o bug de containing-block do `<header>` (Task 6), que continua resolvido pelo
+     portal em `MobileMenu.tsx`, inalterado.
+  9. **Props sem uso neste projeto removidas:** `socialItems`, `displaySocials`, `logoUrl`,
+     `menuButtonColor`, `openMenuButtonColor`, `changeMenuColorOnOpen`, `isFixed`,
+     `closeOnClickAway`, `onMenuOpen`, `onMenuClose` — o CTA do WhatsApp entra via prop `footer`, o
+     clique-fora já é tratado pelo backdrop em `MobileMenu.tsx`.
+  10. `--sm-num-opacity` continua sendo uma custom property por item (`.sm-panel-item`), não numa
+      var no elemento pai — não recalcula estilo de irmãos, dentro da regra de performance do
+      `design-guidance.md`.
+  11. **Cleanup incondicional no unmount** — ver acima.
 
-O brief (Task 9) pedia o `ScrollVelocity` do React Bits
-(`src/ts-tailwind/TextAnimations/ScrollVelocity/ScrollVelocity.tsx`) para a faixa de tratamentos
-abaixo do Hero. Foi lido inteiro antes de decidir — sem `matchMedia` próprio, sem chamada de rede,
-sem dependência nova (usa só `motion/react`, já no projeto) — mas **não foi trazido**:
+### `Silk.tsx`
 
-1. **Não pausa fora da viewport nem com a aba oculta.** Monta seis hooks do `motion/react`
-   (`useScroll` + `useVelocity` + `useSpring` + `useTransform` + `useMotionValue` +
-   `useAnimationFrame`) que ficam ativos pra sempre enquanto o componente está montado — nenhum
-   deles verifica visibilidade. Essa é uma exigência dura desta task ("Um ticker que roda para
-   sempre é o candidato número um a queimar bateria"), e não dava pra cumprir sem reescrever a
-   peça central do componente (o loop de `useAnimationFrame`), o que não é mais "vendorizar com
-   modificação pontual" (o que foi feito em `SplitText.tsx`/`Magnet.tsx`) — é reescrever o
-   componente por dentro.
-2. **`design-guidance.md` nomeia "ticker" explicitamente** como candidato a preferir CSS/JS direto
-   a Motion: *"Para o que é predeterminado (reveal, hover, ticker), prefira CSS. Guarde o Motion
-   para o que é dinâmico e interrompível (lightbox, drawer)."* Um texto correndo em looping infinito
-   com velocidade reativa ao scroll é exatamente o caso descrito.
+- **Origem:** `src/ts-tailwind/Backgrounds/Silk/Silk.tsx`
+- **Histórico:** recusado na Task 8 porque toda variante do componente no repositório
+  (`ts-tailwind`, `tailwind`, `ts-default`, `default` — conferido inclusive no commit inicial do
+  arquivo, maio/2025) usa `@react-three/fiber` + `three`, não `ogl`, e a política do projeto
+  (`reactbits-vendoring.md`) era explícita: *"se um componente exigir three, pare e reporte: three.js
+  num site de clínica não se paga."* No lugar entrou `components/ui/Silk.tsx`, uma reimplementação
+  própria em `ogl` reaproveitando a mesma matemática de ruído do shader original (GLSL, MIT +
+  Commons Clause) — só o motor de render mudava. Recuperado na Task 19 por decisão do parceiro; o
+  `ui/Silk.tsx` em `ogl` foi **removido** (código morto depois da troca).
+- **Usado em:** Task 8/19 — fundo do Hero, via `components/sections/HeroBackdrop.tsx`.
+- **Dependências que arrasta:** `three` + `@react-three/fiber` (novas nesta task; `@types/three`
+  como dev dependency) — o custo está medido em `task-19-report.md`. `three` nunca entra no
+  first-load JS da rota: `HeroBackdrop.tsx` importa este arquivo via `next/dynamic({ssr:false})` e
+  só monta quando `useCapability().podePesado` é `true`.
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** o componente não consulta nada por conta própria — quem decide
+  se ele existe na árvore é `HeroBackdrop.tsx`, via `useCapability().podePesado` (fonte única,
+  inalterado pela troca do `ogl` para o `three`).
+- **Cleanup:** o `<Canvas>` do R3F já chama `gl.forceContextLoss()` automaticamente ao desmontar
+  (confirmado no fonte instalado, `@react-three/fiber/dist/events-*.cjs.dev.js`, grep por
+  `forceContextLoss`) — não precisou de código próprio aqui, diferente do `ui/Silk.tsx` (`ogl`),
+  que precisava fazer isso à mão.
+- **Só `transform`/`opacity`:** o componente inteiro é desenhado em WebGL (shader), não CSS — a
+  regra "só transform e opacity" fala de propriedades CSS animadas fora do canvas, não se aplica ao
+  desenho interno do shader.
+- **Modificações:**
+  1. **Pausa fora da viewport e com a aba oculta** — o original usa `<Canvas frameloop="always">`,
+     que roda o loop de render do R3F para sempre enquanto o componente está montado, sem checar
+     visibilidade nenhuma. `frameloop` do R3F é reativo — este arquivo alterna entre `"always"` e
+     `"never"` via um `IntersectionObserver` no container mais uma checagem de `document.hidden`,
+     mesmo padrão de `Ticker.tsx`/`CircularGallery.tsx`. Alternar `frameloop` pausa/retoma o loop
+     de render SEM destruir o contexto WebGL nem desmontar o `<Canvas>`, então entrar/sair da
+     viewport repetidamente (o hero é a primeira seção da página) não recria o shader a cada vez.
+  2. `'use client'` adicionado no topo (o original não declara).
+  3. Nada do shader (vertex/fragment GLSL) foi tocado — é a mesma matemática de ruído que
+     `ui/Silk.tsx` já usava (adaptada para `ogl` na Task 8); aqui está no formato original, rodando
+     em `three.js` de fato.
+  4. Os uniforms do `ShaderMaterial` são mutados por uma fábrica com closure própria
+     (`criarUniformsStore`, mesmo padrão de `createLenisStore()` em `lib/motion.tsx`) em vez de
+     atribuição direta a um valor de `useState`/`useMemo` — `react-hooks/immutability`
+     (eslint-plugin-react-hooks, era do React Compiler) reprova `<algo>.prop = valor` quando
+     `<algo>` remonta ao retorno direto de um hook dentro do próprio componente.
 
-Em vez disso, `site/components/sections/Ticker.tsx` implementa a trilha à mão: um `rAF` que escreve
-`element.style.transform` diretamente (nunca uma custom property no elemento pai — mesma regra de
-performance do `design-guidance.md`), com pausa por `IntersectionObserver` + `document.hidden`
-**no mesmo padrão exato do `Silk.tsx`** (Task 8), e aceleração vinda do `velocity` que o próprio
-Lenis já calcula a cada evento de `scroll` (`lib/motion.tsx`) — em vez de recalcular a velocidade
-de novo com `useScroll`/`useVelocity` do `motion/react`, reaproveita o Lenis como fonte única sobre
-o estado do scroll (o mesmo Lenis que já move a página inteira). Detalhes e o porquê no
-`task-9-report.md`.
+### `ScrollVelocity.tsx`
 
-### `GlareHover` — **não vendorizado**
+- **Origem:** `src/ts-tailwind/TextAnimations/ScrollVelocity/ScrollVelocity.tsx`
+- **Histórico:** recusado na Task 9 porque **não pausa fora da viewport nem com a aba oculta** —
+  monta seis hooks do `motion/react` (`useScroll`+`useVelocity`+`useSpring`+`useTransform`+
+  `useMotionValue`+`useAnimationFrame`) que ficam ativos para sempre enquanto montado, e nenhum
+  deles verifica visibilidade; e porque `design-guidance.md` nomeia "ticker" explicitamente como
+  caso que deve preferir CSS/JS direto a Motion. No lugar entrou `components/sections/Ticker.tsx`,
+  implementado à mão com `rAF` e aceleração lida do `velocity` que o próprio Lenis calculava.
+  Recuperado na Task 19 por decisão do parceiro; a implementação à mão foi removida — `Ticker.tsx`
+  hoje é uma casca fina em volta deste componente (tipografia e textos por prop, ver
+  `components/sections/Ticker.tsx`).
+- **Usado em:** Task 9/19 — faixa de tratamentos abaixo do Hero, via
+  `components/sections/Ticker.tsx`.
+- **Dependências que arrasta:** `motion/react` (já no projeto desde a Task 6).
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** o componente não consulta nada por conta própria — quem decide
+  se ele existe na árvore é `Ticker.tsx`, via `useCapability().podeAnimar` (fonte única,
+  inalterado).
+- **Cleanup:** o `IntersectionObserver` adicionado (ver modificação nº1) é desconectado no
+  `return` do `useLayoutEffect` que o registra.
+- **Só `transform`/`opacity`:** anima só o `x` do Motion (aplicado como `style.transform` — mesmo
+  caminho de GPU que uma string literal, confirmado no fonte do `motion-dom` na Task 6) — dentro da
+  regra.
+- **Modificações:**
+  1. **Pausa fora da viewport e com a aba oculta.** O original monta `useAnimationFrame`
+     incondicionalmente — o motivo pelo qual não tinha sido vendorizado antes. Adicionado um
+     `IntersectionObserver` no container (`parallax`) e uma checagem de `document.hidden`, mesmo
+     padrão de `Silk.tsx`/`Ticker.tsx`: o callback do `useAnimationFrame` continua sendo chamado a
+     cada frame pelo ticker global da Motion (não dá para cancelar o registro sem desmontar o
+     hook), mas agora só atualiza `baseX` quando visível e com a aba em primeiro plano — fora
+     disso é um retorno antecipado, custo desprezível.
+  2. **Tipografia do original removida do template fixo.** `scrollerClassName` entrava concatenado
+     a classes hardcoded (`text-4xl font-bold tracking-[-0.02em] drop-shadow md:text-[5rem]
+     md:leading-[5rem]`) — cascata do Tailwind não garante que uma classe externa vença uma classe
+     de tamanho igual já presente no template. Removidas; a tipografia agora é 100%
+     responsabilidade de quem chama (`Ticker.tsx` passa as classes da pílula amarela existente por
+     herança de CSS, sem prop nenhuma).
+  3. `scrollContainerRef?: React.RefObject<HTMLElement>` virou `RefObject<HTMLElement | null>` — o
+     React 19 mudou o retorno de `useRef<T>(null)` para `RefObject<T | null>`; o tipo antigo não
+     aceitava a maioria dos refs reais criados com `useRef`.
+  4. `'use client'` explicitado no topo — já estava implícito pelo uso de hooks, sem mudança de
+     comportamento.
+  5. `VelocityText` movido para escopo de módulo — no original era definido dentro do corpo de
+     `ScrollVelocity`, uma nova definição de componente a cada render do pai. Não chegava a quebrar
+     nada aqui (as props de `ScrollVelocity` não mudam depois do mount), mas é o tipo de padrão que
+     remonta os filhos à toa se o pai re-renderizar por outro motivo.
 
-O brief da Task 10 pedia `GlareHover` do React Bits
-(`src/ts-tailwind/Animations/GlareHover/GlareHover.tsx`) para o reflexo de hover nas linhas de
-Tratamentos. Lido inteiro (109 linhas, mesmo commit fixado acima) antes de decidir — sem
-dependência nova, sem chamada de rede, sem `matchMedia` interno, esses três pontos estavam OK —
-mas **não foi trazido**:
+### `GlareHover.tsx`
 
-1. **Anima `background-position`**, não `transform`/`opacity` — viola direto a regra deste projeto
-   ("só transform e opacity animam", repetida em `design-guidance.md` e no brief da própria task).
-2. **Força seu próprio container** (`className="relative grid place-items-center overflow-hidden
-   border cursor-pointer ..."`) com `border` sempre visível e `display:grid;place-items:center` —
-   incompatível com o grid `auto auto 1fr auto` que a linha de tratamento precisa (a linha tem 4
-   colunas com papéis distintos: número, miniatura, texto, seta; o `GlareHover` espera um
-   único filho centralizado num box de dimensão fixa).
-
-Em vez disso, `.linha-tratamento`/`.linha-tratamento::after` em `site/app/globals.css` implementam
-o reflexo à mão em CSS puro: uma faixa de luz diagonal (`skewX(-20deg)`) que translada de fora da
-linha pra fora do outro lado, só `transform` na transição (550ms, `var(--ease-movimento)`), atrás
-de `@media (hover: hover) and (pointer: fine)` — `pointer:fine` já exclui touch estruturalmente
-(toque não tem essa media feature), e o reset global de `prefers-reduced-motion` já deixa a
-transição praticamente instantânea sob esse modo, sem precisar de `useCapability()` para um efeito
-que só existe atrás de `:hover`. Detalhes e o porquê no `task-10-report.md`.
+- **Origem:** `src/ts-tailwind/Animations/GlareHover/GlareHover.tsx`
+- **Histórico:** recusado na Task 10 porque anima `background-position` (não `transform`/`opacity`
+  — viola a regra "só transform e opacity animam" do `design-guidance.md`) e porque força seu
+  próprio container (`display:grid;place-items:center`, `border`, `cursor-pointer`),
+  incompatível com o grid de 4 colunas que a linha de tratamento precisa. No lugar entraram
+  `.linha-tratamento`/`.linha-tratamento::after` em `globals.css`, um reflexo em CSS puro atrás de
+  `@media (hover: hover) and (pointer: fine)`. Recuperado na Task 19: o parceiro decidiu
+  explicitamente aceitar que este componente anima `background-position`, fora da regra do resto
+  do projeto — o custo está medido em `task-19-report.md`. O CSS que o substituía foi removido de
+  `globals.css`.
+- **Usado em:** Task 10/19 — reflexo de hover em cada linha de Tratamentos, via
+  `components/sections/TratamentoLinha.tsx`.
+- **Dependências que arrasta:** nenhuma além de React.
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** o componente não consulta nada por conta própria. Como ele usa
+  handlers de mouse (`onMouseEnter`/`onMouseLeave`), não `:hover` de CSS, e em `pointer:coarse`
+  (touch) navegadores mobile podem disparar um `mouseenter`/`mouseleave` sintético sem um jeito
+  confiável de "sair" do hover depois, `TratamentoLinha.tsx` passa uma prop `disabled={!pontoFino}`
+  (`useCapability()`, fonte única) — atrás de `pointer:fine`, exigência do `design-guidance.md`
+  para qualquer efeito de hover.
+- **Cleanup:** nenhum necessário — o componente só reage a dois eventos de mouse e escreve
+  `style.transition`/`style.backgroundPosition` diretamente, sem `requestAnimationFrame` nem
+  observer, exatamente como o original.
+- **Modificações:**
+  1. **Container deixou de forçar o próprio layout.** O original renderiza `className="relative
+     grid place-items-center overflow-hidden border cursor-pointer ${className}"` — pensado para
+     envolver um único filho decorativo isolado, incompatível com um elemento que já tem layout
+     próprio (a linha de tratamento é um grid de 4 colunas: número, miniatura, texto, seta).
+     Removidas `grid place-items-center`, `border` e `cursor-pointer`; ficou só `relative
+     overflow-hidden` — o mínimo que o efeito precisa (`position:relative` para o overlay
+     absoluto, `overflow:hidden` para não vazar o brilho para fora da caixa). O layout do
+     `children` passa a ser 100% responsabilidade de quem usa o componente.
+  2. **Defaults deixaram de ser um box de demonstração.** O original tinha `width:'500px'
+     height:'500px' background:'#000' borderRadius:'10px' borderColor:'#333'` — um quadrado preto
+     opaco de 500px. Trocado para `width:'100%' height:'100%' background:'transparent'
+     borderRadius:'0' borderColor:'transparent'` — um wrapper transparente que preenche o pai e não
+     desenha nada por conta própria, mais seguro como default.
+  3. **Prop `disabled` nova** — mesmo padrão de `Magnet.tsx` (Task 8): não registra
+     `onMouseEnter`/`onMouseLeave` nem renderiza o `<div>` de overlay quando `disabled` (ver
+     `matchMedia`/reduced-motion acima).
+  4. `React.FC`/`interface` trocados por `function`/`type` — consistência de estilo com os outros
+     arquivos deste diretório, comportamento idêntico.

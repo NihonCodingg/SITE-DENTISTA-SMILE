@@ -259,6 +259,19 @@ export const StaggeredMenu = forwardRef<HTMLElement, StaggeredMenuProps>(functio
     if (layers.length) gsap.set(layers, { clearProps: 'transform' });
   }, [reducedMotion]);
 
+  // Cleanup incondicional no unmount — política de vendorização exige matar
+  // timeline/tween pendentes independentemente de qual ponto de entrada
+  // rodou por último. Hoje `MobileMenu.tsx` nunca desmonta este componente
+  // (fica sempre montado, controlado pela prop `open`), então isto não
+  // corrige um vazamento observado — é a garantia exigida para o dia em que
+  // algum chamador futuro decidir desmontá-lo condicionalmente.
+  useEffect(() => {
+    return () => {
+      openTlRef.current?.kill();
+      closeTweenRef.current?.kill();
+    };
+  }, []);
+
   const wrapperStyle = accentColor ? ({ ['--sm-accent' as string]: accentColor } as React.CSSProperties) : undefined;
 
   return (

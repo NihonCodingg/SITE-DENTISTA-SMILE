@@ -61,15 +61,15 @@ describe('Tratamentos', () => {
     });
   });
 
-  it('so o tratamento sem foto no disco (clareamento) cai no fallback com o glifo', () => {
-    // O cliente entregou foto para 6 dos 7 tratamentos; so
-    // trat-clareamento nao existe em public/img. Os 6 com foto devem
-    // renderizar <img>, e so o clareamento deve mostrar o glifo ✦ — nao pode
-    // haver <img> quebrada apontando pra uma foto que nao existe.
+  it('as sete linhas tem foto real no disco — nenhuma cai no fallback do glifo', () => {
+    // O cliente entregou foto para os 7 tratamentos (trat-clareamento.jpg foi
+    // o ultimo, processado na rodada de correcao da Task 19). Todas as 7
+    // linhas devem renderizar <img>, e o glifo ✦ de fallback nao deve
+    // aparecer mais — nao ha <img> quebrada apontando pra foto que nao existe
+    // porque existeFoto() confirma cada arquivo em disco antes de decidir.
     const { container } = render(<Tratamentos />);
-    const comFoto = TRATAMENTOS.filter((t) => t.slug !== 'clareamento');
-    expect(container.querySelectorAll('img[src*="trat-"]').length).toBe(comFoto.length);
-    expect(container.textContent?.match(/✦/g)?.length).toBe(1);
+    expect(container.querySelectorAll('img[src*="trat-"]').length).toBe(TRATAMENTOS.length);
+    expect(container.textContent?.match(/✦/g)).toBeNull();
   });
 
   it('a secao carrega o id que o Header (Task 6) ja espera em #tratamentos', () => {
