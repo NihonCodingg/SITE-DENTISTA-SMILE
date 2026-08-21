@@ -5,8 +5,16 @@ import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
 const archivo = Archivo_Black({ subsets: ['latin'], weight: '400', variable: '--fonte-archivo', display: 'swap' });
-const jost = Jost({ subsets: ['latin'], weight: ['300','400','500'], variable: '--fonte-jost', display: 'swap' });
-const source = Source_Sans_3({ subsets: ['latin'], weight: ['400','600','700'], variable: '--fonte-source', display: 'swap' });
+// Pesos 400 (default do Tailwind preflight) e 500 (`font-medium`, usado em
+// font-rotulo) são os únicos que o projeto de fato aplica — confirmado com
+// `grep -rn "font-rotulo" components app` (Task 17). 300 nunca é usado por
+// nenhum elemento com `font-rotulo`: era peso morto, baixado sem servir a
+// nenhuma classe do site.
+const jost = Jost({ subsets: ['latin'], weight: ['400','500'], variable: '--fonte-jost', display: 'swap' });
+// Idem: `font-corpo` (Source Sans 3) só aparece sem classe de peso — nenhum
+// `font-semibold`/`font-bold` no projeto inteiro (`grep -rn "font-semibold\
+// |font-bold" components app`, Task 17). 600 e 700 eram baixados à toa.
+const source = Source_Sans_3({ subsets: ['latin'], weight: '400', variable: '--fonte-source', display: 'swap' });
 const caveat = Caveat({ subsets: ['latin'], weight: '600', variable: '--fonte-caveat', display: 'swap' });
 
 // Só `metadataBase` mora aqui: é a única configuração de metadata que o

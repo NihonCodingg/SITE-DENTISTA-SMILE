@@ -4,11 +4,17 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useCapability } from '@/lib/useCapability';
+import { urlImagemOtimizada } from '@/lib/imgOtimizada';
 import { SORRISOS } from '@/lib/content';
 
 // ogl (dependência do CircularGallery) fora do first-load JS da rota — mesmo
 // mecanismo que HeroBackdrop.tsx (Task 8) já usa para o Silk. Ver
 // task-13-report.md para a saída do `npm run build` que prova isso.
+//
+// Task 17 (performance): tentei também adiar esta montagem com
+// `requestIdleCallback`, mesma hipótese do HeroBackdrop.tsx — sem ganho
+// mensurável (ver o comentário lá e task-17-report.md), revertido pra
+// montagem direta por não ter número que justificasse a complexidade extra.
 const CircularGallery = dynamic(() => import('@/components/reactbits/CircularGallery'), {
   ssr: false,
   loading: () => null,
@@ -28,6 +34,15 @@ const TRANSFORMS_FALLBACK = [
   'rotate-[-1deg] translate-y-1',
 ];
 
+// Task 17 (performance): `CircularGallery` carrega textura com `new Image()`
+// direto (ver components/reactbits/CircularGallery.tsx) — passa batido pelo
+// otimizador do `next/image`. Medido: os 9 JPEGs originais (700–950px,
+// 70–240KB cada) somavam ~600KB SÓ da galeria, o maior bloco isolado do
+// `total-byte-weight` da rota inteira (task-17-report.md). `urlImagemOtimizada`
+// (lib/imgOtimizada.ts) passa pela mesma rota `/_next/image` que o
+// `next/image` já usa, pedindo 640px — perceptualmente idêntico no card de
+// ~220px, uma fração do peso.
+//
 // Hospedado em escopo de módulo (não recalculado dentro do componente): SORRISOS
 // é um `const` importado, nunca muda em tempo de execução, então mapear uma vez
 // aqui dá a mesma referência estável pra sempre. Correção pós-review: antes isto
@@ -37,7 +52,7 @@ const TRANSFORMS_FALLBACK = [
 // destruiria e recriaria o contexto inteiro. Mesmo raciocínio que já vale para
 // `onError` (comentário em CircularGallery.tsx): identidade estável evita
 // recriar o WebGL à toa.
-const ITENS_WEBGL = SORRISOS.map((s) => ({ image: s.img }));
+const ITENS_WEBGL = SORRISOS.map((s) => ({ image: urlImagemOtimizada(s.img, 640) }));
 
 /**
  * Decide QUAL veículo mostra os 9 retratos (lib/content.ts → SORRISOS):

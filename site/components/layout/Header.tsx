@@ -18,7 +18,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-[#F1E7DB] bg-branco/94 backdrop-blur-[8px]">
       <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-[10px] md:px-8">
         <a href="#" className="shrink-0">
-          <Image src="/img/logo.png" alt="Smile Ipiranga" width={82} height={46} priority className="h-[46px] w-auto" />
+          <Image src="/img/logo.png" alt="Smile Ipiranga" width={82} height={46} preload className="h-[46px] w-auto" />
         </a>
 
         <nav className="hidden md:flex items-center gap-8">

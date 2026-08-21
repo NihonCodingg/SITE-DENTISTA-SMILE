@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# lighthouse reports (medição local, task 17)
+lh-desktop.json
+lh-mobile.json
+lh-*.json

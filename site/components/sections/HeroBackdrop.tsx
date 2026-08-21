@@ -13,6 +13,19 @@ import { useCapability } from '@/lib/useCapability';
 // ssr:false + montagem condicionada a `podePesado` continua sendo o que
 // garante `three`/`@react-three/fiber` fora do first-load JS da rota — ver
 // task-19-report.md para a saída do `npm run build` que prova isso.
+//
+// Task 17 (performance): cheguei a testar adiar esta montagem pro momento em
+// que o main thread ficasse ocioso (`requestIdleCallback`), na hipótese de
+// que rodar no mesmo tick de `useCapability()` competia com o LCP do hero.
+// Medido com A/B controlado (mesmo build, só essa variável mudando, 2
+// amostras por lado): TBT eager 2291/3257ms vs. TBT adiado 4503/2131ms —
+// faixas sobrepostas, nenhuma diferença confiável, ver task-17-report.md.
+// Hipótese do porquê: adiar dispara o dynamic import (rede nova) mais tarde,
+// o que empurra a janela de "rede ociosa" que o Lighthouse usa pra fechar o
+// trace — captura MAIS do loop de render contínuo do canvas, não menos.
+// Reduz TBT precisa cortar trabalho de CPU, não só adiar quando ele roda.
+// Reduzido de volta pro mount direto: mais simples, e a versão adiada não
+// tinha número que a justificasse.
 const Silk = dynamic(() => import('@/components/reactbits/Silk'), { ssr: false, loading: () => null });
 
 export function HeroBackdrop() {
