@@ -37,7 +37,12 @@ export function Header() {
             <a
               key={item.href}
               href={item.href}
-              className="font-rotulo text-[13px] tracking-[.14em] text-grafite uppercase transition-[color] duration-200 ease-out pointer-fine:hover:text-preto"
+              // inline-flex min-h-11 items-center (Task 18, F1): texto puro
+              // media 19,5px de altura — abaixo dos 24px da WCAG 2.5.8 e dos
+              // 44px que o resto deste header já usa (CTA, telefone). Fonte,
+              // tamanho, tracking e cor não mudam; a fileira já tem 44px por
+              // causa do botão de telefone, então a altura do header não muda.
+              className="inline-flex min-h-11 items-center font-rotulo text-[13px] tracking-[.14em] text-grafite uppercase transition-[color] duration-200 ease-out pointer-fine:hover:text-preto"
             >
               {item.rotulo}
             </a>

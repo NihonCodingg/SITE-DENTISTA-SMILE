@@ -34,6 +34,20 @@ describe('Header', () => {
       expect(screen.getByRole('link', { name: t })).toBeInTheDocument());
   });
 
+  // Task 18 (F1, WCAG 2.5.8): os links do nav desktop eram texto puro com
+  // 19,5px de altura. min-h-11 (44px) é a régua do próprio header (CTA e
+  // telefone). jsdom não mede — a classe é o que se trava aqui; as alturas
+  // medidas ao vivo (768/1024/1280) estão em task-18-fix-report.md.
+  it('os quatro links do nav desktop tem alvo de 44px (min-h-11, inline-flex, items-center)', () => {
+    render(<Header />);
+    ['Tratamentos', 'A Clínica', 'Depoimentos', 'Como Chegar'].forEach((t) => {
+      const a = screen.getByRole('link', { name: t });
+      expect(a.className).toMatch(/\bmin-h-11\b/);
+      expect(a.className).toMatch(/\binline-flex\b/);
+      expect(a.className).toMatch(/\bitems-center\b/);
+    });
+  });
+
   it('aponta o CTA para o WhatsApp certo', () => {
     render(<Header />);
     const cta = screen.getByRole('link', { name: /Agendar avaliação/i });
