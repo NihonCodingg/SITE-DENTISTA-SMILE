@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { TRATAMENTOS } from '@/lib/content';
 import { waLink } from '@/lib/contact';
 import { Reveal } from '@/components/ui/Reveal';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 
 // design-guidance.md: "em listas longas (as 7 linhas de tratamento), limite
 // o stagger aos primeiros 4-5 e deixe o resto entrar junto — cascata longa
@@ -37,6 +38,24 @@ export function Tratamentos() {
   return (
     <section id="tratamentos" className="bg-creme px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1040px]">
+        {/* Bloco de título (COPY.md §4) — esquecido na Task 10, não pego por
+            nenhuma review (achado pós-fix-titulos-report.md: a seção pulava
+            direto da margem para a linha "01 Facetas"). tituloClassName com
+            52px porque essa seção difere do default de 48px do
+            SectionHeading (ver fix-titulos-report.md); max-w-[16ch] e o
+            parágrafo em 17px/62ch vêm do design aprovado. */}
+        <Reveal className="mb-10 flex flex-col gap-4 md:mb-14">
+          <SectionHeading
+            sobretitulo="O que fazemos"
+            titulo="Soluções que transformam sorrisos"
+            tituloClassName="max-w-[16ch] text-[clamp(28px,4.5vw,52px)]"
+          />
+          <p className="max-w-[62ch] font-corpo text-[17px] leading-relaxed text-grafite">
+            Cada caso começa com uma avaliação. A partir dela, montamos o plano de tratamento que
+            faz sentido para a sua boca, sua rotina e o seu orçamento.
+          </p>
+        </Reveal>
+
         {TRATAMENTOS.map((t, i) => {
           const delay = Math.min(i, STAGGER_MAX - 1) * STAGGER_STEP;
           const temFoto = existeFoto(t.img);

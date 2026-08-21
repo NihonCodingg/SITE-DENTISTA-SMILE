@@ -24,6 +24,22 @@ describe('Pilares', () => {
 });
 
 describe('Tratamentos', () => {
+  // Regressão: o bloco de título da seção (COPY.md §4 — sobretítulo,
+  // título e intro) foi esquecido na Task 10 e não pego por nenhuma
+  // review; a seção pulava direto da margem para a linha "01 Facetas" (ver
+  // fix-titulos-report.md). Se alguém remover o bloco de novo, este teste
+  // falha.
+  it('mostra o bloco de titulo da secao (sobretitulo, h2 e intro de COPY.md §4)', () => {
+    render(<Tratamentos />);
+    expect(screen.getByText('O que fazemos')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Soluções que transformam sorrisos' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Cada caso começa com uma avaliação\. A partir dela, montamos o plano de tratamento/i)
+    ).toBeInTheDocument();
+  });
+
   it('lista os sete tratamentos mais o CTA', () => {
     render(<Tratamentos />);
     expect(screen.getAllByRole('link')).toHaveLength(8);

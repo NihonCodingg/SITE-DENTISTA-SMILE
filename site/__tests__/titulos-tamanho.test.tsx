@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { Hero } from '@/components/sections/Hero';
+import { Tratamentos } from '@/components/sections/Tratamentos';
 import { Clinica } from '@/components/sections/Clinica';
 import { Sorrisos } from '@/components/sections/Sorrisos';
 import { Profissional } from '@/components/sections/Profissional';
@@ -52,6 +53,7 @@ const CLASSE_TRACKING = /tracking-\[-0\.01em\]/;
 type Caso = { nome: string; render: () => ReactElement };
 
 const SECOES: Caso[] = [
+  { nome: 'Tratamentos', render: () => <Tratamentos /> },
   { nome: 'Clinica', render: () => <Clinica onAbrirVideo={() => {}} /> },
   { nome: 'Sorrisos', render: () => <Sorrisos /> },
   { nome: 'Profissional', render: () => <Profissional /> },
