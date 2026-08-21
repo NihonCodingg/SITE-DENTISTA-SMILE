@@ -150,7 +150,7 @@ export function Hero({ onAbrirVideo }: Props) {
               <p className="font-rotulo text-[13px] tracking-[.12em] text-preto uppercase">
                 Facetas • Implantes • Próteses
               </p>
-              <p className="max-w-[32ch] font-corpo text-[15px] text-grafite">
+              <p className="max-w-[32ch] font-corpo text-[16px] text-grafite">
                 Consultório de cadeira única — aqui você não é encaixado entre um paciente e
                 outro.
               </p>
