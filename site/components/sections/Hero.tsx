@@ -98,12 +98,28 @@ export function Hero({ onAbrirVideo }: Props) {
 
             {/* Coluna 2 — foto (LCP) com o card do tour sobreposto */}
             <div className="relative mx-auto w-full md:max-w-[460px]">
+              {/* Task 17 (H2): "100vw" superestimava a largura real. O próprio
+                  boundingRect do audit de LCP mediu 348px num viewport de 412
+                  (85vw): padding do section (px-3, 12px) + padding do card
+                  (px-[clamp(20px,4vw,64px)], 20px no mobile) tiram 64px dos
+                  dois lados, sobrando exatamente 348px de coluna. Com DPR
+                  1,75 simulado, 100vw pedia o candidato de 750px do srcset —
+                  85vw (612,9px físicos) já pede o de 640px, mas fica a só
+                  27px do corte de 750px, e 6 amostras repetidas mostraram o
+                  navegador escolhendo os dois candidatos de forma alternada
+                  (bimodal: total-byte-weight ora 524KB ora 1.155KB na mesma
+                  build/servidor — corrida na aplicação do DPR simulado do
+                  Lighthouse perto de um limite de srcset). 80vw (576,8px
+                  físicos, 63px de margem) resolveu SEMPRE para 640px em 6
+                  amostras — mesma fração de largura real (só 5% menor que os
+                  348px medidos, imperceptível numa foto). Detalhe completo em
+                  task-17-report.md. */}
               <div className="relative aspect-[944/1122] overflow-hidden rounded-[24px] bg-borda">
                 <Image
                   src="/img/hero-foto.jpg"
                   alt="Paciente sorrindo na Smile Ipiranga"
                   fill
-                  sizes="(max-width: 768px) 100vw, 460px"
+                  sizes="(max-width: 768px) 80vw, 460px"
                   preload
                   fetchPriority="high"
                   className="object-cover"
