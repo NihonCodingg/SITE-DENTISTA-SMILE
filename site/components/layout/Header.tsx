@@ -32,7 +32,11 @@ export function Header() {
           <Image src="/img/logo.png" alt="Smile Ipiranga" width={82} height={46} preload className="h-[46px] w-auto" />
         </a>
 
-        <nav className="hidden md:flex items-center gap-8">
+        {/* gap-6 lg:gap-8 (Task 18, F2): em 768px o header estourava 8px
+            (scrollWidth 761 vs clientWidth 753, CTA como elemento mais à
+            direita). -24px no gap em md resolve; em lg+ nada muda. O corte do
+            drawer fica em md — tablet paisagem com mouse não perde o nav. */}
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
           {NAV.map((item) => (
             <a
               key={item.href}

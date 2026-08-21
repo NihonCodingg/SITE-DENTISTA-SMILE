@@ -48,6 +48,18 @@ describe('Header', () => {
     });
   });
 
+  // Task 18 (F2): overflow horizontal de 8px em 768px, rastreado ao CTA do
+  // header. gap-6 em md (-24px), gap-8 só de lg em diante. jsdom não faz
+  // layout — a classe é o que se trava aqui; a tabela de larguras (768, 800,
+  // 820, 834, 900, 1023, 1024) medida ao vivo está em task-18-fix-report.md.
+  it('o nav desktop usa gap-6 em md e gap-8 so de lg em diante', () => {
+    const { container } = render(<Header />);
+    const nav = container.querySelector('nav')!;
+    expect(nav.className).toMatch(/\bgap-6\b/);
+    expect(nav.className).toMatch(/\blg:gap-8\b/);
+    expect(nav.className).not.toMatch(/(^|\s)gap-8(\s|$)/);
+  });
+
   it('aponta o CTA para o WhatsApp certo', () => {
     render(<Header />);
     const cta = screen.getByRole('link', { name: /Agendar avaliação/i });
