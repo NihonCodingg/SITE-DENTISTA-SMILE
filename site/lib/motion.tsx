@@ -50,6 +50,52 @@ export function useLenis(): Lenis | null {
   return useSyncExternalStore(store.subscribe, store.getSnapshot, () => null);
 }
 
+/**
+ * Espera o layout assentar antes de recalcular os `ScrollTrigger` da página
+ * (ver o uso em `MotionProvider`, ramo "existe hash na montagem"). Exportada
+ * só para o teste conseguir espionar/controlar sem depender de
+ * `document.fonts`/`decode()` reais.
+ *
+ * `document.fonts.ready` é o sinal real de "o texto parou de mudar de
+ * largura/altura" — melhor que um `setTimeout` chutado, que tanto pode
+ * disparar cedo demais (fonte ainda no FOUT) quanto tarde demais (atraso
+ * perceptível). Ambientes sem a Font Loading API caem no catch e seguem sem
+ * esperar, em vez de travar o efeito.
+ *
+ * Depois, espera decodificar as imagens que já estão dentro da viewport no
+ * momento do salto — são as que mais importam pro layout da seção-alvo, e
+ * medir contra um placeholder que ainda vai trocar de tamanho reproduziria o
+ * mesmo tipo de posição errada que este refresh existe para corrigir.
+ */
+export async function esperarLayoutAssentar(): Promise<void> {
+  try {
+    await document.fonts?.ready;
+  } catch {
+    /* ambiente sem Font Loading API — segue sem esperar */
+  }
+
+  // Tentativa de decodificar as imagens já na viewport — mas com teto: uma
+  // `<img loading="lazy">` que o navegador ainda não começou a buscar (achado
+  // em navegador real, medido nesta correção: `decode()` numa imagem lazy
+  // ainda `complete:false` pode ficar mais de 2s sem resolver NEM rejeitar)
+  // não pode travar o refresh indefinidamente — isso reintroduziria o
+  // próprio bug que este código existe pra corrigir, só que calado, sem
+  // nenhum erro. Todo `<Image>` deste site fica dentro de uma caixa de
+  // aspect-ratio fixo (`aspect-square`/`fill`), então a posição dos
+  // `ScrollTrigger` já está correta mesmo antes da imagem terminar de
+  // decodificar — a espera aqui é só uma folga extra, nunca uma condição
+  // necessária.
+  const imgsNaViewport = Array.from(document.images ?? []).filter((img) => {
+    const r = img.getBoundingClientRect();
+    return r.bottom > 0 && r.top < window.innerHeight;
+  });
+  const decodesOuTeto = Promise.race([
+    Promise.all(imgsNaViewport.map((img) => img.decode?.().catch(() => {}) ?? Promise.resolve())),
+    new Promise<void>((resolve) => setTimeout(resolve, 500)),
+  ]);
+  await decodesOuTeto;
+}
+
 export function MotionProvider({ children }: { children: React.ReactNode }) {
   // Estado com inicializador preguiçoso: cria o store uma única vez, mas — ao
   // contrário de um ref — pode ser lido durante a renderização (é isso que o
@@ -93,11 +139,55 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       e.preventDefault();
       const header = document.querySelector('header');
       const alturaHeader = header ? header.getBoundingClientRect().height : ALTURA_HEADER_FALLBACK;
-      l.scrollTo(href, { offset: -(alturaHeader + 16) });
+      l.scrollTo(href, {
+        offset: -(alturaHeader + 16),
+        // Bug real (achado de review em navegador, fix-titulos-report.md):
+        // cada <Reveal> cria seu próprio ScrollTrigger (`start: 'top 88%'`)
+        // com a posição de disparo calculada em pixel de documento no
+        // instante em que ele monta — sem saber que o Lenis ainda vai rolar
+        // a página até `href`. Sem recalcular depois que o scroll pára, uma
+        // seção cujo Reveal ainda não tinha tido chance de disparar podia
+        // ficar presa em opacity:0 mesmo com o scroll parado bem nela.
+        // `onComplete` do próprio Lenis (não um `setTimeout` chutado) é o
+        // sinal certo de "a animação de scroll realmente terminou" — chamar
+        // cedo demais recalcularia contra uma posição de scroll que ainda
+        // ia mudar.
+        onComplete: () => ScrollTrigger.refresh(),
+      });
     };
     document.addEventListener('click', aoClicarAncora);
 
+    // Navegação direta para uma URL que JÁ chega com hash (link de bio/story
+    // do Instagram, reload, back/forward do navegador) nunca passa pelo
+    // clique acima — não há nenhum `click` disparado, o navegador faz o
+    // próprio salto nativo pro elemento (instantâneo, ou só suavizado pelo
+    // `scroll-behavior: smooth` do CSS) e o Lenis nem fica sabendo. Mesmo
+    // sintoma do `onComplete` acima, causa diferente: os ScrollTrigger de
+    // cada <Reveal> calculam a posição de disparo contra o layout NAQUELE
+    // instante da montagem — se o layout ainda não assentou (fontes
+    // carregando, imagens sem decodificar), essa posição fica errada, e sem
+    // ninguém chamar `.refresh()` depois, ela nunca se corrige.
+    //
+    // `cancelado` evita chamar `ScrollTrigger.refresh()` depois que este
+    // efeito já foi desmontado (StrictMode, ou a capacidade mudando de
+    // podeAnimar=true para false enquanto a promise ainda está pendente).
+    let cancelado = false;
+    if (typeof location !== 'undefined' && location.hash) {
+      esperarLayoutAssentar().then(() => {
+        if (cancelado) return;
+        // UMA chamada só, depois da espera — ScrollTrigger.refresh() é caro
+        // (recalcula TODOS os triggers da página), então nunca deve rodar em
+        // loop nem em resposta a scroll; aqui é uma vez por montagem, só
+        // quando existe hash. `once: true` em cada <Reveal> (Reveal.tsx) já
+        // mata o próprio ScrollTrigger assim que dispara — um refresh()
+        // depois disso não reanima nada que já tenha completado, só corrige
+        // os triggers que ainda não tiveram chance de disparar.
+        ScrollTrigger.refresh();
+      });
+    }
+
     return () => {
+      cancelado = true;
       cancelAnimationFrame(raf.current);
       document.removeEventListener('click', aoClicarAncora);
       l.destroy();
