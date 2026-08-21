@@ -9,15 +9,29 @@ vi.stubGlobal('matchMedia', (q: string) => ({
 }));
 
 describe('Pilares', () => {
-  it('mostra os quatro pilares como h3', () => {
-    render(<Pilares />);
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(4);
+  // Task 18 (A2): os quatro rótulos NÃO são headings. A seção não tem <h2>
+  // e o heading anterior na página é o <h1> do hero — um <h3> aqui saltava
+  // nível (axe `heading-order`, WCAG 1.3.1, reprovava o Lighthouse de
+  // acessibilidade). "Atendimento humanizado" etc. são rótulos de 2-3
+  // palavras sem conteúdo organizado abaixo, não subtítulos de subseção:
+  // viraram <p><strong>, com as mesmas classes (visual idêntico).
+  it('mostra os quatro rotulos por texto, sem nenhum heading de nivel 3 na secao', () => {
+    const { container } = render(<Pilares />);
+    PILARES.forEach((p) => {
+      expect(screen.getByText(p.titulo)).toBeInTheDocument();
+    });
+    expect(screen.queryAllByRole('heading', { level: 3 })).toHaveLength(0);
+    expect(container.querySelectorAll('h3')).toHaveLength(0);
+    // Nem heading de nível nenhum: a seção inteira fica entre o <h1> do hero
+    // e o <h2> de Tratamentos, sem título próprio (COPY.md §3 não tem um).
+    expect(screen.queryAllByRole('heading')).toHaveLength(0);
   });
 
   it('usa titulo e descricao reais de lib/content.ts, sem parafrasear', () => {
     render(<Pilares />);
     PILARES.forEach((p) => {
-      expect(screen.getByRole('heading', { level: 3, name: p.titulo })).toBeInTheDocument();
+      const rotulo = screen.getByText(p.titulo);
+      expect(rotulo.tagName).toBe('STRONG');
       expect(screen.getByText(p.desc)).toBeInTheDocument();
     });
   });
