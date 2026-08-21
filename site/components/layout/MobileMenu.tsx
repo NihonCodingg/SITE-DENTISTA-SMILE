@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { waLink } from '@/lib/contact';
 import { useCapability } from '@/lib/useCapability';
 import { useLenis } from '@/lib/motion';
+import { isolarFundo } from '@/lib/fundoInerte';
 import { StaggeredMenu } from '@/components/reactbits/StaggeredMenu';
 import type Lenis from 'lenis';
 
@@ -63,10 +64,19 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
   const painelId = useId();
   const botaoRef = useRef<HTMLButtonElement>(null);
   const painelRef = useRef<HTMLElement | null>(null);
+  // Wrapper único do portal (backdrop + painel) — é o que fica de fora do
+  // isolamento do fundo (Task 18, F3b). Sem classes: os filhos são `fixed`,
+  // o wrapper não entra no layout.
+  const portalRef = useRef<HTMLDivElement>(null);
+  const restaurarFundoRef = useRef<(() => void) | null>(null);
 
   const fechar = () => {
     setAberto(false);
     destravarScroll(lenis);
+    // Restaura o fundo ANTES de devolver o foco: com o header ainda inerte,
+    // `focus()` no hambúrguer seria um no-op (elemento inerte não é focável).
+    restaurarFundoRef.current?.();
+    restaurarFundoRef.current = null;
     botaoRef.current?.focus();
   };
 
@@ -84,6 +94,10 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
     if (!aberto) return;
     const painel = painelRef.current;
     if (!painel) return;
+
+    // Tudo que não é este portal (header, main, footer, FAB, o portal do
+    // lightbox) fica inert + aria-hidden enquanto o drawer está aberto.
+    restaurarFundoRef.current = isolarFundo([portalRef.current]);
 
     const focaveis = () => Array.from(painel.querySelectorAll<HTMLElement>(FOCAVEIS_SELETOR));
     // Um quadro de folga: o StaggeredMenu acabou de tirar `inert` no mesmo
@@ -116,6 +130,10 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener('keydown', aoTeclar);
+      // Idempotente: `fechar()` normalmente já restaurou; aqui cobre
+      // desmontagem e qualquer fechamento que não passe por `fechar()`.
+      restaurarFundoRef.current?.();
+      restaurarFundoRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aberto]);
@@ -153,7 +171,7 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
       */}
       {montado &&
         createPortal(
-          <>
+          <div ref={portalRef}>
             <AnimatePresence>
               {aberto && (
                 <motion.div
@@ -201,7 +219,7 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
                 }
               />
             </div>
-          </>,
+          </div>,
           document.body
         )}
     </div>

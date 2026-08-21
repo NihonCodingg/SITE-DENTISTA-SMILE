@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCapability } from '@/lib/useCapability';
 import { useLenis } from '@/lib/motion';
+import { isolarFundo } from '@/lib/fundoInerte';
 import type Lenis from 'lenis';
 
 type Props = {
@@ -71,6 +72,10 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
   const painelRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const gatilhoRef = useRef<HTMLElement | null>(null);
+  // Wrapper único do portal (backdrop + painel) — fica de fora do isolamento
+  // do fundo (Task 18, F3b; mesmo padrão de MobileMenu.tsx).
+  const portalRef = useRef<HTMLDivElement>(null);
+  const restaurarFundoRef = useRef<(() => void) | null>(null);
 
   const aberto = slug !== null;
 
@@ -109,6 +114,10 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
       painelRef.current.setAttribute('aria-hidden', 'true');
       painelRef.current.inert = true;
     }
+    // Restaura o fundo ANTES de devolver o foco: o gatilho (card de vídeo)
+    // mora no <main>, que está inerte — `focus()` nele seria um no-op.
+    restaurarFundoRef.current?.();
+    restaurarFundoRef.current = null;
     gatilhoRef.current?.focus();
     onFechar();
   };
@@ -141,6 +150,9 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
     // exceção conhecida que não foca botão por clique de mouse).
     gatilhoRef.current = document.activeElement as HTMLElement | null;
     travarScroll(lenis);
+    // Tudo que não é este portal (header, main, footer, FAB, o portal do
+    // drawer) fica inert + aria-hidden enquanto o lightbox está aberto.
+    restaurarFundoRef.current = isolarFundo([portalRef.current]);
 
     const painel = painelRef.current;
     if (painel) {
@@ -175,6 +187,10 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
     return () => {
       document.removeEventListener('keydown', aoTeclar);
       destravarScroll(lenis);
+      // Idempotente: `fechar()` já restaurou quando o fechamento passou por
+      // ele; aqui cobre o pai zerando `slug` direto e a desmontagem.
+      restaurarFundoRef.current?.();
+      restaurarFundoRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aberto, montado]);
@@ -210,7 +226,7 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
   if (!montado) return null;
 
   return createPortal(
-    <>
+    <div ref={portalRef}>
       <AnimatePresence>
         {aberto && (
           <motion.div
@@ -296,7 +312,7 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
           )}
         </AnimatePresence>
       </div>
-    </>,
+    </div>,
     document.body
   );
 }

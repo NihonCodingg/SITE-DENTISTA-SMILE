@@ -220,6 +220,65 @@ describe('Header', () => {
     expect(document.activeElement).toBe(hamburguer);
   });
 
+  // Task 18 (F3b): com o drawer aberto, o FUNDO (tudo que é filho do body e
+  // não é o portal do drawer — na página real: header, main, footer, FAB)
+  // fica inert + aria-hidden; ao fechar, volta exatamente ao estado anterior.
+  // O jsdom não faz layout nem implementa a semântica de `inert`; o que se
+  // trava aqui é o ATRIBUTO (mesma via do teste de "fica inacessivel" acima).
+  // `<Header />` é renderizado pela RTL dentro de um <div> filho do body —
+  // esse <div> faz o papel do <header> da página; main/footer são criados à
+  // mão como irmãos, com um aria-hidden pré-existente no footer para provar
+  // que a restauração não o apaga.
+  it('com o drawer aberto, header, main e footer ficam inert + aria-hidden; ao fechar, voltam ao estado anterior', async () => {
+    const main = document.createElement('main');
+    const footer = document.createElement('footer');
+    footer.setAttribute('aria-hidden', 'true');
+    document.body.append(main, footer);
+    try {
+      render(<Header />);
+      const hamburguer = screen.getByRole('button', { name: 'Abrir menu' });
+      const fundoDoHeader = hamburguer.closest('body > *')!;
+      expect(fundoDoHeader).not.toHaveAttribute('inert');
+
+      fireEvent.click(hamburguer);
+      await waitFor(() => expect(document.querySelector('[role="dialog"]:not([aria-hidden="true"])')).not.toBeNull());
+
+      [fundoDoHeader, main, footer].forEach((el) => {
+        expect(el).toHaveAttribute('inert');
+        expect(el).toHaveAttribute('aria-hidden', 'true');
+      });
+      // O portal do drawer (wrapper do backdrop + painel) fica de fora.
+      const painel = document.querySelector('[role="dialog"]')!;
+      const portal = painel.closest('body > *')!;
+      expect(portal).not.toHaveAttribute('inert');
+      expect(portal).not.toHaveAttribute('aria-hidden');
+
+      // Ordem de `fechar()`: o fundo é restaurado ANTES de devolver o foco ao
+      // hambúrguer — num navegador real, focus() em elemento inerte é no-op.
+      const registro: boolean[] = [];
+      const focusOriginal = HTMLElement.prototype.focus;
+      const spy = vi.spyOn(HTMLElement.prototype, 'focus').mockImplementation(function (this: HTMLElement, ...args) {
+        if (this === hamburguer) registro.push(fundoDoHeader.hasAttribute('inert'));
+        return focusOriginal.apply(this, args);
+      });
+      fireEvent.keyDown(document, { key: 'Escape' });
+      spy.mockRestore();
+      expect(registro).toEqual([false]);
+
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Menu' })).toBeNull());
+      [fundoDoHeader, main].forEach((el) => {
+        expect(el).not.toHaveAttribute('inert');
+        expect(el).not.toHaveAttribute('aria-hidden');
+      });
+      expect(footer).not.toHaveAttribute('inert');
+      expect(footer).toHaveAttribute('aria-hidden', 'true'); // pré-existente, preservado
+      expect(document.activeElement).toBe(hamburguer);
+    } finally {
+      main.remove();
+      footer.remove();
+    }
+  });
+
   it('prende o foco dentro do painel nas duas direcoes (Tab e Shift+Tab)', async () => {
     render(<Header />);
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));

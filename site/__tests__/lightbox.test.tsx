@@ -151,6 +151,73 @@ describe('Lightbox', () => {
     expect(document.activeElement).toBe(gatilho);
   });
 
+  // Task 18 (F3b): mesmo helper do drawer (lib/fundoInerte.ts). Com o
+  // lightbox aberto, tudo que é filho do body e não é o portal do lightbox
+  // fica inert + aria-hidden; ao fechar (pelo pai zerando `slug` OU por
+  // Escape), volta ao estado anterior. O <div> que a RTL cria no body faz o
+  // papel do <main> da página (é onde o gatilho mora).
+  it('com o lightbox aberto, o fundo fica inert + aria-hidden; ao fechar, volta ao estado anterior', async () => {
+    const header = document.createElement('header');
+    const footer = document.createElement('footer');
+    footer.setAttribute('aria-hidden', 'true');
+    document.body.append(header, footer);
+    try {
+      const { container, rerender } = render(<Lightbox slug="tour-clinica" legenda="Tour" onFechar={() => {}} />);
+      await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
+
+      [header, footer, container].forEach((el) => {
+        expect(el).toHaveAttribute('inert');
+        expect(el).toHaveAttribute('aria-hidden', 'true');
+      });
+      const portal = document.querySelector('[role="dialog"]')!.closest('body > *')!;
+      expect(portal).not.toHaveAttribute('inert');
+      expect(portal).not.toHaveAttribute('aria-hidden');
+
+      rerender(<Lightbox slug={null} legenda="Tour" onFechar={() => {}} />);
+      await waitFor(() => expect(header).not.toHaveAttribute('inert'));
+      [header, container].forEach((el) => {
+        expect(el).not.toHaveAttribute('inert');
+        expect(el).not.toHaveAttribute('aria-hidden');
+      });
+      expect(footer).not.toHaveAttribute('inert');
+      expect(footer).toHaveAttribute('aria-hidden', 'true'); // pré-existente, preservado
+    } finally {
+      header.remove();
+      footer.remove();
+    }
+  });
+
+  it('ao fechar por Escape, restaura o fundo ANTES de devolver o foco ao gatilho', async () => {
+    function Harness() {
+      const [slug, setSlug] = useState<string | null>(null);
+      return (
+        <>
+          <button onClick={() => setSlug('tour-clinica')}>Abrir</button>
+          <Lightbox slug={slug} legenda="Tour" onFechar={() => setSlug(null)} />
+        </>
+      );
+    }
+    const { container } = render(<Harness />);
+    const gatilho = screen.getByRole('button', { name: 'Abrir' });
+    gatilho.focus();
+    fireEvent.click(gatilho);
+    await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
+    expect(container).toHaveAttribute('inert'); // o "main" onde o gatilho mora
+
+    // Num navegador real, focus() em elemento dentro de subárvore inerte é
+    // no-op — a ordem restaurar→focar é o que faz o foco voltar de verdade.
+    const registro: boolean[] = [];
+    const focusOriginal = HTMLElement.prototype.focus;
+    const spy = vi.spyOn(HTMLElement.prototype, 'focus').mockImplementation(function (this: HTMLElement, ...args) {
+      if (this === gatilho) registro.push(container.hasAttribute('inert'));
+      return focusOriginal.apply(this, args);
+    });
+    fireEvent.keyDown(document, { key: 'Escape' });
+    spy.mockRestore();
+    expect(registro).toEqual([false]);
+    expect(document.activeElement).toBe(gatilho);
+  });
+
   it('trava o scroll da pagina (position:fixed) ao abrir e destrava ao fechar', async () => {
     const { rerender } = render(<Lightbox slug="tour-clinica" legenda="Tour" onFechar={() => {}} />);
     await waitFor(() => expect(document.body.style.position).toBe('fixed'));
