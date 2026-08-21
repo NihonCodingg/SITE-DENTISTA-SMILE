@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import { Header, ANCORA_TOPO } from '@/components/layout/Header';
 import { WhatsAppFab } from '@/components/layout/WhatsAppFab';
 
@@ -177,6 +177,32 @@ describe('Header', () => {
     });
   });
 
+  // Task 18 (F3a): com o drawer aberto, o ✕ do header fica SOB o backdrop
+  // (z-65) e o painel (z-70) — invisível e inalcançável por toque. O painel
+  // ganhou o próprio botão "Fechar menu", primeiro focável (foco inicial cai
+  // nele, como num diálogo); fechar por ele devolve o foco ao hambúrguer.
+  it('o painel tem botao "Fechar menu"; clicar nele fecha e devolve o foco ao hamburguer', async () => {
+    render(<Header />);
+    const hamburguer = screen.getByRole('button', { name: 'Abrir menu' });
+    fireEvent.click(hamburguer);
+
+    const painel = await screen.findByRole('dialog', { name: 'Menu' });
+    const fecharNoPainel = within(painel).getByRole('button', { name: 'Fechar menu' });
+    expect(fecharNoPainel.className).toMatch(/\bpressable\b/);
+    expect(fecharNoPainel.className).toMatch(/\bh-11\b/);
+    expect(fecharNoPainel.className).toMatch(/\bw-11\b/);
+
+    // Foco inicial cai no ✕ do painel (primeiro focável).
+    await waitFor(() => expect(document.activeElement).toBe(fecharNoPainel));
+
+    fireEvent.click(fecharNoPainel);
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Menu' })).toBeNull();
+    });
+    expect(document.activeElement).toBe(hamburguer);
+    expect(hamburguer).toHaveAttribute('aria-expanded', 'false');
+  });
+
   it('Escape fecha o drawer e devolve o foco ao hamburguer', async () => {
     render(<Header />);
     const hamburguer = screen.getByRole('button', { name: 'Abrir menu' });
@@ -206,6 +232,10 @@ describe('Header', () => {
 
     const primeiro = focaveis()[0];
     const ultimo = focaveis().at(-1)!;
+    // Desde a Task 18 (F3a) o primeiro focável é o ✕ do painel, e o último
+    // continua sendo o CTA do WhatsApp — o trap cobre primeiro↔último.
+    expect(primeiro).toHaveAttribute('aria-label', 'Fechar menu');
+    expect(ultimo).toHaveTextContent('Agendar avaliação');
 
     // Tab a partir do último elemento focável volta pro primeiro.
     ultimo.focus();

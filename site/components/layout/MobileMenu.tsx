@@ -76,7 +76,10 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
   };
 
   // Escape fecha, Tab/Shift+Tab prende o foco dentro do painel, e o foco
-  // inicial vai para o primeiro elemento focável do painel ao abrir.
+  // inicial vai para o primeiro elemento focável do painel ao abrir — que,
+  // desde a Task 18 (F3a), é o botão ✕ dentro do painel (é o que um diálogo
+  // faz; o ✕ do header da página fica sob o backdrop/painel quando aberto,
+  // invisível e fora do alcance do toque — por isso o painel tem o seu).
   useEffect(() => {
     if (!aberto) return;
     const painel = painelRef.current;
@@ -175,6 +178,18 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
                 reducedMotion={!podeAnimar}
                 colors={['#F0B40C', '#FCCC24']}
                 accentColor="#F0B40C"
+                cabecalho={
+                  <div className="mb-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={fechar}
+                      aria-label="Fechar menu"
+                      className="pressable flex h-11 w-11 items-center justify-center rounded-full border border-borda-forte text-preto"
+                    >
+                      <HamburgerIcon aberto />
+                    </button>
+                  </div>
+                }
                 footer={
                   <a
                     href={waLink()}

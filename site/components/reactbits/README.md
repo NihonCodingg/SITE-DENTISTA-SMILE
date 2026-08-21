@@ -333,6 +333,15 @@ está em `task-19-report.md`.
       token deixa de ser órfão. Os números vivem em `MOTION_GAVETA` (exportado) e
       `__tests__/staggeredMenu.test.ts` os trava contra os tetos e contra o token do CSS.
       Sob `reducedMotion` nada disso roda (inalterado: só opacity, sem stagger).
+  13. **Prop `cabecalho?: ReactNode` (Task 18, F3a)** — slot renderizado dentro do painel, antes
+      da lista (simétrico ao `footer`, que já existia depois dela). Consequência da modificação
+      nº 1: ao remover o `<header>` interno (e com ele o toggle), o único ✕ que sobrou era o do
+      header da página — que, com o drawer aberto, fica **sob** o backdrop (`z-[65]`) e o painel
+      (`z-[70]`), invisível e inalcançável por toque. `MobileMenu.tsx` passa por este slot um botão
+      `aria-label="Fechar menu"`, `pressable`, 44×44, com o mesmo `<path>` de ✕ do `HamburgerIcon`.
+      Por vir antes da lista no DOM, é o primeiro focável do painel: o foco inicial cai nele (como
+      num diálogo) e o trap Tab/Shift+Tab continua cobrindo primeiro↔último. O hambúrguer do header
+      mantém `aria-expanded`/`aria-controls` e continua recebendo o foco de volta ao fechar.
 
 ### `Silk.tsx`
 

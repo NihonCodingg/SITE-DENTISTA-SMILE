@@ -77,6 +77,13 @@
  * - `--sm-num-opacity` continua sendo uma custom property por ITEM
  *   (`.sm-panel-item`), não numa var no elemento pai — não recalcula estilo
  *   de irmãos, dentro da regra de performance do design-guidance.md.
+ * - **`cabecalho` (Task 18, F3a):** slot renderizado dentro do painel,
+ *   antes da lista (como `footer` é depois). `MobileMenu.tsx` passa o botão
+ *   ✕ de fechar — o original tinha o toggle no `<header>` interno, removido
+ *   na vendorização (ver acima); sem ele, o ✕ do header da página ficava
+ *   SOB o backdrop e o painel, invisível e inalcançável por toque. Por vir
+ *   antes da lista no DOM, é o primeiro focável: o foco inicial cai nele,
+ *   como num diálogo.
  * - **Tempos e curva (Task 18, B).** O original abria em ~1,3s (camadas
  *   0,5s a cada 0,07s, painel 0,55s entrando em 0,15s, itens 0,8s com
  *   stagger 0,06s começando em 0,23s) e fechava em 0,28s com `power3.in` —
@@ -134,6 +141,8 @@ export interface StaggeredMenuProps {
   open: boolean;
   items: StaggeredMenuItem[];
   onItemClick?: () => void;
+  /** Renderizado dentro do painel, antes da lista (o botão ✕ de fechar). */
+  cabecalho?: React.ReactNode;
   footer?: React.ReactNode;
   position?: 'left' | 'right';
   /** Cores dos painéis decorativos que deslizam atrás do painel principal. */
@@ -151,6 +160,7 @@ export const StaggeredMenu = forwardRef<HTMLElement, StaggeredMenuProps>(functio
     open,
     items,
     onItemClick,
+    cabecalho,
     footer,
     position = 'right',
     colors = ['#F0B40C', '#FCCC24'],
@@ -360,6 +370,7 @@ export const StaggeredMenu = forwardRef<HTMLElement, StaggeredMenuProps>(functio
         style={reducedMotion ? { opacity: open ? 1 : 0 } : undefined}
       >
         <div>
+          {cabecalho}
           <ul className="sm-panel-list m-0 flex list-none flex-col p-0" data-numbering={displayItemNumbering || undefined}>
             {items.map((it, idx) => (
               <li key={it.link + idx} className="sm-panel-itemWrap relative overflow-hidden leading-none">
