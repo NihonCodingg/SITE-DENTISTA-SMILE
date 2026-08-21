@@ -26,6 +26,18 @@ import { Reveal } from '@/components/ui/Reveal';
  * que já está confirmado: o nome e o traço real do negócio que o
  * BRIEFING.md já aprova (§3: consultório boutique, 1 cadeira — "o ativo
  * real é atendimento pessoal e especializado").
+ *
+ * O `alt` da foto (correção pós-review) descreve a CENA, não a credencial:
+ * a primeira versão dizia "...ortodontista da Smile Ipiranga", e isso
+ * afirmava a especialidade como fato para quem usa leitor de tela — sem a
+ * ressalva de pendência que quem enxerga recebe pelo tracejado do `PENDENTE`
+ * logo abaixo. Duas pessoas recebendo informação diferente, e a versão sem
+ * ressalva é justamente a alegação que a Resolução CFO-196/2019 restringe.
+ * `alt` existe para dizer o que a imagem MOSTRA (um retrato do Dr. Vinicius
+ * no consultório), não para repetir uma credencial que já está no texto da
+ * seção — que o leitor de tela lê logo em seguida, com a marcação de
+ * pendente intacta. Testado: o `alt` não pode conter "ortodontista" (nem
+ * variação), o texto da seção continua contendo.
  */
 
 // Classe compartilhada pelas duas pendências (Ortodontista e CRO-SP) — uma
@@ -40,7 +52,7 @@ export function Profissional() {
           <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-borda">
             <Image
               src="/img/dr-vinicius.jpg"
-              alt="Dr. Vinicius Aracena, ortodontista da Smile Ipiranga"
+              alt="Dr. Vinicius Aracena no consultório da Smile Ipiranga"
               fill
               sizes="(max-width: 768px) 80vw, 380px"
               className="object-cover"

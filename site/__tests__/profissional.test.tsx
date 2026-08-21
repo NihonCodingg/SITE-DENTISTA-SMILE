@@ -57,6 +57,23 @@ describe('Profissional', () => {
     const img = container.querySelector('img');
     expect(img?.getAttribute('src')).toContain('dr-vinicius.jpg');
   });
+
+  // Regressão (review pós-implementação): o `alt` da foto tinha
+  // "...ortodontista da Smile Ipiranga" — afirmava a especialidade como
+  // fato para quem usa leitor de tela, sem a ressalva de pendência que
+  // quem enxerga recebe pelo tracejado (teste acima). `alt` deve descrever
+  // a CENA, não repetir a credencial — que já está no texto da seção,
+  // marcada como pendente. Se alguém reescrever o `alt` no futuro e
+  // reintroduzir a credencial, este teste pega.
+  it('o alt da foto descreve a cena, nao afirma a especialidade nao confirmada', () => {
+    const { container } = render(<Profissional />);
+    const img = container.querySelector('img');
+    expect(img?.getAttribute('alt') ?? '').not.toMatch(/ortodontista/i);
+    // ...enquanto o texto da seção continua trazendo a especialidade, com a
+    // marcação de pendente intacta (não é uma remoção da informação, é uma
+    // mudança de ONDE e COMO ela aparece).
+    expect(container.textContent).toMatch(/ortodontista/i);
+  });
 });
 
 describe('AntesDepois', () => {
