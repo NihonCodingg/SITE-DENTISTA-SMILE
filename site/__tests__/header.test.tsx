@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { Header } from '@/components/layout/Header';
+import { Header, ANCORA_TOPO } from '@/components/layout/Header';
 import { WhatsAppFab } from '@/components/layout/WhatsAppFab';
 
 vi.stubGlobal('matchMedia', (q: string) => ({
@@ -36,6 +38,20 @@ describe('Header', () => {
     render(<Header />);
     const cta = screen.getByRole('link', { name: /Agendar avaliação/i });
     expect(cta).toHaveAttribute('href', expect.stringContaining('wa.me/551122740228'));
+  });
+
+  // Task 18 (E2): o logo apontava para "#" — excluído de propósito pelo
+  // interceptador de âncoras (lib/motion.tsx), virava jump nativo bruto.
+  // "/" numa <a> comum recarregaria a página. "#topo" existe em app/page.tsx
+  // e cai no caminho normal do interceptador (Lenis rola suave até o topo).
+  it('o logo leva ao topo por ancora interceptavel (#topo), nao "#" nem "/"', () => {
+    render(<Header />);
+    const logo = screen.getByRole('link', { name: 'Smile Ipiranga' });
+    expect(ANCORA_TOPO).toMatch(/^#.+/);
+    expect(logo).toHaveAttribute('href', ANCORA_TOPO);
+    // ...e o alvo existe na página.
+    const page = readFileSync(path.resolve(__dirname, '../app/page.tsx'), 'utf8');
+    expect(page).toContain(`<main id="${ANCORA_TOPO.slice(1)}"`);
   });
 
   it('tem link de telefone acessivel', () => {

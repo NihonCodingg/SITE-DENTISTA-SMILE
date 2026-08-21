@@ -40,7 +40,8 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(dentistJsonLd()) }}
       />
       <Header />
-      <main className="bg-branco">
+      {/* id="topo": alvo do logo do header (ANCORA_TOPO, Task 18 E2) */}
+      <main id="topo" className="bg-branco">
         {/* Hero, Clínica e Depoimentos precisam do mesmo estado "qual vídeo
             está aberto" e de um único <Lightbox> — PaginaComVideo é a
             fronteira 'use client' que segura isso (Task 12), recebendo

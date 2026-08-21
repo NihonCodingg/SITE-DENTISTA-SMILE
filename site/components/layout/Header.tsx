@@ -13,11 +13,22 @@ const NAV = [
   { rotulo: 'Como Chegar', href: '#localizacao' },
 ] as const;
 
+/**
+ * Destino do logo (Task 18, E2). Não "#": o interceptador de âncoras de
+ * lib/motion.tsx o exclui de propósito, e o clique vira o jump nativo bruto,
+ * por fora do Lenis. Não "/": numa <a> comum é navegação de documento
+ * inteiro — a página recarrega (flash branco, re-hidratação, Silk de novo).
+ * "#topo" aponta para o <main id="topo"> de app/page.tsx e cai no caminho
+ * normal do interceptador: Lenis rola suave até o topo (sem Lenis, sob
+ * reduced-motion, é o salto nativo instantâneo — certo para esse caso).
+ */
+export const ANCORA_TOPO = '#topo';
+
 export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#F1E7DB] bg-branco/94 backdrop-blur-[8px]">
       <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-[10px] md:px-8">
-        <a href="#" className="shrink-0">
+        <a href={ANCORA_TOPO} className="shrink-0">
           <Image src="/img/logo.png" alt="Smile Ipiranga" width={82} height={46} preload className="h-[46px] w-auto" />
         </a>
 
