@@ -15,6 +15,13 @@ const jost = Jost({ subsets: ['latin'], weight: ['400','500'], variable: '--font
 // `font-semibold`/`font-bold` no projeto inteiro (`grep -rn "font-semibold\
 // |font-bold" components app`, Task 17). 600 e 700 eram baixados à toa.
 const source = Source_Sans_3({ subsets: ['latin'], weight: '400', variable: '--fonte-source', display: 'swap' });
+// Task 17 (performance): testado `preload: false` aqui (a Caveat só é usada em
+// CtaFinal.tsx, abaixo da dobra — hipótese: tirá-la da rajada de preload de
+// alta prioridade liberaria banda simulada pra foto do hero). Medido (3
+// builds, 3 lighthouse cada): LCP simulado não mudou (4368,7ms vs 4360,6ms
+// da baseline — dentro do ruído) e o FCP simulado PIOROU de forma
+// reprodutível (~910ms → ~1220ms nas 3 amostras). Sem ganho e com regressão
+// medida — revertido. Detalhe completo em task-17-report.md.
 const caveat = Caveat({ subsets: ['latin'], weight: '600', variable: '--fonte-caveat', display: 'swap' });
 
 // Só `metadataBase` mora aqui: é a única configuração de metadata que o
