@@ -43,9 +43,26 @@ describe('Localizacao', () => {
     expect(screen.getByText(/Rua Clemente Pereira, 507/)).toBeInTheDocument();
   });
 
-  it('carrega o mapa de forma preguicosa', () => {
+  // Regressão de review (Task 15): a primeira versão desta seção montava o
+  // `<iframe loading="lazy">` incondicionalmente no HTML, justificando isso
+  // com este mesmo teste (que só checava o atributo, não a ausência do
+  // nó). `loading="lazy"` adia a BUSCA do conteúdo até chegar perto da
+  // viewport, mas numa página de seção única rolar até aqui é exatamente o
+  // que a pessoa faz — os ~270KB entram de qualquer jeito, só mais tarde. A
+  // garantia real de "não montar de cara" só existe não colocando o
+  // `<iframe>` no HTML até a ativação de verdade (clique OU interseção).
+  it('nao monta o iframe do mapa antes de clicar ou entrar na viewport', () => {
     const { container } = render(<Localizacao />);
-    expect(container.querySelector('iframe')).toHaveAttribute('loading', 'lazy');
+    expect(container.querySelector('iframe')).toBeNull();
+  });
+
+  it('monta o iframe (com loading=lazy) depois de clicar em "Ver no mapa"', () => {
+    render(<Localizacao />);
+    const botao = screen.getByRole('button', { name: /ver no mapa/i });
+    fireEvent.click(botao);
+    const iframe = document.querySelector('iframe');
+    expect(iframe).not.toBeNull();
+    expect(iframe).toHaveAttribute('loading', 'lazy');
   });
 
   it('nao afirma horario de atendimento como fato', () => {

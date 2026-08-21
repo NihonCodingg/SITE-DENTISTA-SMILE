@@ -133,3 +133,71 @@ describe('MotionProvider — ScrollTrigger.refresh() nos dois pontos da correç�
     scrollToSpy.mockRestore();
   });
 });
+
+// Regressão de review (Task 15): a primeira versão da correção acima vivia
+// inteira dentro do guard `if (!montado || !podeAnimar) return`, então quem
+// tem prefers-reduced-motion: reduce ligado nunca chegava a rodar o refresh
+// por hash-na-montagem — mesmo <Reveal> (Reveal.tsx) criando um
+// ScrollTrigger de verdade independente de podeAnimar ("reduzir não é
+// zerar": o reveal continua existindo sob reduced-motion, só sem o
+// deslocamento). É o pior segmento pra deixar quebrado: quem liga movimento
+// reduzido geralmente faz por necessidade, não preferência estética.
+describe('MotionProvider — refresh por hash funciona TAMBÉM sob prefers-reduced-motion', () => {
+  let refreshSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    mockMatchMedia(true); // reduced-motion ligado — podeAnimar fica false
+    mockNavigatorCapaz();
+    refreshSpy = vi.spyOn(ScrollTrigger, 'refresh').mockImplementation(() => undefined as unknown as void);
+  });
+
+  afterEach(() => {
+    refreshSpy.mockRestore();
+    window.location.hash = '';
+  });
+
+  it('com location.hash presente na montagem, chama ScrollTrigger.refresh() mesmo sem Lenis (reduced-motion)', async () => {
+    window.location.hash = '#tratamentos';
+    render(
+      <MotionProvider>
+        <Probe />
+      </MotionProvider>
+    );
+    // Confirma primeiro que este é de fato o caminho sem Lenis (podeAnimar
+    // false) — sem isso o teste não prova o que diz provar.
+    expect(screen.getByTestId('probe')).toHaveTextContent('sem-lenis');
+    await waitFor(() => expect(refreshSpy).toHaveBeenCalled());
+  });
+
+  it('sem location.hash na montagem, NÃO chama ScrollTrigger.refresh() (reduced-motion)', async () => {
+    window.location.hash = '';
+    render(
+      <MotionProvider>
+        <Probe />
+      </MotionProvider>
+    );
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(refreshSpy).not.toHaveBeenCalled();
+  });
+
+  it('nao registra listener de clique de ancora quando nao ha Lenis (reduced-motion)', () => {
+    const scrollToSpy = vi.spyOn(Lenis.prototype, 'scrollTo');
+
+    const { container } = render(
+      <MotionProvider>
+        <a href="#tratamentos">Ir para tratamentos</a>
+        <section id="tratamentos" />
+      </MotionProvider>
+    );
+
+    const link = container.querySelector('a[href="#tratamentos"]')!;
+    const evento = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    link.dispatchEvent(evento);
+
+    // Sem Lenis, o comportamento nativo do link deve valer — nada de
+    // preventDefault nem lenis.scrollTo() interceptando o clique.
+    expect(scrollToSpy).not.toHaveBeenCalled();
+    expect(evento.defaultPrevented).toBe(false);
+    scrollToSpy.mockRestore();
+  });
+});

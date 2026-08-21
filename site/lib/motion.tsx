@@ -108,8 +108,58 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
   const raf = useRef<number>(0);
 
   useEffect(() => {
-    if (!montado || !podeAnimar) return;
+    if (!montado) return;
     gsap.registerPlugin(ScrollTrigger);
+
+    // Navegação direta para uma URL que JÁ chega com hash (link de bio/story
+    // do Instagram, reload, back/forward do navegador) nunca dispara nenhum
+    // evento de `click` — é o navegador quem faz o salto nativo pro
+    // elemento sozinho. Os ScrollTrigger de cada <Reveal> (Reveal.tsx)
+    // calculam a posição de disparo contra o layout NAQUELE instante da
+    // montagem; se o layout ainda não assentou (fontes carregando, imagens
+    // sem decodificar), essa posição fica errada, e sem ninguém chamar
+    // `.refresh()` depois, ela nunca se corrige — a seção renderiza presa
+    // em opacity:0 mesmo com a pessoa já rolada até ela.
+    //
+    // Correção de review (este bloco morava inteiro dentro do guard de
+    // `podeAnimar`, abaixo): <Reveal> cria um ScrollTrigger de verdade
+    // INDEPENDENTE de `podeAnimar` — as duas branches do `gsap.fromTo` de
+    // Reveal.tsx têm `scrollTrigger: {...once:true}`, porque "reduzir não é
+    // zerar": o reveal continua existindo sob `prefers-reduced-motion`, só
+    // sem o deslocamento. Then, o bug de hash-na-montagem também afeta quem
+    // tem movimento reduzido — e é o pior segmento pra deixar quebrado,
+    // porque em geral essa preferência é ligada por necessidade, não
+    // estética. Por isso este bloco roda sempre que há `ScrollTrigger` na
+    // página (ou seja, sempre que `montado`), não só quando o Lenis existe.
+    //
+    // `cancelado` evita chamar `ScrollTrigger.refresh()` depois que este
+    // efeito já foi desmontado (StrictMode, ou a capacidade mudando entre
+    // renders enquanto a promise ainda está pendente).
+    let cancelado = false;
+    if (typeof location !== 'undefined' && location.hash) {
+      esperarLayoutAssentar().then(() => {
+        if (cancelado) return;
+        // UMA chamada só, depois da espera — ScrollTrigger.refresh() é caro
+        // (recalcula TODOS os triggers da página), então nunca deve rodar em
+        // loop nem em resposta a scroll; aqui é uma vez por montagem, só
+        // quando existe hash. `once: true` em cada <Reveal> (Reveal.tsx) já
+        // mata o próprio ScrollTrigger assim que dispara — um refresh()
+        // depois disso não reanima nada que já tenha completado, só corrige
+        // os triggers que ainda não tiveram chance de disparar.
+        ScrollTrigger.refresh();
+      });
+    }
+
+    // Tudo daqui pra baixo depende do Lenis existir de verdade. Sem
+    // movimento (podeAnimar=false), o comportamento nativo de scroll deve
+    // valer sem interferência nenhuma: nenhum listener de clique
+    // interceptando âncoras, nenhuma instância de Lenis sendo criada — só o
+    // bloco acima (que não depende de Lenis) continua rodando.
+    if (!podeAnimar) {
+      return () => {
+        cancelado = true;
+      };
+    }
 
     const l = new Lenis({ duration: 1.05, smoothWheel: true, touchMultiplier: 1.6 });
     store.set(l);
@@ -151,40 +201,14 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
         // `onComplete` do próprio Lenis (não um `setTimeout` chutado) é o
         // sinal certo de "a animação de scroll realmente terminou" — chamar
         // cedo demais recalcularia contra uma posição de scroll que ainda
-        // ia mudar.
+        // ia mudar. Este `onComplete` só existe quando há Lenis de verdade
+        // (o clique nem é interceptado sem ele, ver guard acima) — ao
+        // contrário do refresh por hash-na-montagem, que roda mesmo sem
+        // Lenis.
         onComplete: () => ScrollTrigger.refresh(),
       });
     };
     document.addEventListener('click', aoClicarAncora);
-
-    // Navegação direta para uma URL que JÁ chega com hash (link de bio/story
-    // do Instagram, reload, back/forward do navegador) nunca passa pelo
-    // clique acima — não há nenhum `click` disparado, o navegador faz o
-    // próprio salto nativo pro elemento (instantâneo, ou só suavizado pelo
-    // `scroll-behavior: smooth` do CSS) e o Lenis nem fica sabendo. Mesmo
-    // sintoma do `onComplete` acima, causa diferente: os ScrollTrigger de
-    // cada <Reveal> calculam a posição de disparo contra o layout NAQUELE
-    // instante da montagem — se o layout ainda não assentou (fontes
-    // carregando, imagens sem decodificar), essa posição fica errada, e sem
-    // ninguém chamar `.refresh()` depois, ela nunca se corrige.
-    //
-    // `cancelado` evita chamar `ScrollTrigger.refresh()` depois que este
-    // efeito já foi desmontado (StrictMode, ou a capacidade mudando de
-    // podeAnimar=true para false enquanto a promise ainda está pendente).
-    let cancelado = false;
-    if (typeof location !== 'undefined' && location.hash) {
-      esperarLayoutAssentar().then(() => {
-        if (cancelado) return;
-        // UMA chamada só, depois da espera — ScrollTrigger.refresh() é caro
-        // (recalcula TODOS os triggers da página), então nunca deve rodar em
-        // loop nem em resposta a scroll; aqui é uma vez por montagem, só
-        // quando existe hash. `once: true` em cada <Reveal> (Reveal.tsx) já
-        // mata o próprio ScrollTrigger assim que dispara — um refresh()
-        // depois disso não reanima nada que já tenha completado, só corrige
-        // os triggers que ainda não tiveram chance de disparar.
-        ScrollTrigger.refresh();
-      });
-    }
 
     return () => {
       cancelado = true;

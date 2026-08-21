@@ -18,26 +18,59 @@ const MAPS_EMBED_URL =
   '&output=embed';
 
 /**
- * Card "foto da fachada → mapa" (Task 15). O iframe do Google Maps é o
- * maior peso de terceiro da página (~300KB) — o requisito duro do brief é
- * não montá-lo de cara.
+ * O iframe do Google Maps, montado SÓ quando `<CardMapa>` decide revelar
+ * (clique ou interseção — ver abaixo). Componente próprio só para poder dar
+ * um fade de entrada (`pronto`, `requestAnimationFrame` de um tick — dá
+ * tempo do navegador pintar o estado inicial `opacity-0` antes de animar
+ * para `opacity-100`, senão a transição não teria de onde partir) sem
+ * misturar esse detalhe decorativo com a lógica de revelar do card.
  *
- * Solução de duas camadas, não montagem condicional em React:
- *   1. O `<iframe loading="lazy">` já nasce no HTML, sempre — é assim que o
- *      teste de regressão (`rodape.test.tsx`) confirma o comportamento, e é
- *      também a técnica que de fato economiza a banda: `loading="lazy"` é
- *      nativo do navegador e adia o download do conteúdo do iframe até ele
- *      chegar perto da viewport, sem precisar de nenhum JavaScript rodando
- *      para isso funcionar (inclusive com JS desligado). Como Localização é
- *      a penúltima seção da página, o iframe começa fora da tela — o
- *      navegador não busca o conteúdo no carregamento inicial.
- *   2. Por cima dele, a foto real da fachada cobre o card inteiro com um
- *      botão "Ver no mapa" — ninguém vê o iframe (nem interage com ele) até
- *      clicar OU até a seção entrar na viewport, o que vier primeiro. Isso
- *      é controlado por estado React (IntersectionObserver + onClick), uma
- *      decisão independente da camada 1: mesmo que o navegador ainda não
- *      tenha buscado o iframe (ou não suporte `loading="lazy"`), a pessoa
- *      já vê a foto real da clínica em vez de uma tela vazia.
+ * Correção de review (Task 15): a primeira versão desta seção montava o
+ * `<iframe loading="lazy">` incondicionalmente no HTML — `loading="lazy"`
+ * de fato adia a *busca* do conteúdo até chegar perto da viewport, mas essa
+ * NUNCA foi a mesma garantia que "não montar de cara" pede: numa página de
+ * seção única, rolar até aqui é exatamente o que a pessoa faz, e os ~270KB
+ * entram de qualquer jeito, só um pouco mais tarde. E medido em revisão:
+ * pode nem esperar — cache de perfil do navegador é conhecido por
+ * desativar esse adiamento. A garantia real só existe não colocando o
+ * `<iframe>` no HTML até a ativação de verdade.
+ */
+function IframeMapa() {
+  const [pronto, setPronto] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setPronto(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  return (
+    <iframe
+      src={MAPS_EMBED_URL}
+      loading="lazy"
+      referrerPolicy="no-referrer-when-downgrade"
+      title="Mapa de localização da Smile Ipiranga, na Rua Clemente Pereira, 507"
+      className={
+        'absolute inset-0 h-full w-full border-0 transition-opacity duration-300 ease-[var(--ease-saida)] ' +
+        (pronto ? 'opacity-100' : 'opacity-0')
+      }
+    />
+  );
+}
+
+/**
+ * Card "foto da fachada → mapa" (Task 15). O iframe do Google Maps é o
+ * maior peso de terceiro da página (~270KB medidos, ver task-15-report.md)
+ * — o requisito duro do brief é não montá-lo de cara.
+ *
+ * `revelado` decide entre DOIS ramos que se excluem: enquanto `false`, o
+ * card inteiro é um `<button>` mostrando a foto real da fachada com um
+ * rótulo "Ver no mapa" (mesmo padrão de `VideoCard.tsx` — poster/vídeo
+ * trocam por um ternário, não por camadas sobrepostas com opacidade);
+ * quando `true`, vira `<IframeMapa>`. O `<iframe>` só existe no DOM depois
+ * que `revelado` vira `true` — clicando no botão OU quando o card entra na
+ * viewport (`IntersectionObserver`, `rootMargin: 200px`), o que vier
+ * primeiro. Antes disso, `document.querySelector('iframe')` dentro desta
+ * seção não encontra nada — é o que `rodape.test.tsx` prova.
  */
 function CardMapa() {
   const [revelado, setRevelado] = useState(false);
@@ -65,43 +98,34 @@ function CardMapa() {
     // brief: 0.05), independente de quando a foto ou o mapa terminam de
     // chegar.
     <div ref={containerRef} className="relative aspect-[3/4] w-full overflow-hidden rounded-[24px] bg-borda">
-      <iframe
-        src={MAPS_EMBED_URL}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="Mapa de localização da Smile Ipiranga, na Rua Clemente Pereira, 507"
-        className="absolute inset-0 h-full w-full border-0"
-      />
-
-      <div
-        aria-hidden={revelado}
-        className={
-          'absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-[var(--ease-saida)] ' +
-          (revelado ? 'pointer-events-none opacity-0' : 'opacity-100')
-        }
-      >
-        <Image
-          src="/img/fachada.jpg"
-          alt="Fachada da Smile Ipiranga, na Rua Clemente Pereira, 507"
-          fill
-          sizes="(max-width: 768px) 90vw, 460px"
-          style={{ objectPosition: 'center 62%' }}
-          className="object-cover"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-t from-preto/55 via-preto/5 to-transparent"
-        />
+      {revelado ? (
+        <IframeMapa />
+      ) : (
         <button
           type="button"
           onClick={() => setRevelado(true)}
-          tabIndex={revelado ? -1 : 0}
-          className="pressable relative flex min-h-11 items-center gap-2 rounded-full bg-branco/94 px-6 font-rotulo text-[13px] font-medium tracking-[.08em] text-preto uppercase backdrop-blur-[6px] pointer-fine:hover:bg-branco"
+          className="pressable group absolute inset-0 flex h-full w-full items-center justify-center text-left"
         >
-          <PinIcon />
-          Ver no mapa
+          <Image
+            src="/img/fachada.jpg"
+            alt=""
+            fill
+            sizes="(max-width: 768px) 90vw, 460px"
+            style={{ objectPosition: 'center 62%' }}
+            className="pointer-events-none object-cover"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-preto/55 via-preto/5 to-transparent"
+          />
+          {/* Nome acessível do botão vem deste texto — nada de aria-hidden
+              aqui (só no ícone, decorativo por si). */}
+          <span className="pointer-events-none relative flex min-h-11 items-center gap-2 rounded-full bg-branco/94 px-6 font-rotulo text-[13px] font-medium tracking-[.08em] text-preto uppercase backdrop-blur-[6px] pointer-fine:group-hover:bg-branco">
+            <PinIcon />
+            Ver no mapa
+          </span>
         </button>
-      </div>
+      )}
     </div>
   );
 }
