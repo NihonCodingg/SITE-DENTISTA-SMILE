@@ -7,6 +7,12 @@ import { PASSOS } from '@/lib/content';
 import { Reveal } from '@/components/ui/Reveal';
 import { useCapability } from '@/lib/useCapability';
 
+// 60ms — teto da janela de 30-80ms do guia de craft (correção pós-review:
+// o brief original pedia i*0.1 = 100ms, acima do teto; alinhado aqui com o
+// mesmo STAGGER_STEP que AntesDepois.tsx já usa, por consistência entre
+// seções).
+const STAGGER_STEP = 0.06;
+
 /**
  * Linha de progresso vertical "ligando os quatro números" (brief), scaleY
  * 0→1 via ScrollTrigger, só `transform`.
@@ -106,7 +112,7 @@ export function ComoFunciona() {
           {PASSOS.map((p, i) => (
             <Reveal
               key={p.n}
-              delay={i * 0.1}
+              delay={i * STAGGER_STEP}
               className="flex flex-col gap-2 border-t-[3px] border-borda-forte pt-5"
             >
               <span className="font-titulo text-[40px] leading-none text-amarelo">{p.n}</span>

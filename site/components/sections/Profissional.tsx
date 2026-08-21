@@ -7,22 +7,31 @@ import { Reveal } from '@/components/ui/Reveal';
  * Pilares.tsx/Tratamentos.tsx, o único cliente é o próprio <Reveal>, que já
  * carrega 'use client' internamente.
  *
- * O CRO é uma pendência REAL, não um placeholder de design (ver BRIEFING.md
- * §4 e PERGUNTAS-CLIENTE.md, pendência nº1: "trava a publicação"). O texto
- * "CRO-SP a confirmar" precisa continuar exatamente assim — nunca um número
- * inventado — até o cliente confirmar. `.pendente` marca essa lacuna com
- * `border-bottom: 2px dashed` dourado (brief), para ficar visualmente óbvio
- * (pro cliente e pra quem revisar) que aquele trecho ainda não está pronto
- * para ir ao ar. Ver PERGUNTAS-CLIENTE.md para a pergunta já formulada.
+ * DUAS pendências reais nesta seção, não uma só (correção pós-review: a
+ * primeira versão só marcava o CRO). BRIEFING.md §4 marca separadamente:
+ *   - CRO: "—" (⚠️ PENDENTE — obrigatório na publicidade odontológica)
+ *   - Especialidade: "Ortodontista (bordado no jaleco)" mas
+ *     "⚠️ PENDENTE — confirmar se é especialidade registrada"
+ * São dados distintos. Pela Resolução CFO-196/2019 não se anuncia
+ * especialidade sem registro correspondente — exibir "Ortodontista" como
+ * fato afirmado sem essa confirmação carrega o mesmo risco regulatório que
+ * inventar um número de CRO. Por isso os DOIS trechos (não só o CRO) levam
+ * `border-bottom: 2px dashed` dourado (`PENDENTE`, abaixo) — nem o texto
+ * nem a ordem mudam, só fica visualmente óbvio que ambos são dados a
+ * confirmar antes de publicar. Ver PERGUNTAS-CLIENTE.md, pendência nº1.
  *
  * O parágrafo abaixo não pode citar formação, tempo de atuação ou qualquer
  * fato específico não confirmado (COPY.md §6 marca esse texto como
  * "⚠️ a escrever com o cliente" — exatamente essas três coisas). Só usa o
- * que já está confirmado: o nome, a especialidade declarada no jaleco
- * (Ortodontista) e o traço real do negócio que o BRIEFING.md já aprova
- * (§3: consultório boutique, 1 cadeira — "o ativo real é atendimento
- * pessoal e especializado").
+ * que já está confirmado: o nome e o traço real do negócio que o
+ * BRIEFING.md já aprova (§3: consultório boutique, 1 cadeira — "o ativo
+ * real é atendimento pessoal e especializado").
  */
+
+// Classe compartilhada pelas duas pendências (Ortodontista e CRO-SP) — uma
+// fonte só, para as duas marcações nunca divergirem visualmente por acidente.
+const PENDENTE = 'border-b-[2px] border-dashed border-dourado pb-0.5';
+
 export function Profissional() {
   return (
     <section id="profissional" className="bg-creme px-4 py-16 md:px-8 md:py-24">
@@ -43,9 +52,9 @@ export function Profissional() {
           <SectionHeading sobretitulo="Quem vai te atender" titulo="Dr. Vinicius Aracena" />
 
           <p className="font-rotulo text-[15px] tracking-wide text-grafite">
-            Ortodontista{' '}
+            <span className={PENDENTE}>Ortodontista</span>{' '}
             <span aria-hidden="true">·</span>{' '}
-            <span className="border-b-[2px] border-dashed border-dourado pb-0.5">CRO-SP a confirmar</span>
+            <span className={PENDENTE}>CRO-SP a confirmar</span>
           </p>
 
           <p className="max-w-[46ch] font-corpo text-[16px] leading-relaxed text-grafite">

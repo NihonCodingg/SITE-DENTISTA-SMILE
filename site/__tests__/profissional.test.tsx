@@ -21,17 +21,33 @@ describe('Profissional', () => {
     expect(screen.queryByText(/CRO-SP\s*\d/)).toBeNull();
   });
 
-  it('marca o trecho pendente com a borda tracejada dourada do brief', () => {
+  it('marca o CRO pendente com a borda tracejada dourada do brief', () => {
     render(<Profissional />);
     const trecho = screen.getByText('CRO-SP a confirmar');
     expect(trecho.className).toMatch(/border-dashed/);
     expect(trecho.className).toMatch(/border-dourado/);
   });
 
+  // Regressão (review pós-implementação): BRIEFING.md §4 marca a
+  // especialidade em si como pendência separada do CRO ("Ortodontista
+  // (bordado no jaleco)... ⚠️ PENDENTE — confirmar se é especialidade
+  // registrada") — não uma coisa só. A primeira versão desta seção só
+  // tracejava o CRO; pela Resolução CFO-196/2019 não se anuncia
+  // especialidade sem registro correspondente, então "Ortodontista" exibido
+  // como fato afirmado, sem essa confirmação, carrega o mesmo risco
+  // regulatório que um CRO inventado.
+  it('marca TAMBEM a especialidade (Ortodontista) como pendente, nao so o CRO', () => {
+    render(<Profissional />);
+    const especialidade = screen.getByText('Ortodontista');
+    expect(especialidade.className).toMatch(/border-dashed/);
+    expect(especialidade.className).toMatch(/border-dourado/);
+  });
+
   it('nao inventa formacao, tempo de atuacao ou numero de CRO', () => {
-    // BRIEFING.md §4: só nome e especialidade declarada estão confirmados.
-    // Nenhum dígito pode aparecer perto de "CRO", e nenhuma das palavras que
-    // indicariam um dado de formação/tempo de atuação inventado.
+    // BRIEFING.md §4: só o nome está confirmado sem ressalva — especialidade
+    // e CRO são as duas pendências marcadas acima. Nenhum dígito pode
+    // aparecer perto de "CRO", e nenhuma das palavras que indicariam um
+    // dado de formação/tempo de atuação inventado.
     const { container } = render(<Profissional />);
     expect(container.textContent).not.toMatch(/anos? de (experiência|atuação)|formad[oa] (pela|em|no)/i);
   });
