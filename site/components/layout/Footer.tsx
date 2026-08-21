@@ -37,6 +37,10 @@ export function Footer() {
             <p className="font-rotulo text-[11px] uppercase tracking-[.28em] text-escuro-texto">
               Saúde &amp; Estética Orofacial
             </p>
+            {/* Assinatura que a própria marca repete no feed (BRIEFING.md §7,
+                "#sorrisocompropósito") — copy existente, não nova. Antes só
+                vivia na meta description, invisível no site (Task 18, E1). */}
+            <p className="font-rotulo text-[13px] tracking-[.06em] text-escuro-texto">Sorriso com propósito</p>
           </div>
 
           <div className="flex flex-col gap-2 font-corpo text-[14px] text-escuro-texto">

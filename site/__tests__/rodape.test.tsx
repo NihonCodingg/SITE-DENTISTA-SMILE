@@ -35,6 +35,20 @@ describe('Footer', () => {
     const link = screen.getByRole('link', { name: /whatsapp/i });
     expect(link.className).toMatch(/text-amarelo/);
   });
+
+  // Task 18 (E1): "Sorriso com propósito" é a assinatura mais repetida do
+  // feed da clínica (BRIEFING.md §7) e só existia na meta description. Entra
+  // como linha discreta sob o logo, em font-rotulo e escuro-texto (~9,4:1
+  // sobre o preto do rodapé — ver tabela de contraste no Footer.tsx).
+  it('traz a assinatura "Sorriso com propósito" sob o logo, discreta', () => {
+    render(<Footer />);
+    const assinatura = screen.getByText('Sorriso com propósito');
+    expect(assinatura.className).toMatch(/font-rotulo/);
+    expect(assinatura.className).toMatch(/text-escuro-texto/);
+    // Sob o logo: mesma coluna do <img alt="Smile Ipiranga">.
+    const logo = screen.getByAltText('Smile Ipiranga');
+    expect(logo.parentElement).toBe(assinatura.parentElement);
+  });
 });
 
 describe('Localizacao', () => {
