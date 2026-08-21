@@ -86,6 +86,19 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
     setUltimo({ slug, legenda });
   }
 
+  // Feedback de carregamento (Task 18, D — heurística 1, persona Casey em
+  // 3G): o .mp4 completo só começa a baixar no clique, e até o `canplay` a
+  // pessoa via um player parado sem saber se algo acontecia. Guarda o slug
+  // que já pode tocar — comparar com `ultimo.slug` (em vez de um booleano)
+  // faz o indicador voltar sozinho quando outro vídeo abre, sem efeito de
+  // reset. `<video poster>` mostra o quadro já baixado pelo card enquanto
+  // isso (o .webp existe para os 5 slugs).
+  const [slugPronto, setSlugPronto] = useState<string | null>(null);
+  const carregando = ultimo !== null && slugPronto !== ultimo.slug;
+  const aoPoderTocar = () => {
+    if (ultimo) setSlugPronto(ultimo.slug);
+  };
+
   const fechar = () => {
     videoRef.current?.pause();
     // Marca o painel não-interativo já no clique, sem esperar a AnimatePresence
@@ -171,6 +184,14 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
     aberto: { opacity: 1, transition: { duration: 0.25 } },
   };
 
+  // O indicador some com fade de ~200ms; sob reduced-motion some de uma vez
+  // (só opacity anima, e "reduzir não é zerar" vale para o que a pessoa
+  // precisa entender — aqui o sumiço em si já é a informação).
+  const variantesCarregando = {
+    visivel: { opacity: 1 },
+    sumido: { opacity: 0, transition: { duration: podeAnimar ? 0.2 : 0 } },
+  };
+
   // scale desligado sob reduced-motion — "reduzir não é zerar", o fade de
   // opacidade continua. Nunca de scale(0): nada no mundo real aparece do nada.
   // Saída (200ms) mais rápida que entrada (300ms): quem fecha já decidiu.
@@ -238,6 +259,8 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
                   controls
                   preload="metadata"
                   playsInline
+                  poster={`/videos/posters/${ultimo.slug}.webp`}
+                  onCanPlay={aoPoderTocar}
                   // tabIndex explícito: focalizabilidade nativa de <video controls>
                   // por Tab varia entre browsers (Safari é inconsistente). Um
                   // tabindex declarado remove a ambiguidade e é o que faz este
@@ -249,6 +272,26 @@ export function Lightbox({ slug, legenda, onFechar }: Props) {
                   className="block aspect-video w-full bg-preto"
                 />
               )}
+
+              {/* Discreto e fora do caminho: canto superior esquerdo (o ✕ está
+                  à direita, os controles nativos embaixo), pointer-events-none
+                  para nunca roubar um toque do player. role="status" para o
+                  leitor de tela saber que algo está acontecendo. */}
+              <AnimatePresence>
+                {carregando && (
+                  <motion.p
+                    key="carregando"
+                    role="status"
+                    initial="visivel"
+                    animate="visivel"
+                    exit="sumido"
+                    variants={variantesCarregando}
+                    className="pointer-events-none absolute left-3 top-3 z-10 m-0 rounded-full bg-preto/70 px-4 py-2 font-rotulo text-[12px] uppercase tracking-[.12em] text-branco"
+                  >
+                    Carregando vídeo…
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>

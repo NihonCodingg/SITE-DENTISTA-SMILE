@@ -159,6 +159,33 @@ describe('Lightbox', () => {
     await waitFor(() => expect(document.body.style.position).toBe(''));
   });
 
+  // Task 18 (D): feedback de carregamento. O .mp4 completo só começa a
+  // baixar no clique — até o `canplay`, poster do vídeo como fundo e um
+  // indicador discreto; depois do `canplay`, o indicador some.
+  it('mostra o poster e "Carregando vídeo…" ate o canplay, e some depois', async () => {
+    render(<Lightbox slug="tour-clinica" legenda="Tour" onFechar={() => {}} />);
+    await waitFor(() => expect(document.querySelector('video')).not.toBeNull());
+    const video = document.querySelector('video')!;
+    expect(video).toHaveAttribute('poster', '/videos/posters/tour-clinica.webp');
+    expect(screen.getByRole('status')).toHaveTextContent('Carregando vídeo…');
+
+    fireEvent.canPlay(video);
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+  });
+
+  it('o indicador volta quando outro video abre no mesmo lightbox', async () => {
+    const { rerender } = render(<Lightbox slug="tour-clinica" legenda="Tour" onFechar={() => {}} />);
+    await waitFor(() => expect(document.querySelector('video')).not.toBeNull());
+    fireEvent.canPlay(document.querySelector('video')!);
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
+
+    rerender(<Lightbox slug="caso-protese" legenda="Caso" onFechar={() => {}} />);
+    await waitFor(() => {
+      expect(document.querySelector('video')).toHaveAttribute('src', '/videos/completos/caso-protese.mp4');
+      expect(screen.getByRole('status')).toHaveTextContent('Carregando vídeo…');
+    });
+  });
+
   it('nao deixa dialog nenhum no DOM depois que a saida termina', async () => {
     const { rerender } = render(<Lightbox slug="tour-clinica" legenda="Tour" onFechar={() => {}} />);
     await waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull());
