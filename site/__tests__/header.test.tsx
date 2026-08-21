@@ -70,39 +70,44 @@ describe('Header', () => {
     });
   });
 
-  it('nao deixa nada no DOM com transform quando o drawer esta fechado', () => {
-    // Regressão do bug de overflow horizontal: um elemento fixed com
-    // transform:translateX(100%) conta para document.scrollWidth mesmo fora
-    // da viewport visível — mesmo estando aria-hidden (dois revisores
-    // confirmaram ao vivo: 375px virava 695px). jsdom não faz layout de
-    // verdade, então não dá pra medir scrollWidth aqui; a garantia real é
-    // sobre a própria existência do nó no DOM.
+  it('fica inacessivel (aria-hidden + inert) quando o drawer esta fechado', () => {
+    // Task 19: o painel trocou de motion.div+AnimatePresence (desmontava ao
+    // fechar) para StaggeredMenu do React Bits, animado via GSAP — GSAP
+    // anima o MESMO nó pra sempre, ele nunca desmonta. A garantia de
+    // "invisível pra quem usa teclado/leitor de tela quando fechado" agora
+    // vem de aria-hidden + inert amarrados direto à prop `open`, não da
+    // ausência do nó no DOM. A proteção contra overflow horizontal
+    // (scrollWidth) continua vindo da MESMA estrutura de wrapper
+    // .fixed.inset-0.overflow-hidden + painel .absolute (inalterada por
+    // esta troca) — verificada ao vivo no navegador, não aqui (jsdom não
+    // faz layout de verdade).
     //
-    // Importante: a consulta usa document.querySelector cru, NÃO
-    // screen.queryByRole. queryByRole já filtra elementos aria-hidden por
-    // padrão — o padrão antigo (painel sempre montado, só alternando
-    // aria-hidden) passaria por queryByRole mesmo com o bug presente, porque
-    // teria sumido da árvore de acessibilidade sem sumir do DOM. Só a
-    // consulta crua distingue "não está montado" (correto) de "está montado
-    // mas escondido de leitor de tela" (o próprio bug).
+    // getByRole já filtra elementos aria-hidden/inert por padrão — por isso
+    // a consulta usa document.querySelector cru: precisa achar o nó (ele
+    // está montado) e então confirmar que ele está marcado inacessível.
     render(<Header />);
-    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    const painel = document.querySelector('[role="dialog"]');
+    expect(painel).not.toBeNull();
+    expect(painel).toHaveAttribute('aria-hidden', 'true');
+    expect(painel).toHaveAttribute('inert');
+    // E continua fora da árvore de acessibilidade por essa via.
+    expect(screen.queryByRole('dialog', { name: 'Menu' })).toBeNull();
   });
 
   it('reabre acessivel mesmo fechando e reabrindo rapido, antes da saida terminar', async () => {
-    // Regressão achada pela review com 3 cliques reais a 60ms de intervalo:
-    // fechar() marca aria-hidden/inert direto no nó do painel (necessário
-    // porque a AnimatePresence segura o nó fora do ciclo normal de render
-    // durante a saída de ~220ms). Se a pessoa reabrir antes disso terminar,
-    // a AnimatePresence reaproveita o MESMO nó — sem abrir() limpar
-    // simetricamente o que fechar() setou, o painel reabre com
-    // aria-expanded="true" no botão mas inert/aria-hidden presos, e
-    // .focus() em qualquer item interno vira no-op silencioso.
+    // Regressão original (implementação motion.div+AnimatePresence, até a
+    // Task 18): fechar() marcava aria-hidden/inert direto no nó do painel
+    // porque a AnimatePresence segurava o nó fora do ciclo normal de render
+    // durante a saída. Reabrir antes disso terminar podia deixar
+    // inert/aria-hidden presos.
     //
-    // A consulta ao painel é refeita via document.querySelector (não uma
-    // referência guardada de antes do fechar/reabrir): cobre tanto o caso
-    // de a AnimatePresence reaproveitar o nó quanto o de criar um novo —
-    // o que importa é o estado observável depois do ciclo, não qual nó é.
+    // Task 19 (StaggeredMenu, GSAP): aria-hidden/inert agora são props
+    // React diretas amarradas a `aberto` — não existe mais nó "fora do
+    // ciclo normal de render" nem estado imperativo pra ficar preso. Este
+    // teste continua existindo porque a garantia observável (reabertura
+    // rápida tem que deixar o painel focável) é a mesma; só o mecanismo
+    // testado mudou de "resíduo imperativo limpo" para "prop sempre em
+    // sincronia com o estado".
     render(<Header />);
     const hamburguer = screen.getByRole('button', { name: 'Abrir menu' });
 
@@ -116,7 +121,7 @@ describe('Header', () => {
 
     const painel = document.querySelector('[role="dialog"]') as HTMLElement | null;
     expect(painel).not.toBeNull();
-    expect(painel!.inert).toBe(false);
+    expect(painel).not.toHaveAttribute('inert');
     expect(painel).not.toHaveAttribute('aria-hidden', 'true');
 
     // Prova adicional do sintoma relatado: o efeito de foco inicial
@@ -128,6 +133,105 @@ describe('Header', () => {
     await waitFor(() => {
       expect(painel!.contains(document.activeElement)).toBe(true);
     });
+  });
+
+  it('Escape fecha o drawer e devolve o foco ao hamburguer', async () => {
+    render(<Header />);
+    const hamburguer = screen.getByRole('button', { name: 'Abrir menu' });
+    fireEvent.click(hamburguer);
+
+    await waitFor(() => {
+      expect(screen.getByRole('dialog', { name: 'Menu' })).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Menu' })).toBeNull();
+    });
+    expect(document.activeElement).toBe(hamburguer);
+  });
+
+  it('prende o foco dentro do painel nas duas direcoes (Tab e Shift+Tab)', async () => {
+    render(<Header />);
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
+
+    const painel = await screen.findByRole('dialog', { name: 'Menu' });
+    const focaveis = () =>
+      Array.from(painel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+
+    await waitFor(() => expect(painel.contains(document.activeElement)).toBe(true));
+
+    const primeiro = focaveis()[0];
+    const ultimo = focaveis().at(-1)!;
+
+    // Tab a partir do último elemento focável volta pro primeiro.
+    ultimo.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(primeiro);
+
+    // Shift+Tab a partir do primeiro vai pro último.
+    primeiro.focus();
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(ultimo);
+  });
+
+  it('trava o scroll (lenis.stop) ao abrir e destrava (lenis.start) ao fechar', async () => {
+    // Sem <MotionProvider> na árvore (Header sozinho, como nos outros
+    // testes deste arquivo), useLenis() é sempre null — o próprio hook é
+    // testado em useCapability.test.tsx/motion.test.tsx. O que este teste
+    // prova é o fallback: sem Lenis, a trava usa position:fixed (não
+    // overflow:hidden, que remove a scrollbar e causa salto lateral) e
+    // desfaz exatamente isso ao fechar.
+    render(<Header />);
+    const hamburguer = screen.getByRole('button', { name: 'Abrir menu' });
+
+    fireEvent.click(hamburguer);
+    await waitFor(() => expect(document.body.style.position).toBe('fixed'));
+
+    fireEvent.click(hamburguer);
+    await waitFor(() => expect(document.body.style.position).toBe(''));
+  });
+
+  it('sob prefers-reduced-motion, abre e fecha sem chamar a timeline GSAP (só opacity)', async () => {
+    // O GSAP não passa pelo reset global de transition-duration do
+    // globals.css (GSAP não usa `transition` do CSS, interpola por conta
+    // própria a cada frame) — StaggeredMenu precisa desligar a timeline
+    // inteira sob reduced motion, não só encurtar. Este teste troca o stub
+    // de matchMedia só aqui (reduce:true) e confirma que abrir/fechar
+    // continua funcionando (aria-hidden/inert corretos) sem lançar erro.
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: q.includes('reduce'),
+      media: q,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    render(<Header />);
+    const hamburguer = screen.getByRole('button', { name: 'Abrir menu' });
+
+    fireEvent.click(hamburguer);
+    await waitFor(() => {
+      const dialog = document.querySelector('[role="dialog"]');
+      expect(dialog).not.toBeNull();
+      expect(dialog).not.toHaveAttribute('aria-hidden', 'true');
+      expect(dialog).not.toHaveAttribute('inert');
+    });
+
+    fireEvent.click(hamburguer);
+    await waitFor(() => {
+      const dialog = document.querySelector('[role="dialog"]');
+      expect(dialog).toHaveAttribute('aria-hidden', 'true');
+      expect(dialog).toHaveAttribute('inert');
+    });
+
+    // Restaura o stub padrão (reduce:false) pros testes seguintes do arquivo.
+    vi.stubGlobal('matchMedia', (q: string) => ({
+      matches: false,
+      media: q,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
   });
 });
 

@@ -6,26 +6,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { waLink } from '@/lib/contact';
 import { useCapability } from '@/lib/useCapability';
 import { useLenis } from '@/lib/motion';
+import { StaggeredMenu } from '@/components/reactbits/StaggeredMenu';
 import type Lenis from 'lenis';
 
 type Item = { rotulo: string; href: string };
-
-// Mesma curva de --ease-gaveta (globals.css), traduzida para o formato de array
-// que a Motion aceita — os dois lugares descrevem a mesma curva com a mesma
-// intenção: entrada e saída do drawer do menu mobile.
-const EASE_GAVETA: [number, number, number, number] = [0.32, 0.72, 0, 1];
-
-// Mesma curva de --ease-saida (globals.css) — feedback de toque nos itens do
-// drawer. Não pode depender da classe CSS .pressable ali: a Motion escreve o
-// transform de entrada como estilo inline no elemento assentado
-// ("transform: translateX(0px)"), e estilo inline sempre vence regra de
-// classe, com ou sem pseudo-classe — o :active de .pressable nunca ganharia.
-// whileTap injeta o scale no MESMO sistema que já é dono do transform desses
-// itens, então compõe corretamente em vez de perder a corrida de cascata — mas
-// só compõe de verdade se o transform de entrada TAMBÉM estiver nesse sistema
-// (ver o comentário em variantesItem, mais abaixo, sobre por que ele usa `x`
-// em vez do literal `transform: 'translateX()'`).
-const EASE_SAIDA: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
 const FOCAVEIS_SELETOR = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -58,44 +42,37 @@ function destravarScroll(lenis: Lenis | null) {
   window.scrollTo(0, top ? -parseInt(top, 10) : 0);
 }
 
+/**
+ * O painel em si (o retângulo que desliza, os itens em stagger, os painéis
+ * de cor por trás) veio do `StaggeredMenu` do React Bits — vendorizado e
+ * fortemente modificado em `components/reactbits/StaggeredMenu.tsx` (Task
+ * 19, "maximizar React Bits" — ver `components/reactbits/README.md`).
+ *
+ * Este componente continua dono de TUDO que o painel sozinho não resolve:
+ * o botão hambúrguer (que o React Bits também oferecia, mas duplicado com o
+ * nosso — removido da versão vendorizada), o foco preso nas duas direções,
+ * `Escape`, o retorno de foco ao fechar, a trava de scroll via
+ * `useLenis()?.stop()`, e o portal pra `document.body` (que resolve o
+ * mesmo bug de containing-block do `backdrop-filter` do header que já
+ * exigiu 3 rodadas de correção — inalterado pela troca).
+ */
 export function MobileMenu({ items }: { items: readonly Item[] }) {
   const [aberto, setAberto] = useState(false);
   const { podeAnimar, montado } = useCapability();
   const lenis = useLenis();
   const painelId = useId();
   const botaoRef = useRef<HTMLButtonElement>(null);
-  const painelRef = useRef<HTMLDivElement>(null);
+  const painelRef = useRef<HTMLElement | null>(null);
 
   const fechar = () => {
     setAberto(false);
     destravarScroll(lenis);
-    // Marca o painel como não-interativo já no instante do fechar, sem
-    // esperar a AnimatePresence terminar a animação de saída (~220ms): o
-    // React para de repassar props novas pra esse nó assim que ele some do
-    // JSX (é a própria AnimatePresence que segura o DOM vivo por fora do
-    // ciclo normal de render para tocar a saída), então aria-hidden/inert
-    // via prop ficariam presos no valor de quando o painel ainda estava
-    // aberto. Setar direto no nó por ref cobre esse intervalo.
-    if (painelRef.current) {
-      painelRef.current.setAttribute('aria-hidden', 'true');
-      painelRef.current.inert = true;
-    }
     botaoRef.current?.focus();
   };
 
   const abrir = () => {
     setAberto(true);
     travarScroll(lenis);
-    // Espelha o fechar() acima: se a pessoa reabrir antes da saída (~220ms)
-    // terminar, a AnimatePresence reaproveita o MESMO nó DOM que fechar()
-    // acabou de marcar aria-hidden/inert — sem isso o painel reabre preso
-    // (foco vira no-op silencioso, some de leitor de tela) mesmo com
-    // aria-expanded="true" no botão. Achado pela review com 3 cliques reais
-    // a 60ms de intervalo.
-    if (painelRef.current) {
-      painelRef.current.removeAttribute('aria-hidden');
-      painelRef.current.inert = false;
-    }
   };
 
   // Escape fecha, Tab/Shift+Tab prende o foco dentro do painel, e o foco
@@ -106,7 +83,11 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
     if (!painel) return;
 
     const focaveis = () => Array.from(painel.querySelectorAll<HTMLElement>(FOCAVEIS_SELETOR));
-    focaveis()[0]?.focus();
+    // Um quadro de folga: o StaggeredMenu acabou de tirar `inert` no mesmo
+    // commit que abriu — em navegador real isso já é síncrono o bastante,
+    // mas dar um `requestAnimationFrame` de folga custa nada e blinda contra
+    // qualquer navegador que adie a remoção de `inert` do layout.
+    const raf = requestAnimationFrame(() => focaveis()[0]?.focus());
 
     const aoTeclar = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -129,7 +110,10 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
     };
 
     document.addEventListener('keydown', aoTeclar);
-    return () => document.removeEventListener('keydown', aoTeclar);
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener('keydown', aoTeclar);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aberto]);
 
@@ -137,50 +121,6 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
     fechado: { opacity: 0, transition: { duration: 0.22 } },
     aberto: { opacity: 1, transition: { duration: 0.3 } },
   };
-
-  const variantesPainel = podeAnimar
-    ? {
-        // `opacity` é fixado em 1 nos dois estados (a visibilidade é só o
-        // transform) de propósito: useCapability() começa com podeAnimar
-        // false até o efeito resolver, então o primeiríssimo commit usa o
-        // ramo reduced-motion abaixo (que define opacity:0 em "fechado"). A
-        // Motion só atualiza propriedades presentes no variant atual — se
-        // este ramo não declarasse opacity, o 0 herdado daquele primeiro
-        // commit ficaria preso para sempre e o painel nunca apareceria.
-        fechado: { transform: 'translateX(100%)', opacity: 1, transition: { duration: 0.22, ease: EASE_GAVETA } },
-        aberto: {
-          transform: 'translateX(0%)',
-          opacity: 1,
-          transition: { duration: 0.3, ease: EASE_GAVETA, staggerChildren: 0.04, delayChildren: 0.08 },
-        },
-      }
-    : {
-        // Sob reduced-motion o drawer não desliza — só um fade curto, sem
-        // escalonamento nos itens (abre tudo junto).
-        fechado: { transform: 'translateX(0%)', opacity: 0, transition: { duration: 0.2 } },
-        aberto: { transform: 'translateX(0%)', opacity: 1, transition: { duration: 0.2 } },
-      };
-
-  // Único lugar do projeto onde a entrada usa o atalho `x` da Motion em vez do
-  // `transform` literal que o resto do código prefere (ver COPY/guia de
-  // craft). Comprovado ao vivo no navegador que a mistura quebra o whileTap
-  // abaixo: quando a entrada escreve `transform: 'translateX(...)'` como
-  // string crua, a Motion trata isso como um valor opaco e não sabe compor
-  // scale (do whileTap) com ele — o pointerdown disparava normalmente
-  // (onTapStart chegava a rodar) mas o estilo nunca ganhava o scale(0.97).
-  // Trocar para `x` bota a translação no MESMO sistema de valores compostos
-  // que o `scale` do whileTap usa, e os dois passam a se combinar num único
-  // `transform` corretamente. Sem essa troca não existe jeito de dar
-  // feedback de toque nesses itens.
-  const variantesItem = podeAnimar
-    ? {
-        fechado: { opacity: 0, x: 16 },
-        aberto: { opacity: 1, x: 0, transition: { duration: 0.22, ease: EASE_GAVETA } },
-      }
-    : {
-        fechado: { opacity: 0 },
-        aberto: { opacity: 1, transition: { duration: 0.2 } },
-      };
 
   return (
     <div className="md:hidden">
@@ -197,44 +137,16 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
       </button>
 
       {/*
-        Backdrop e painel são renderizados via portal em document.body, e só
-        existem no DOM enquanto abertos (ou saindo), via AnimatePresence
-        (preserva a animação de saída — 300ms entrando/220ms saindo,
-        --ease-gaveta — antes de remover).
+        Backdrop e painel são renderizados via portal em document.body.
+        `montado` (useCapability) evita montar o portal antes do cliente
+        confirmar (SSR não tem document.body do jeito que o cliente vai
+        hidratar).
 
-        Dois problemas de containing block, achados um depois do outro:
-
-        1) Um elemento fixed com transform:translateX(100%) conta para
-           document.scrollWidth mesmo fora da viewport visível ENQUANTO
-           ainda está montado — e ele passa um instante montado nesse
-           estado bem no início/fim de toda abertura/fechamento (a
-           AnimatePresence não evita isso sozinha). Corrigido com um
-           wrapper de recorte: painel em `.absolute` dentro de um
-           `.fixed.inset-0.overflow-hidden` (em vez de `.fixed` direto) —
-           um `position:fixed` normalmente ESCAPA do overflow:hidden de um
-           ancestral (só é clipado se o ancestral tiver
-           transform/filter/etc.), mas `position:absolute` É clipado pelo
-           ancestral posicionado mais próximo.
-
-        2) Esse MESMO wrapper, quando renderizado dentro do <Header>,
-           colapsava para ~66px: `backdrop-blur-[8px]` no <header>
-           estabelece containing block para descendentes fixed/absolute
-           (comportamento padrão do CSS), então o `inset-0` do wrapper
-           passava a se referenciar ao <header> (a altura dele), não à
-           viewport. Confirmado por hit-test real: com o drawer aberto,
-           `document.elementFromPoint(200, 400)` retornava um elemento da
-           página por trás em vez do link "Tratamentos" — só a faixa de
-           66px do topo ficava clicável, o resto do menu inacessível a
-           mouse/toque (teclado não pegava porque focus()/eventos de
-           teclado ignoram clipping visual).
-
-           Corrigido tirando backdrop+painel de dentro do <header> via
-           `createPortal` para `document.body`, que escapa de QUALQUER
-           containing block estabelecido por ancestrais — não só do
-           backdrop-filter deste header, mas de qualquer transform/filter
-           que apareça ali no futuro. `montado` (useCapability) evita
-           montar o portal antes do cliente confirmar (SSR não tem
-           document.body do jeito que o cliente vai hidratar).
+        O painel do StaggeredMenu NUNCA desmonta (GSAP anima o mesmo nó pra
+        sempre, ao contrário do motion.div + AnimatePresence de antes) — por
+        isso só o backdrop usa AnimatePresence aqui. `aria-hidden`/`inert`
+        do painel são props diretas amarradas a `aberto`, sem timing de
+        desmontagem para correr atrás.
       */}
       {montado &&
         createPortal(
@@ -254,60 +166,25 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
             </AnimatePresence>
 
             <div className="pointer-events-none fixed inset-0 z-[70] overflow-hidden">
-              <AnimatePresence>
-                {aberto && (
-                  <motion.div
-                    key="drawer-painel"
-                    ref={painelRef}
-                    id={painelId}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Menu"
-                    initial="fechado"
-                    animate="aberto"
-                    exit="fechado"
-                    variants={variantesPainel}
-                    className="pointer-events-auto absolute right-0 top-0 flex h-dvh w-[min(320px,86vw)] flex-col justify-between bg-creme px-6 py-6 shadow-[-12px_0_30px_rgba(17,17,17,0.14)]"
+              <StaggeredMenu
+                ref={painelRef}
+                open={aberto}
+                panelId={painelId}
+                items={items.map((item) => ({ label: item.rotulo, ariaLabel: item.rotulo, link: item.href }))}
+                onItemClick={fechar}
+                reducedMotion={!podeAnimar}
+                colors={['#F0B40C', '#FCCC24']}
+                accentColor="#F0B40C"
+                footer={
+                  <a
+                    href={waLink()}
+                    onClick={fechar}
+                    className="pressable flex min-h-11 items-center justify-center rounded-full bg-amarelo px-6 font-rotulo text-[13px] font-medium uppercase tracking-[.08em] text-preto"
                   >
-                    <div>
-                      <div className="mb-8 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={fechar}
-                          aria-label="Fechar menu"
-                          className="pressable flex h-11 w-11 items-center justify-center rounded-full border border-borda-forte text-preto"
-                        >
-                          <FecharIcon />
-                        </button>
-                      </div>
-
-                      <nav className="flex flex-col">
-                        {items.map((item, i) => (
-                          <motion.a
-                            key={item.href}
-                            href={item.href}
-                            onClick={fechar}
-                            variants={variantesItem}
-                            whileTap={{ scale: 0.97, transition: { duration: 0.16, ease: EASE_SAIDA } }}
-                            className="pressable flex min-h-[56px] items-center gap-4 border-b border-borda font-rotulo text-[15px] uppercase tracking-[.1em] text-preto"
-                          >
-                            <span className="font-rotulo text-[12px] text-dourado">{String(i + 1).padStart(2, '0')}</span>
-                            {item.rotulo}
-                          </motion.a>
-                        ))}
-                      </nav>
-                    </div>
-
-                    <a
-                      href={waLink()}
-                      onClick={fechar}
-                      className="pressable flex min-h-11 items-center justify-center rounded-full bg-amarelo px-6 font-rotulo text-[13px] font-medium uppercase tracking-[.08em] text-preto"
-                    >
-                      Agendar avaliação
-                    </a>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    Agendar avaliação
+                  </a>
+                }
+              />
             </div>
           </>,
           document.body
@@ -324,14 +201,6 @@ function HamburgerIcon({ aberto }: { aberto: boolean }) {
       ) : (
         <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       )}
-    </svg>
-  );
-}
-
-function FecharIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }

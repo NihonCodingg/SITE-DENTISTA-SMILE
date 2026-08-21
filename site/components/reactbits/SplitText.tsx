@@ -3,7 +3,7 @@
 // Vendorizado de DavidHDev/react-bits — ver README.md deste diretório para
 // origem, commit e todas as modificações feitas neste arquivo.
 
-import { useEffect, useRef, useSyncExternalStore, type CSSProperties, type ElementType, type ReactElement } from 'react';
+import { useEffect, useRef, useSyncExternalStore, type CSSProperties, type ReactElement, type ReactNode, type Ref } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText as GSAPSplitText } from 'gsap/SplitText';
@@ -158,7 +158,26 @@ export default function SplitText({
 
   const style: CSSProperties = { textAlign, wordWrap: 'break-word', willChange: 'transform, opacity' };
   const classes = `split-parent inline-block whitespace-normal ${className}`;
-  const Tag = (tag || 'p') as ElementType;
+
+  // Tipado como componente com assinatura de chamada própria (não
+  // `ElementType`) de propósito: a Task 19 trouxe @react-three/fiber, que
+  // amplia globalmente `JSX.IntrinsicElements` com ~100 elementos do
+  // three.js (`components/reactbits/Silk.tsx`). Com `Tag: ElementType`, o
+  // JSX `<Tag ref={ref} .../>` resolvia o tipo das props indexando essa
+  // união gigante de `JSX.IntrinsicElements` e passou a inferir `children`
+  // como `never` — quebrava `tsc --noEmit` neste componente, não no Silk.
+  // `createElement(Tag, {ref, ...})` evitava esse indexador, mas o
+  // `eslint-plugin-react-hooks` (regra `react-hooks/refs`) só reconhece a
+  // sintaxe JSX `ref={...}` como isenta de "ref pode ser lida durante o
+  // render" — `createElement` com `ref` no objeto de props cai fora dessa
+  // isenção. A saída que satisfaz as duas ferramentas: manter a sintaxe JSX
+  // (mantém a isenção do lint), mas tipar `Tag` como uma assinatura de
+  // chamada explícita — daí o JSX não passa pelo indexador de
+  // `IntrinsicElements` (só entra nesse caminho quando o tipo é um literal
+  // de string ou `keyof IntrinsicElements`), então a ampliação do R3F nunca
+  // entra em jogo.
+  type TagComponent = (props: { ref: Ref<HTMLElement>; style: CSSProperties; className: string; children: ReactNode }) => ReactElement;
+  const Tag = (tag || 'p') as unknown as TagComponent;
 
   return (
     <Tag ref={ref} style={style} className={classes}>

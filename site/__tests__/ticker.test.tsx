@@ -48,10 +48,11 @@ describe('Ticker', () => {
     const txt = screen.getByTestId('ticker').textContent ?? '';
     ['Facetas', 'Implantes', 'Protocolo de implante', 'Próteses', 'Ortodontia', 'Limpeza profissional', 'Clareamento']
       .forEach((t) => expect(txt).toContain(t));
-    // Estático: nenhuma repetição, e nenhuma trilha com will-change de transform.
+    // Estático: nenhuma repetição, e o <section> que o ScrollVelocity
+    // (React Bits) monta no modo animado nem existe.
     const ocorrencias = (container.textContent?.match(/Facetas/g) ?? []).length;
     expect(ocorrencias).toBe(1);
-    expect(container.querySelector('[data-ticker-trilha]')).toBeNull();
+    expect(container.querySelector('section')).toBeNull();
   });
 
   it('sob prefers-reduced-motion, a faixa continua visivel (nao some)', () => {
@@ -69,82 +70,50 @@ describe('Ticker', () => {
   });
 });
 
-describe('Ticker — motion da trilha (rAF controlado manualmente)', () => {
-  function lerOffsetX(el: Element | null): number {
-    const transform = (el as HTMLElement | null)?.style.transform ?? '';
-    const m = /translate3d\(([-\d.]+)px/.exec(transform);
+describe('Ticker — motion da trilha (React Bits ScrollVelocity, timers reais)', () => {
+  // O ScrollVelocity vendorizado (components/reactbits/ScrollVelocity.tsx)
+  // usa useAnimationFrame do motion/react — um ticker interno da própria
+  // lib, não uma chamada direta e isolada a window.requestAnimationFrame
+  // como o antigo TrilhaAnimada tinha. Não dá pra mockar esse ticker com a
+  // mesma precisão de quadro-a-quadro do teste anterior; em vez disso,
+  // deixamos o rAF real do jsdom rodar (jsdom 21+ tem um polyfill de rAF
+  // funcional) e observamos o resultado depois de uma janela real de tempo
+  // — mede o comportamento observável (anda / não anda), não a curva exata.
+  //
+  // offsetWidth de verdade é sempre 0 em jsdom (não faz layout) — sem
+  // mockar, `copyWidth` do ScrollVelocity nunca sai de 0 e a trilha nunca
+  // se move (ver a guarda `if (copyWidth === 0) return '0px'` no
+  // componente). Fixado num valor grande o bastante pra o wrap-around
+  // nunca entrar em jogo dentro da janela curta destes testes.
+  function lerTransformX(el: Element | null): number {
+    const style = (el as HTMLElement | null)?.style.transform ?? '';
+    const m = /translateX\(([-\d.]+)px\)/.exec(style);
     return m ? parseFloat(m[1]) : 0;
   }
 
-  it('avança a trilha continuamente e em velocidade constante (linear) enquanto visível', () => {
+  function montarComLarguraFixa() {
+    const larguraSpy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(10000);
+    const resultado = render(<Ticker />);
+    const scroller = resultado.container.querySelector('section > div > div') as HTMLElement | null;
+    return { ...resultado, scroller, larguraSpy };
+  }
+
+  it('avança a trilha (a posição muda) enquanto visível', async () => {
     mockMatchMedia(false);
+    const { scroller, larguraSpy } = montarComLarguraFixa();
+    expect(scroller).not.toBeNull();
 
-    // jsdom não faz layout — offsetWidth de verdade sempre é 0. Fixamos um
-    // valor grande o bastante pra o wrap-around nunca entrar em jogo dentro
-    // da janela curta deste teste, e testamos só o avanço linear.
-    const larguraSpy = vi
-      .spyOn(HTMLElement.prototype, 'offsetWidth', 'get')
-      .mockReturnValue(10000);
+    const antes = lerTransformX(scroller);
+    await new Promise((r) => setTimeout(r, 200));
+    const depois = lerTransformX(scroller);
 
-    let quadro: FrameRequestCallback | null = null;
-    const rafSpy = vi
-      .spyOn(window, 'requestAnimationFrame')
-      .mockImplementation((cb) => {
-        quadro = cb;
-        return 1;
-      });
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
-
-    const { container } = render(<Ticker />);
-    const trilha = container.querySelector('[data-ticker-trilha] > div');
-    expect(quadro).not.toBeNull();
-
-    // 1º quadro: só registra o timestamp inicial (dt=0), sem lenis nenhum
-    // Lenis conectado (sem <MotionProvider> na árvore, useLenis() = null) —
-    // então a velocidade fica só na base, sem boost. Intervalos de 30ms e
-    // 60ms — bem abaixo do teto de 100ms que o loop aplica pra não saltar
-    // depois de uma aba minimizada, senão os dois ficariam igualmente
-    // grampeados no teto e a proporção pareceria "não-linear" por um motivo
-    // que nada tem a ver com a curva de movimento.
-    quadro!(0);
-    const offset0 = lerOffsetX(trilha);
-
-    quadro!(30); // +30ms
-    const offset30 = lerOffsetX(trilha);
-
-    quadro!(90); // +60ms a mais (janela 2x maior, mesma velocidade)
-    const offset90 = lerOffsetX(trilha);
-
-    // Constante e para a esquerda: cada quadro desloca mais que o anterior,
-    // nunca para, nunca inverte.
-    expect(offset30).toBeLessThan(offset0);
-    expect(offset90).toBeLessThan(offset30);
-
-    // Linear: o deslocamento do 2º intervalo (60ms) é ~2x o do 1º (30ms) —
-    // sem curva de easing, sem aceleração espúria (sem scroll não há boost).
-    const delta1 = offset0 - offset30; // positivo (moveu pra esquerda)
-    const delta2 = offset30 - offset90;
-    expect(delta2 / delta1).toBeGreaterThan(1.8);
-    expect(delta2 / delta1).toBeLessThan(2.2);
-
+    expect(depois).not.toBe(antes);
     larguraSpy.mockRestore();
-    rafSpy.mockRestore();
   });
 
-  it('pausa a trilha fora da viewport (IntersectionObserver) e com a aba oculta (document.hidden)', () => {
+  it('pausa fora da viewport (IntersectionObserver)', async () => {
     mockMatchMedia(false);
-    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(10000);
 
-    let quadro: FrameRequestCallback | null = null;
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
-      quadro = cb;
-      return 1;
-    });
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
-
-    // Substitui o stub no-op de IntersectionObserver (vitest.setup.ts) por um
-    // que guarda o callback, pra simular a faixa saindo da viewport de
-    // verdade — o mesmo mecanismo do Silk.tsx (Task 8).
     let aoInterseccionar: ((entries: Pick<IntersectionObserverEntry, 'isIntersecting'>[]) => void) | null = null;
     class IntersectionObserverStubDeTeste {
       constructor(cb: (entries: Pick<IntersectionObserverEntry, 'isIntersecting'>[]) => void) {
@@ -159,28 +128,65 @@ describe('Ticker — motion da trilha (rAF controlado manualmente)', () => {
     }
     vi.stubGlobal('IntersectionObserver', IntersectionObserverStubDeTeste);
 
-    const { container } = render(<Ticker />);
-    const trilha = container.querySelector('[data-ticker-trilha] > div');
+    const { scroller, larguraSpy } = montarComLarguraFixa();
     expect(aoInterseccionar).not.toBeNull();
 
-    quadro!(0);
-    quadro!(100);
-    const offsetVisivel = lerOffsetX(trilha);
-    expect(offsetVisivel).toBeLessThan(0); // já andou
+    // Uma pequena espera inicial deixa o `copyWidth` (medido via
+    // offsetWidth, mockado acima) assentar — a mudança de largura de 0 pro
+    // valor mockado dispara UM re-render que recalcula a posição de
+    // repouso mesmo sem nenhum movimento real (é matemática do `wrap`, não
+    // animação). Captura a posição DEPOIS desse assentamento, pra não
+    // confundir "assentou a largura" com "andou".
+    await new Promise((r) => setTimeout(r, 20));
 
-    // Sai da viewport.
-    aoInterseccionar!([{ isIntersecting: false }]);
-    quadro!(200);
-    quadro!(300);
-    expect(lerOffsetX(trilha)).toBe(offsetVisivel); // parado, nada mudou
+    // Nunca disparou "visível" — a trilha começa parada (mesmo padrão do
+    // Silk.tsx: só liga depois que o IntersectionObserver confirmar).
+    const offsetParado = lerTransformX(scroller);
+    await new Promise((r) => setTimeout(r, 150));
+    expect(lerTransformX(scroller)).toBe(offsetParado);
 
-    // Volta pra viewport, mas a aba está oculta.
+    // Entra na viewport: passa a andar.
     aoInterseccionar!([{ isIntersecting: true }]);
+    await new Promise((r) => setTimeout(r, 150));
+    const offsetAndando = lerTransformX(scroller);
+    expect(offsetAndando).not.toBe(offsetParado);
+
+    // Sai de novo: para.
+    aoInterseccionar!([{ isIntersecting: false }]);
+    await new Promise((r) => setTimeout(r, 150));
+    expect(lerTransformX(scroller)).toBe(offsetAndando);
+
+    larguraSpy.mockRestore();
+  });
+
+  it('pausa com a aba oculta (document.hidden)', async () => {
+    mockMatchMedia(false);
+
+    let aoInterseccionar: ((entries: Pick<IntersectionObserverEntry, 'isIntersecting'>[]) => void) | null = null;
+    class IntersectionObserverStubDeTeste {
+      constructor(cb: (entries: Pick<IntersectionObserverEntry, 'isIntersecting'>[]) => void) {
+        aoInterseccionar = cb;
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return [];
+      }
+    }
+    vi.stubGlobal('IntersectionObserver', IntersectionObserverStubDeTeste);
+
+    const { scroller, larguraSpy } = montarComLarguraFixa();
+    aoInterseccionar!([{ isIntersecting: true }]);
+    await new Promise((r) => setTimeout(r, 150));
+    const offsetAntes = lerTransformX(scroller);
+    expect(offsetAntes).not.toBe(0);
+
     Object.defineProperty(document, 'hidden', { value: true, configurable: true });
-    quadro!(400);
-    quadro!(500);
-    expect(lerOffsetX(trilha)).toBe(offsetVisivel); // ainda parado
+    await new Promise((r) => setTimeout(r, 150));
+    expect(lerTransformX(scroller)).toBe(offsetAntes);
 
     Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+    larguraSpy.mockRestore();
   });
 });
