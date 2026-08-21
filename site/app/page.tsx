@@ -1,10 +1,14 @@
 import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 import { PaginaComVideo } from '@/components/sections/PaginaComVideo';
 import { Ticker } from '@/components/sections/Ticker';
 import { Pilares } from '@/components/sections/Pilares';
 import { Tratamentos } from '@/components/sections/Tratamentos';
 import { Sorrisos } from '@/components/sections/Sorrisos';
 import { Profissional } from '@/components/sections/Profissional';
+import { Localizacao } from '@/components/sections/Localizacao';
+import { Faq } from '@/components/sections/Faq';
+import { CtaFinal } from '@/components/sections/CtaFinal';
 import { WhatsAppFab } from '@/components/layout/WhatsAppFab';
 
 export default function Home() {
@@ -21,7 +25,14 @@ export default function Home() {
             um arquivo client. Profissional (Task 14) entra entre Sorrisos e
             Depoimentos; AntesDepois e ComoFunciona (Task 14, 'use client'
             por conta própria) entram direto dentro de PaginaComVideo, depois
-            de Depoimentos — não passam por aqui. */}
+            de Depoimentos — não passam por aqui. ComoFunciona é a última
+            seção de dentro de PaginaComVideo (Task 14) — Localizacao, Faq e
+            CtaFinal (Task 15) são 'use client' por conta própria também
+            (mesmo padrão de AntesDepois/ComoFunciona), mas não precisam do
+            estado de vídeo do Lightbox, então entram aqui direto, como
+            irmãs de <PaginaComVideo>, mantendo app/page.tsx um Server
+            Component — a ordem final da página continua a mesma de ponta a
+            ponta. */}
         <PaginaComVideo
           ticker={<Ticker />}
           pilares={<Pilares />}
@@ -29,7 +40,11 @@ export default function Home() {
           sorrisos={<Sorrisos />}
           profissional={<Profissional />}
         />
+        <Localizacao />
+        <Faq />
+        <CtaFinal />
       </main>
+      <Footer />
       <WhatsAppFab />
     </>
   );

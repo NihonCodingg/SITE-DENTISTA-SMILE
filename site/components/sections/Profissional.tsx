@@ -42,7 +42,11 @@ import { Reveal } from '@/components/ui/Reveal';
 
 // Classe compartilhada pelas duas pendências (Ortodontista e CRO-SP) — uma
 // fonte só, para as duas marcações nunca divergirem visualmente por acidente.
-const PENDENTE = 'border-b-[2px] border-dashed border-dourado pb-0.5';
+// Exportada (Task 15): Localizacao.tsx (horário pendente) e Footer.tsx
+// (responsável técnico/CRO pendentes) reaproveitam a MESMA constante — não
+// uma cópia — para o tracejado dourado de "dado a confirmar" nunca divergir
+// entre as seções que o exibem.
+export const PENDENTE = 'border-b-[2px] border-dashed border-dourado pb-0.5';
 
 export function Profissional() {
   return (
