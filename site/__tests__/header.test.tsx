@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
+import gsap from 'gsap';
 import { Header, ANCORA_TOPO } from '@/components/layout/Header';
 import { WhatsAppFab } from '@/components/layout/WhatsAppFab';
 
@@ -85,30 +86,24 @@ describe('Header', () => {
     expect(screen.getByLabelText('Ligar para a Smile')).toHaveAttribute('href', 'tel:+5511981691210');
   });
 
-  it('abre o drawer do menu mobile com opacidade visivel, nao presa em 0', async () => {
-    // Regressão do bug achado só no navegador: useCapability() começa com
-    // podeAnimar:false até o efeito resolver, então o primeiríssimo commit do
-    // MobileMenu usava o ramo reduced-motion dos variants (opacity:0 em
-    // "fechado"). Se o ramo animado voltar a esquecer de fixar opacity:1 nos
-    // dois estados, esse 0 herdado fica preso para sempre e o painel nunca
-    // aparece. O painel só existe no DOM enquanto aberto (AnimatePresence —
-    // ver nota de scrollWidth em MobileMenu.tsx), então "encontrável pelo
-    // role" já prova que não está aria-hidden; falta só provar que a Motion
-    // não deixou opacity presa em 0.
+  it('abre o drawer ate a posicao visivel, nao preso fora da tela', async () => {
+    // Enquanto fechado, o StaggeredMenu mantém o painel fora da tela com
+    // `gsap.set(panel, { xPercent: 100 })`; abrir é a timeline que leva esse
+    // xPercent a 0. A regressão que este teste existe para pegar é o painel
+    // montar, ficar acessível (aria/inert corretos, provados nos testes
+    // abaixo) e mesmo assim continuar invisível porque a timeline não rodou.
+    //
+    // A versão anterior deste teste checava `el.style.opacity !== '0'`. Desde
+    // a Task 19 o painel animado nunca recebe `style.opacity` (só o ramo
+    // reduced-motion escreve essa propriedade), então a asserção comparava
+    // string vazia com '0' e passava sempre — inclusive com a animação
+    // quebrada. Trocada pela propriedade que a abertura de fato move.
     render(<Header />);
     fireEvent.click(screen.getByRole('button', { name: 'Abrir menu' }));
 
-    // getByRole (não queryByRole) dentro do waitFor: se o painel ainda não
-    // tiver montado, a asserção relança e o waitFor tenta de novo — e depois
-    // que monta, opacity ainda pode estar em 0 por um instante (a Motion
-    // escreve via rAF, um passo depois do React commitar o elemento). As
-    // duas coisas represento no mesmo waitFor de propósito: checar opacity
-    // fora dele corre atrás do estado errado sob carga, e foi exatamente
-    // esse timing que fez esse teste ficar instável ao rodar a suíte
-    // inteira, mesmo com o componente correto.
     await waitFor(() => {
-      const el = screen.getByRole('dialog', { name: 'Menu' });
-      expect(el.style.opacity).not.toBe('0');
+      const painel = screen.getByRole('dialog', { name: 'Menu' });
+      expect(Number(gsap.getProperty(painel, 'xPercent'))).toBe(0);
     });
   });
 
@@ -307,7 +302,7 @@ describe('Header', () => {
     expect(document.activeElement).toBe(ultimo);
   });
 
-  it('trava o scroll (lenis.stop) ao abrir e destrava (lenis.start) ao fechar', async () => {
+  it('sem Lenis na arvore, trava o scroll com position:fixed e desfaz ao fechar', async () => {
     // Sem <MotionProvider> na árvore (Header sozinho, como nos outros
     // testes deste arquivo), useLenis() é sempre null — o próprio hook é
     // testado em useCapability.test.tsx/motion.test.tsx. O que este teste

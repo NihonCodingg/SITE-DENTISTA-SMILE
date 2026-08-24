@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { useEffect } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { Sorrisos } from '@/components/sections/Sorrisos';
 import { SORRISOS } from '@/lib/content';
@@ -9,12 +10,17 @@ import { SORRISOS } from '@/lib/content';
 // __tests__/circularGallery.test.tsx com um mock de `ogl`; aqui o que importa
 // é só a decisão de QUAL veículo a seção monta (WebGL vs. fallback) e o
 // equivalente textual — por isso o componente inteiro é trocado por um stub.
-const circularGalleryOnErrorSpy = vi.fn();
 let circularGalleryDeveFalhar = false;
 vi.mock('@/components/reactbits/CircularGallery', () => ({
-  default: (props: { onError?: (falhou: boolean) => void }) => {
-    circularGalleryOnErrorSpy.mockImplementation(() => {});
-    if (circularGalleryDeveFalhar) props.onError?.(true);
+  // Nome com maiúscula: o stub tem hook dentro, e a regra rules-of-hooks só
+  // reconhece como componente uma função nomeada assim.
+  default: function CircularGalleryStub(props: { onError?: (falhou: boolean) => void }) {
+    // O aviso de falha vai num efeito, não no corpo do render: chamar
+    // `onError` durante o render é setState do pai enquanto o filho ainda
+    // renderiza, o que o React reprova em aviso de console.
+    useEffect(() => {
+      if (circularGalleryDeveFalhar) props.onError?.(true);
+    }, [props]);
     return <div data-testid="circular-gallery-stub" aria-hidden="true" />;
   },
 }));
