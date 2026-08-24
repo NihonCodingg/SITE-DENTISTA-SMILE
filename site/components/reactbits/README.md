@@ -121,6 +121,30 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      `requestAnimationFrame(runFrame)` de dentro do próprio `runFrame` — uso antes da declaração,
      que o eslint deste Next reprova. Um nome próprio (`quadro`) resolve sem ref intermediário.
 
+### `ScrollExpand.tsx`
+
+- **Origem:** `src/ts-tailwind/Animations/ScrollExpand/ScrollExpand.tsx` (branch `main`)
+- **Usado em:** Task 20 — `components/sections/TourExpandido.tsx`, a fachada da clínica se abrindo
+  com o scroll logo depois do hero. Pedido do dono do projeto ("teste esse elemento na hero"): o
+  componente é uma seção inteira (prende a mídia com `sticky` e consome ~2 viewports de rolagem),
+  então entrou como transição DEPOIS do hero, sem desmontar a grade de três colunas aprovada.
+- **Dependências que arrasta:** nenhuma além de React e `next/image`.
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** o original consultava por conta própria; virou prop
+  `reducedMotion`, vinda de `useCapability().podeAnimar` (modificação nº2).
+- **Cleanup:** o efeito remove os listeners de `scroll`/`resize` e desconecta o `ResizeObserver`;
+  o `requestAnimationFrame` é cancelado. Nada a consertar.
+- **Só `clip-path`/`transform`/`opacity`:** o percurso anima `clip-path` (na régua do projeto),
+  mais `transform` e `opacity` na mídia e nas camadas.
+- **Modificações:**
+  1. `'use client'` no topo (o original não declara).
+  2. **`reducedMotion` virou prop** em vez de `window.matchMedia` interno.
+  3. **`<img>` trocado por `next/image`** — é a maior imagem da página quando aberta, então passar
+     pelo otimizador não é detalhe. **O modo `video` foi removido junto** (props `mediaType` e
+     `poster`): o site não hospeda vídeo desde 24/08, e manter o ramo convidaria a reintroduzir um.
+  4. **Escrita de ref movida do render para `useLayoutEffect`** (regra `react-hooks/refs`, mesma
+     correção do `DepthCarousel` e do `OptionWheel`).
+
 ### `Magnet.tsx`
 
 - **Origem:** `src/ts-tailwind/Animations/Magnet/Magnet.tsx`
