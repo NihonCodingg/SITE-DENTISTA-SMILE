@@ -82,6 +82,11 @@ describe('Todo <h2> de seção carrega tamanho de fonte próprio (regressão sit
     const { container } = render(<Hero />);
     const h1 = container.querySelector('h1');
     expect(h1).not.toBeNull();
-    expect(h1!.className).toMatch(/text-\[clamp\(42px,7\.6vw,104px\)\]/);
+    // O clamp mudou na Task 20, quando o hero virou o ScrollExpand: a
+    // headline passou a ficar SOBRE a foto, num palco com a altura da
+    // janela, e o tamanho antigo (até 104px) não cabia. O que este teste
+    // guarda continua sendo o mesmo — o h1 tem clamp PRÓPRIO, não herda o
+    // default de h2 do SectionHeading.
+    expect(h1!.className).toMatch(/text-\[clamp\(28px,4\.4vw,64px\)\]/);
   });
 });

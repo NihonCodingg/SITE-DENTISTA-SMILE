@@ -148,19 +148,28 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      card creme, headline, foto do doutor, colunas — com a foto parada no lugar onde o design a
      colocou. Com `midia`, o que cresce é conteúdo, não um arquivo.
   6. **`startOffsetY`** (pontos percentuais) desloca o quadro inicial para baixo, decaindo até zero
-     na abertura. O original só sabe centralizar. Não é usado hoje pelo hero, mas é o que permite
-     alinhar o quadro com um elemento que não está no centro vertical da tela.
+     na abertura. O original só sabe centralizar.
+  7. **`title` aceita nó, não só string** — o hero passa o próprio `<h1>`; o original renderizava
+     um `<div>`, o que custaria o heading da página.
+  8. **Altura da pista e do palco vem do CSS, antes de o JS medir.** No original os dois nascem
+     com zero e só ganham altura no efeito: a página saltava ~2 telas depois da hidratação, o que
+     rendeu **0,96 de CLS** no Lighthouse mobile (medido). O `measure()` continua mandando — só
+     não há mais um quadro com altura zero.
 
-**Duas restrições deste componente, descobertas medindo — quem for mexer no hero precisa saber:**
+**Restrições deste componente, descobertas medindo — quem for mexer no hero precisa saber:**
 
-- **O conteúdo tem que caber numa tela.** O palco é `sticky` com a altura da janela. O hero em
-  tamanho normal media 1296px numa tela de 900px e nascia cortado; por isso a variante que se abre
-  usa título e foto menores (`compacto` em `Hero.tsx`), o que o traz para 786px. Decisão tomada com
-  o dono do projeto.
-- **Não convive com o fundo WebGL.** O canvas do R3F se dimensiona pelo retângulo JÁ ESCALADO do
-  container (medido: 859px de canvas num card de 1022), e como a escala muda a cada quadro,
-  corrigir por medição volta a quebrar no quadro seguinte. O `Silk` fica fora da variante que se
-  abre e continua na normal (celular, reduced-motion).
+- **O conteúdo do palco tem que caber numa tela.** O palco é `sticky` com a altura da janela.
+  Tentei encaixar a grade de três colunas do hero antigo ali dentro: ela media 1296px numa tela de
+  900px e nascia cortada. Por isso o palco hoje leva só headline e CTA — cabe em qualquer tela,
+  inclusive no celular, sem variante nem exceção; o resto do hero desceu para a faixa logo abaixo.
+- **Nada de conteúdo centralizado que mude de tamanho depois da primeira pintura.** As duas fontes
+  da marca terminam de carregar depois dela; com o bloco do título centralizado, cada uma o movia,
+  e isso valia **0,176 de CLS** em dois saltos (medido, um por fonte). Com o topo ANCORADO
+  (`absolute top-[30%]`) o texto só cresce para baixo — a distância de deslocamento é zero, que é
+  o que o CLS mede. Caiu para 0,071.
+- **Não convive com o fundo WebGL** se o conteúdo for escalado: o canvas do R3F se dimensiona pelo
+  retângulo JÁ ESCALADO do container (medido: 859px num card de 1022) e a escala muda a cada
+  quadro. Não é problema no arranjo atual — o `Silk` não está dentro do palco.
 
 ### `Magnet.tsx`
 

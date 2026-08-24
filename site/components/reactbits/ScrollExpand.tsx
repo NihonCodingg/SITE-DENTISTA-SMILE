@@ -48,7 +48,9 @@ type ConfigKey =
 export interface ScrollExpandProps {
   src?: string;
   alt?: string;
-  title?: string;
+  /** Aceita nó, não só string: o hero passa o próprio `<h1>` (o original
+   *  renderizava um `<div>`, o que custaria o heading da página). */
+  title?: ReactNode;
   scrollHint?: string;
   startWidth?: number;
   startHeight?: number;
@@ -78,7 +80,7 @@ export interface ScrollExpandProps {
 const ScrollExpand: React.FC<ScrollExpandProps> = ({
   src = '',
   alt = '',
-  title = '',
+  title,
   scrollHint = '',
   startWidth = 42,
   startHeight = 58,
@@ -286,8 +288,22 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
       style={style}
       {...rest}
     >
-      <div ref={trackRef} className="relative w-full">
-        <div ref={stageRef} className="sticky top-0 w-full overflow-hidden [--se-title-size:4rem]">
+      {/* A altura da pista e do palco vem do CSS ANTES de o JS medir. No
+          original os dois nascem com zero e só ganham altura no efeito de
+          `measure()` — a página inteira saltava ~2 telas depois da hidratação,
+          o que rendeu 0,96 de CLS no Lighthouse mobile (medido). O `measure()`
+          continua mandando: ele reescreve os mesmos valores em pixels; a
+          diferença é que agora não há um quadro com altura zero. */}
+      <div
+        ref={trackRef}
+        className="relative w-full"
+        style={{ minHeight: `${(1 + Math.max(0, scrollDistance) + Math.max(0, holdDistance)) * 100}svh` }}
+      >
+        <div
+          ref={stageRef}
+          className="sticky top-0 w-full overflow-hidden [--se-title-size:4rem]"
+          style={{ minHeight: '100svh' }}
+        >
           <div
             ref={frameRef}
             className="absolute inset-0 [clip-path:inset(21%_29%_21%_29%_round_24px)] [will-change:clip-path]"
