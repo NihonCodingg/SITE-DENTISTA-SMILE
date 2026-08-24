@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { ENDERECO, INSTAGRAM, TELEFONE, TELEFONE_DISPLAY, WHATSAPP_DISPLAY, waLink } from '@/lib/contact';
-import { PENDENTE } from '@/components/sections/Profissional';
+import { PENDENTE } from '@/components/ui/pendente';
 
 // Dimensões reais do arquivo (430×242) — largura calculada para a altura de
 // 72px que o brief pede, mantendo a proporção original do logo.

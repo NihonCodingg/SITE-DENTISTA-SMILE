@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { ENDERECO, MAPS_URL, TELEFONE, TELEFONE_DISPLAY, WHATSAPP_DISPLAY, waLink } from '@/lib/contact';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
-import { PENDENTE } from './Profissional';
+import { PENDENTE } from '@/components/ui/pendente';
 
 // URL de embed do Google Maps sem chave de API (formato `output=embed`,
 // documentado publicamente pelo próprio Google) — MAPS_URL (lib/contact.ts)

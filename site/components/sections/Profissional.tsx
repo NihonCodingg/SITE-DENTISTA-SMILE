@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
+import { PENDENTE } from '@/components/ui/pendente';
 
 /**
  * Seção "O Profissional" (Task 14). Server Component puro — igual a
@@ -16,8 +17,9 @@ import { Reveal } from '@/components/ui/Reveal';
  * especialidade sem registro correspondente — exibir "Ortodontista" como
  * fato afirmado sem essa confirmação carrega o mesmo risco regulatório que
  * inventar um número de CRO. Por isso os DOIS trechos (não só o CRO) levam
- * `border-bottom: 2px dashed` dourado (`PENDENTE`, abaixo) — nem o texto
- * nem a ordem mudam, só fica visualmente óbvio que ambos são dados a
+ * `border-bottom: 2px dashed` dourado (`PENDENTE`, em
+ * components/ui/pendente.ts) — nem o texto nem a ordem mudam, só fica
+ * visualmente óbvio que ambos são dados a
  * confirmar antes de publicar. Ver PERGUNTAS-CLIENTE.md, pendência nº1.
  *
  * O parágrafo abaixo não pode citar formação, tempo de atuação ou qualquer
@@ -40,13 +42,7 @@ import { Reveal } from '@/components/ui/Reveal';
  * variação), o texto da seção continua contendo.
  */
 
-// Classe compartilhada pelas duas pendências (Ortodontista e CRO-SP) — uma
-// fonte só, para as duas marcações nunca divergirem visualmente por acidente.
-// Exportada (Task 15): Localizacao.tsx (horário pendente) e Footer.tsx
-// (responsável técnico/CRO pendentes) reaproveitam a MESMA constante — não
-// uma cópia — para o tracejado dourado de "dado a confirmar" nunca divergir
-// entre as seções que o exibem.
-export const PENDENTE = 'border-b-[2px] border-dashed border-dourado pb-0.5';
+
 
 export function Profissional() {
   return (
