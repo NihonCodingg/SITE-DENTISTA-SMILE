@@ -1,9 +1,10 @@
 /**
  * Isola o fundo da página enquanto um overlay modal está aberto (Task 18,
- * F3b) — helper ÚNICO, compartilhado pelo drawer do menu mobile
- * (`components/layout/MobileMenu.tsx`) e pelo lightbox de vídeo
- * (`components/ui/Lightbox.tsx`). Antes, os dois só isolavam o PRÓPRIO
- * painel: com o overlay aberto, `<main>`/`<header>`/`<footer>` continuavam
+ * F3b). Nasceu compartilhado entre o drawer do menu mobile
+ * (`components/layout/MobileMenu.tsx`) e o lightbox de vídeo; o lightbox
+ * deixou de existir em 24/08, quando os vídeos passaram a abrir no Instagram,
+ * então hoje o drawer é o único consumidor. Antes, o overlay só isolava o
+ * PRÓPRIO painel: com ele aberto, `<main>`/`<header>`/`<footer>` continuavam
  * sem `inert` e sem `aria-hidden`, e um leitor de tela em cursor virtual
  * alcançava o fundo por trás do diálogo (medido ao vivo na Task 18-B:
  * `main.inert=false`, `mainAriaHidden=null`).

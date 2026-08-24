@@ -48,29 +48,40 @@ ainda contêm as cenas. Antes de publicar, decidir uma das opções:
 **Sem WebM.** VP9 foi testado e perdeu: 500 KB contra 295 KB do H.264 no tour. Em clipes
 curtos o VP9 não amortiza o overhead. H.264 é universal, então um arquivo só por preview.
 
-## Contrato para o build (FASE 5/6)
+## Contrato para o build — ATUALIZADO EM 24/08
 
-```html
-<figure class="depoimento">
-  <video
-    class="preview"
-    poster="/videos/posters/tour-clinica.webp"
-    muted loop playsinline preload="none"
-    aria-label="Prévia do tour pela clínica">
-    <source src="/videos/previews/tour-clinica.mp4" type="video/mp4">
-  </video>
-  <button class="play" aria-label="Assistir o tour completo">▶</button>
-</figure>
+**O site não hospeda vídeo.** Cada card mostra o pôster e o clique abre o reel no Instagram
+da clínica, em aba nova. Foi o que o design aprovado desenhou e o que o dono do projeto pediu;
+até 24/08 o site carregava prévias `.mp4` e servia os vídeos completos num lightbox.
+
+```tsx
+<VideoCard slug="tour-clinica" titulo="Tour pela clínica" legenda="…" reel={REEL_TOUR} />
 ```
 
-Regras obrigatórias:
-- `preload="none"` — nada baixa antes da hora
-- **IntersectionObserver**: ao entrar na viewport, seta o `src` e dá `play()`; ao sair, `pause()`
-- **Um por vez**: se vários cards estiverem visíveis, toca só o mais centralizado
-- Se `matchMedia('(prefers-reduced-motion: reduce)')` → nunca dá play, fica no poster
-- Se `navigator.connection?.saveData` → nunca dá play, fica no poster
-- O vídeo completo (`web/completos/`) só carrega no clique, dentro do lightbox
-- `muted` + `playsinline` são obrigatórios para autoplay no iOS
+- `site/public/videos/posters/<slug>.webp` é o único arquivo de vídeo que sobrou no repositório.
+  `previews/` e `completos/` foram removidos (17 MB).
+- As URLs vivem em `site/lib/content.ts`: `reel` em cada item de `DEPOIMENTOS`, mais
+  `REEL_TOUR` e `REEL_RECEPCAO`.
+- `target="_blank"` + `rel="noopener noreferrer"`.
+
+| Slug | Reel |
+|---|---|
+| `tour-clinica` | https://www.instagram.com/reel/DQUVleFju0U/ |
+| `recepcao` | https://www.instagram.com/reel/Cy1Yw5iOXfz/ |
+| `caso-protese` | https://www.instagram.com/reel/DQxpqgejgst/ |
+| `facetas-resina` | https://www.instagram.com/reel/DRPmt1UjlUH/ |
+| `facetas-transformacao` | https://www.instagram.com/reel/DRXSyLJDkhA/ |
+
+Os originais e as prévias geradas continuam em `VIDEOS/` (fora do site, `originais/` é
+gitignored), caso um dia se decida hospedar de novo.
+
+### O que isso muda nos bloqueios de publicação
+
+O trecho de procedimento (CFO-196/2019) em `caso-protese` e `facetas-transformacao` **deixa de
+ser servido pelo site** — quem assiste vê o post no Instagram, publicado pela própria clínica.
+Isso tira o site da equação, mas **não resolve o conteúdo**: o post segue no ar, publicado pela
+clínica, e a mesma avaliação continua valendo para ele. Levar ao cliente, não dar por encerrado.
+A marca d'água do CapCut na recepção segue pelo mesmo raciocínio.
 
 ## Ganho de conteúdo — o que as legendas revelaram
 

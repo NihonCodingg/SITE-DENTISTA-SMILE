@@ -54,10 +54,10 @@ type Caso = { nome: string; render: () => ReactElement };
 
 const SECOES: Caso[] = [
   { nome: 'Tratamentos', render: () => <Tratamentos /> },
-  { nome: 'Clinica', render: () => <Clinica onAbrirVideo={() => {}} /> },
+  { nome: 'Clinica', render: () => <Clinica /> },
   { nome: 'Sorrisos', render: () => <Sorrisos /> },
   { nome: 'Profissional', render: () => <Profissional /> },
-  { nome: 'Depoimentos', render: () => <Depoimentos onAbrirVideo={() => {}} /> },
+  { nome: 'Depoimentos', render: () => <Depoimentos /> },
   { nome: 'AntesDepois', render: () => <AntesDepois /> },
   { nome: 'ComoFunciona', render: () => <ComoFunciona /> },
   { nome: 'Localizacao', render: () => <Localizacao /> },
@@ -79,7 +79,7 @@ describe('Todo <h2> de seção carrega tamanho de fonte próprio (regressão sit
   });
 
   it('Hero: o h1 mantém o próprio clamp (Task 8) — não é afetado pelo default de h2', () => {
-    const { container } = render(<Hero onAbrirVideo={() => {}} />);
+    const { container } = render(<Hero />);
     const h1 = container.querySelector('h1');
     expect(h1).not.toBeNull();
     expect(h1!.className).toMatch(/text-\[clamp\(42px,7\.6vw,104px\)\]/);

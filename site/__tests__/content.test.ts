@@ -50,7 +50,9 @@ describe('content', () => {
     // que contenha um dígito é, por definição, um dado sobre o negócio real
     // (contagem de pacientes, anos de atuação, nota, avaliação etc.) que
     // ninguém confirmou — e portanto não pode existir aqui.
-    const CAMPOS_COM_NUMERO_PERMITIDO = new Set(['n', 'img']);
+    // `reel` entrou junto com `img`: é a URL do post no Instagram, um
+    // localizador, não uma afirmação sobre a clínica.
+    const CAMPOS_COM_NUMERO_PERMITIDO = new Set(['n', 'img', 'reel']);
 
     type Achado = { caminho: string; valor: string; digitos: string[] };
     const achados: Achado[] = [];

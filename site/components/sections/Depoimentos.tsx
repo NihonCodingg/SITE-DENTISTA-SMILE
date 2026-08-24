@@ -6,10 +6,6 @@ import { Reveal } from '@/components/ui/Reveal';
 import { VideoCard } from '@/components/ui/VideoCard';
 import GradualBlur from '@/components/reactbits/GradualBlur';
 
-type Props = {
-  onAbrirVideo: (slug: string) => void;
-};
-
 // O GradualBlur vendorizado tem z-index:1000 por padrão (components/
 // reactbits/GradualBlur.tsx) — pensado para um componente sozinho na tela,
 // não para uma faixa decorativa dentro de uma seção que fica atrás de
@@ -41,7 +37,7 @@ export const Z_INDEX_BLUR_BORDA = 1;
  * card sozinho ser mais largo que a viewport, e é o scroller — não a seção —
  * quem ganha a barra de rolagem.
  */
-export function Depoimentos({ onAbrirVideo }: Props) {
+export function Depoimentos() {
   return (
     <section id="depoimentos" className="bg-creme px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1360px]">
@@ -59,7 +55,7 @@ export function Depoimentos({ onAbrirVideo }: Props) {
           <div className="depoimentos-scroller flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-4 pb-2 md:gap-6 md:scroll-pl-8">
             {DEPOIMENTOS.map((d, i) => (
               <Reveal key={d.slug} delay={Math.min(i, 2) * 0.06} className="shrink-0 snap-start flex-[0_0_min(260px,78vw)]">
-                <VideoCard slug={d.slug} titulo={d.titulo} legenda={d.legenda} onAbrir={onAbrirVideo} />
+                <VideoCard slug={d.slug} titulo={d.titulo} legenda={d.legenda} reel={d.reel} />
               </Reveal>
             ))}
           </div>

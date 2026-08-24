@@ -42,23 +42,14 @@ export default function Home() {
       <Header />
       {/* id="topo": alvo do logo do header (ANCORA_TOPO, Task 18 E2) */}
       <main id="topo" className="bg-branco">
-        {/* Hero, Clínica e Depoimentos precisam do mesmo estado "qual vídeo
-            está aberto" e de um único <Lightbox> — PaginaComVideo é a
-            fronteira 'use client' que segura isso (Task 12), recebendo
-            Ticker/Pilares/Tratamentos/Sorrisos/Profissional (Server
-            Components, sem estado de vídeo) já prontos por prop para manter
-            a ordem certa da página sem importar um módulo server dentro de
-            um arquivo client. Profissional (Task 14) entra entre Sorrisos e
-            Depoimentos; AntesDepois e ComoFunciona (Task 14, 'use client'
-            por conta própria) entram direto dentro de PaginaComVideo, depois
-            de Depoimentos — não passam por aqui. ComoFunciona é a última
-            seção de dentro de PaginaComVideo (Task 14) — Localizacao, Faq e
-            CtaFinal (Task 15) são 'use client' por conta própria também
-            (mesmo padrão de AntesDepois/ComoFunciona), mas não precisam do
-            estado de vídeo do Lightbox, então entram aqui direto, como
-            irmãs de <PaginaComVideo>, mantendo app/page.tsx um Server
-            Component — a ordem final da página continua a mesma de ponta a
-            ponta. */}
+        {/* PaginaComVideo carrega a ordem das seções do corpo. Foi a
+            fronteira 'use client' que segurava o estado "qual vídeo está
+            aberto no lightbox" (Task 12); desde 24/08 os vídeos abrem no
+            Instagram e não há mais estado nem lightbox, então ela voltou a
+            ser Server Component. Ticker/Pilares/Tratamentos/Sorrisos/
+            Profissional continuam chegando por prop, herança daquela
+            fronteira. Localizacao, Faq e CtaFinal entram aqui direto, como
+            irmãs — a ordem final da página é a mesma de ponta a ponta. */}
         <PaginaComVideo
           ticker={<Ticker />}
           pilares={<Pilares />}

@@ -37,11 +37,24 @@ export const SORRISOS = [
   '/img/retrato-9.jpg',
 ].map((img, i) => ({ img, n: String(i + 1).padStart(2, '0') }));
 
+/**
+ * Os vídeos NÃO são hospedados aqui: cada card mostra o pôster e o clique leva
+ * ao reel original no Instagram da clínica, em aba nova. Foi assim que o design
+ * aprovado desenhou, e é o que o dono do projeto pediu — o acervo de vídeo vive
+ * no Instagram, que é onde o público da clínica já está.
+ *
+ * `reel` é um localizador (como `img`), não um dado sobre o negócio — por isso
+ * está na whitelist de campos que podem conter dígito em `content.test.ts`.
+ */
 export const DEPOIMENTOS = [
-  { slug: 'facetas-resina', titulo: 'Facetas em resina', legenda: 'Resultado de facetas em resina, gravado na clínica.' },
-  { slug: 'facetas-transformacao', titulo: 'Transformação com facetas', legenda: 'Paciente da Smile após tratamento com facetas.' },
-  { slug: 'caso-protese', titulo: 'Caso de prótese', legenda: 'Dr. Vinicius explicando um caso de prótese.' },
+  { slug: 'facetas-resina', titulo: 'Facetas em resina', legenda: 'Resultado de facetas em resina, gravado na clínica.', reel: 'https://www.instagram.com/reel/DRPmt1UjlUH/' },
+  { slug: 'facetas-transformacao', titulo: 'Transformação com facetas', legenda: 'Paciente da Smile após tratamento com facetas.', reel: 'https://www.instagram.com/reel/DRXSyLJDkhA/' },
+  { slug: 'caso-protese', titulo: 'Caso de prótese', legenda: 'Dr. Vinicius explicando um caso de prótese.', reel: 'https://www.instagram.com/reel/DQxpqgejgst/' },
 ] as const;
+
+/** Os dois reels que não são depoimento: o tour da clínica (Hero) e a recepção (A Clínica). */
+export const REEL_TOUR = 'https://www.instagram.com/reel/DQUVleFju0U/';
+export const REEL_RECEPCAO = 'https://www.instagram.com/reel/Cy1Yw5iOXfz/';
 
 export const ANTES_DEPOIS = [
   { img: '/img/antes-depois-1.jpg', alt: 'Antes e depois de reabilitação na Smile' },

@@ -12,21 +12,23 @@ const IMGS = [
   'trat-proteses.jpg','trat-ortodontia.jpg','trat-limpeza.jpg',
   'trat-clareamento.jpg',
 ];
-const PREVIEWS = ['tour-clinica','caso-protese','facetas-resina','facetas-transformacao','recepcao'];
+// O site não hospeda vídeo desde 24/08 (ver components/ui/VideoCard.tsx): o
+// que sobrou de `public/videos/` são os pôsteres, que são o que o card mostra.
+const POSTERS = ['tour-clinica','caso-protese','facetas-resina','facetas-transformacao','recepcao'];
 
 describe('assets', () => {
   it.each(IMGS)('a imagem %s existe', (nome) => {
     expect(existsSync(`public/img/${nome}`)).toBe(true);
   });
 
-  it.each(PREVIEWS)('o preview %s existe e cabe no orçamento', (nome) => {
-    const p = `public/videos/previews/${nome}.mp4`;
+  it.each(POSTERS)('o pôster %s existe e cabe no orçamento', (nome) => {
+    const p = `public/videos/posters/${nome}.webp`;
     expect(existsSync(p)).toBe(true);
-    expect(statSync(p).size).toBeLessThan(260 * 1024);
+    expect(statSync(p).size).toBeLessThan(120 * 1024);
   });
 
-  it('o conjunto de previews soma menos de 1MB', () => {
-    const total = PREVIEWS.reduce((s, n) => s + statSync(`public/videos/previews/${n}.mp4`).size, 0);
-    expect(total).toBeLessThan(1024 * 1024);
+  it('nao sobrou nenhum video hospedado no repositorio', () => {
+    expect(existsSync('public/videos/previews')).toBe(false);
+    expect(existsSync('public/videos/completos')).toBe(false);
   });
 });

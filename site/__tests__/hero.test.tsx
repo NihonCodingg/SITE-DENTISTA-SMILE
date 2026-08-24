@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Hero } from '@/components/sections/Hero';
+import { REEL_TOUR } from '@/lib/content';
 
 vi.stubGlobal('matchMedia', (q: string) => ({
   matches: false, media: q, addEventListener: vi.fn(), removeEventListener: vi.fn(),
@@ -8,7 +9,7 @@ vi.stubGlobal('matchMedia', (q: string) => ({
 
 describe('Hero', () => {
   it('usa a headline da marca como h1 unico', () => {
-    const { container } = render(<Hero onAbrirVideo={() => {}} />);
+    const { container } = render(<Hero />);
     // Com podeAnimar=true (matchMedia mockado acima como "nunca reduzido") a
     // Hero usa o SplitText vendorizado (components/reactbits/SplitText.tsx),
     // que reparte a headline em spans por palavra via gsap/SplitText e anima
@@ -34,25 +35,26 @@ describe('Hero', () => {
   });
 
   it('leva o CTA principal ao WhatsApp', () => {
-    render(<Hero onAbrirVideo={() => {}} />);
+    render(<Hero />);
     expect(screen.getByRole('link', { name: /Agendar minha avaliação/i }))
       .toHaveAttribute('href', expect.stringContaining('wa.me/551122740228'));
   });
 
-  it('dispara o tour ao clicar no card de video', () => {
-    const abrir = vi.fn();
-    render(<Hero onAbrirVideo={abrir} />);
-    screen.getByRole('button', { name: /Tour pela clínica/i }).click();
-    expect(abrir).toHaveBeenCalledOnce();
+  it('leva o tour para o reel no Instagram, em aba nova', () => {
+    render(<Hero />);
+    const link = screen.getByRole('link', { name: /Tour pela clínica/i });
+    expect(link).toHaveAttribute('href', REEL_TOUR);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
   });
 
   it('descreve a foto do hero para leitor de tela', () => {
-    render(<Hero onAbrirVideo={() => {}} />);
+    render(<Hero />);
     expect(screen.getByAltText(/Dr\. Vinicius Aracena sorrindo sob o letreiro/i)).toBeInTheDocument();
   });
 
   it('nao afirma numero que a clinica nao tem', () => {
-    const { container } = render(<Hero onAbrirVideo={() => {}} />);
+    const { container } = render(<Hero />);
     expect(container.textContent).not.toMatch(/\d+\s*\+/);
     expect(container.textContent).not.toMatch(/★|estrelas/);
   });
@@ -64,7 +66,7 @@ describe('Hero', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     }));
-    const { container } = render(<Hero onAbrirVideo={() => {}} />);
+    const { container } = render(<Hero />);
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading).toHaveTextContent('Seu novo sorriso começa aqui');
     // Sem podeAnimar, o SplitText não monta — nada de span.split-parent na

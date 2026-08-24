@@ -1,28 +1,19 @@
-'use client';
-
 import { VideoCard } from '@/components/ui/VideoCard';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
+import { REEL_RECEPCAO } from '@/lib/content';
 
-type Props = {
-  onAbrirVideo: (slug: string) => void;
-};
-
-// Legenda do vídeo da recepção — usada tanto pelo VideoCard (alt do poster
-// quando o vídeo não pode tocar) quanto pelo Lightbox compartilhado
-// (PaginaComVideo.tsx importa esta constante para montar o mapa slug→legenda
-// do diálogo). Fonte única, para as duas pontas nunca divergirem.
-export const LEGENDA_RECEPCAO = 'Vídeo da recepção da Smile Ipiranga, gravado no consultório.';
+const LEGENDA_RECEPCAO = 'Vídeo da recepção da Smile Ipiranga, gravado no consultório.';
 
 /**
- * Seção "A Clínica" (Task 12). O design original mandava este cartão de
- * vídeo para fora do site (Instagram, aba nova) — mudança registrada no
- * brief: agora existe o vídeo da recepção gravado na própria clínica, então
- * ele abre no Lightbox compartilhado da página, como qualquer outro vídeo.
- * Um clique que tira a pessoa do site é um clique perdido — o objetivo da
- * página é agendamento.
+ * Seção "A Clínica" (Task 12). O cartão leva ao reel da recepção no Instagram,
+ * em aba nova — como o design aprovado desenhava. A Task 12 tinha trocado isso
+ * por um vídeo hospedado abrindo em lightbox, com o argumento de que "um
+ * clique que tira a pessoa do site é um clique perdido"; o dono do projeto
+ * reverteu em 24/08. O acervo de vídeo é do Instagram da clínica, e o site não
+ * carrega o peso dele.
  */
-export function Clinica({ onAbrirVideo }: Props) {
+export function Clinica() {
   return (
     <section id="clinica" className="mx-auto max-w-[1360px] px-4 py-16 md:px-8 md:py-24">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] items-center gap-[clamp(32px,6vw,80px)]">
@@ -41,12 +32,12 @@ export function Clinica({ onAbrirVideo }: Props) {
               slug="recepcao"
               titulo="Conheça a recepção"
               legenda={LEGENDA_RECEPCAO}
-              onAbrir={onAbrirVideo}
+              reel={REEL_RECEPCAO}
             />
 
             {/* Gradiente + rótulo por cima do VideoCard: sibling depois do
                 card no DOM, pointer-events-none para o clique atravessar até
-                o <button> do card. Fica só na metade inferior — a mesma
+                o link do card. Fica só na metade inferior — a mesma
                 faixa onde o próprio VideoCard já desenha seu ícone de play
                 (bottom-right), então o rótulo fica à esquerda, sem competir
                 com o ícone. */}

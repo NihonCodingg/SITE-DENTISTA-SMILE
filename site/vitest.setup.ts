@@ -48,10 +48,9 @@ if (typeof globalThis.IntersectionObserver === 'undefined') {
 // jsdom não implementa playback de <video>/<audio>: play()/pause()/load() existem
 // (não lançam), mas play() devolve undefined em vez de Promise — todo navegador
 // real devolve Promise desde que autoplay virou política do browser, não do
-// elemento. VideoCard e Lightbox chamam os três; sem este stub, qualquer teste que
-// dispare o IntersectionObserver de verdade (em vez do stub vazio que nunca invoca
-// a callback) ou monte o Lightbox quebra por um gap do ambiente de teste, não do
-// código — e também deixa de ser possível espionar as chamadas com vi.spyOn.
+// elemento. Nenhum componente monta <video> desde 24/08 (os vídeos abrem no
+// Instagram), então hoje este stub não cobre nada em uso; mantido porque é
+// barato e volta a ser necessário no instante em que algum <video> reaparecer.
 if (typeof HTMLMediaElement !== 'undefined') {
   HTMLMediaElement.prototype.play = function play() {
     return Promise.resolve();

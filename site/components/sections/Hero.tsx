@@ -2,21 +2,19 @@
 
 import Image from 'next/image';
 import { waLink, ENDERECO, INSTAGRAM } from '@/lib/contact';
+import { REEL_TOUR } from '@/lib/content';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { HeroBackdrop } from './HeroBackdrop';
 import SplitText from '@/components/reactbits/SplitText';
 import Magnet from '@/components/reactbits/Magnet';
 import { useCapability } from '@/lib/useCapability';
 
-type Props = {
-  onAbrirVideo: (slug: string) => void;
-};
 
 const HEADLINE = 'Seu novo sorriso começa aqui';
 
 // `id="hero"` é usado pelo WhatsAppFab (lib/layout) para saber exatamente
 // onde a seção termina, em vez de aproximar por 100dvh.
-export function Hero({ onAbrirVideo }: Props) {
+export function Hero() {
   const { podeAnimar, pontoFino } = useCapability();
 
   // O texto sempre existe puro no HTML do servidor (SEO/LCP): no primeiro
@@ -131,9 +129,12 @@ export function Hero({ onAbrirVideo }: Props) {
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={() => onAbrirVideo('tour-clinica')}
+              {/* Abre o reel do tour no Instagram da clínica, em aba nova — o
+                  site não hospeda vídeo (ver components/ui/VideoCard.tsx). */}
+              <a
+                href={REEL_TOUR}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="pressable absolute bottom-4 left-4 flex min-h-11 items-center gap-3 rounded-full bg-branco/94 py-2 pr-5 pl-2 shadow-[0_12px_30px_rgba(17,17,17,0.18)] backdrop-blur-[6px] pointer-fine:hover:bg-branco"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amarelo text-preto">
@@ -142,7 +143,7 @@ export function Hero({ onAbrirVideo }: Props) {
                 <span className="font-rotulo text-[13px] font-medium tracking-[.06em] text-preto uppercase">
                   Tour pela clínica
                 </span>
-              </button>
+              </a>
             </div>
 
             {/* Coluna 3 — especialidades reais, cadeira única, endereço, instagram */}
