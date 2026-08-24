@@ -1,7 +1,7 @@
 # Re-review escopada da onda final de correção (última antes do merge)
 
 Você verifica, sem corrigir nada, a onda única de correção pós-review-final da branch
-`feat/site` (site da clínica Smile Ipiranga). Commits: `<<BASE>>..<<HEAD>>`.
+`feat/site` (site da clínica Smile Ipiranga). Commits: `e20b607^..5b59e01`.
 
 **Diretório:** `D:/PROGRAMAÇÃO/CLAUDE/PROJETOS/PROJETO SMILE IPIRANGA DENTISTA` (raiz do git).
 App em `site/`. **Leia:** `final-fix-brief.md` (contrato, 13 itens), `final-fix-report.md` (o
@@ -55,7 +55,7 @@ com a vez encerrada); `orcamento.test.ts` vermelho é esperado.
 `npm test` (você rodou), `npm run build`, `npx eslint .`, `npx tsc --noEmit` limpos; `git status`
 limpo; `.claude/launch.json` sem diff; nenhum `lh-*.json` commitado; um commit por item; nenhuma
 mudança de comportamento em runtime além dos 3 tamanhos de fonte e do token de borda (confira
-`git diff <<BASE>>..<<HEAD>> -- site/components site/lib site/app` com olho em lógica).
+`git diff e20b607^..5b59e01 -- site/components site/lib site/app` com olho em lógica).
 
 ## Relatório
 

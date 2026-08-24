@@ -1067,3 +1067,21 @@ Onda única pós-review: brief final-fix-brief.md — I1, I5 (arquivar workspace
   comentário no orcamento.test, progress.md da raiz a partir do rascunho), I2, I3, M9, M2, M7,
   M8, M10, M5, M6 (2 testes), M1 (registrar), M12. Follow-up pós-merge: M3, M4, M11, I4, R4,
   motion.test setTimeout. Despachada.
+ONDA FINAL DE CORREÇÃO — COMPLETA. Commits e20b607..5b59e01 (15 commits, 13 itens: I1, I5.1-5.4,
+  I2, I3, M9, M10, M2, M7, M8, M5, M6, M1+M12). Relatório: final-fix-report.md.
+  O agente despachado caiu no limite de sessão depois do I1 e no meio do I5 (30 arquivos
+  modificados, sem commit). Verifiquei que era SÓ comentário (zero linha de código): era a
+  expansão de todo ponteiro de doc para o caminho completo, 59 ocorrências com reflow. Revertido
+  a favor de 1 linha de convenção no README (I5.2) — os docs agora existem no repo, então o nome
+  puro do arquivo já é localizável. O resto executei direto, sem subagente.
+  npm test: 26 arquivos, 244 testes, 243 verdes, 62,9s (I1 resolvido — antes travava).
+  eslint, tsc e build limpos. git status limpo. launch.json sem diff.
+  Provas por quebra feitas: I3 (gate removido -> 2 negativos falham) e M6 (playOpen sem play(0)
+  -> teste novo falha; o antigo passaria).
+  Ao vivo na 4702: sem overflow em 320/375/1265; nav 4x44px; aria-label no h1; hero renderiza o
+  reveal completo. Lighthouse NÃO rodado (nada de runtime mudou além de 3 fontes, 1 token de cor
+  e 1 curva) — declarado como raciocínio, não medição.
+  ERRO MEU, corrigido: um `git commit --amend` caiu no commit errado (M1/M12 em vez de M6) e
+  levou junto a correção de eslint do stub. Desfeito com reset --soft + restore --staged; cada
+  item voltou para o seu commit.
+  A 4173 (servidor compartilhado da Task 18) já não estava de pé — morreu com a sessão do agente.

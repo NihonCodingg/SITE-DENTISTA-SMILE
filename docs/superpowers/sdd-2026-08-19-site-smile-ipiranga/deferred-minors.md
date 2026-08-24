@@ -47,3 +47,46 @@ Gerado em 2026-08-21 a partir de progress.md. A review final tria: o que bloquei
   natureza. Não alterado.
 - A "Perguntas provocativas" (Silk vs. custo, frase manuscrita no CTA final) — registradas em
   task-18-critique.md; não são defeitos.
+
+## Review final da branch (2026-08-21) — itens registrados, não corrigidos
+
+**Desvio aceito**
+- `Faq.tsx` anima `height` (0 → auto) com a Motion, única violação da regra "só transform,
+  opacity e clip-path" no projeto. 250ms, 2 perguntas, abaixo da dobra; `clip-path` exigiria
+  medir a altura em JS. Registrado no comentário do próprio componente (M1).
+- Bloco de contato do rodapé em 13-14px sem `font-rotulo`: microcopy legal/contato é rótulo por
+  natureza (P3 da Avaliação B da Task 18). O aviso legal do Antes e Depois entrou na mesma
+  exceção, a 14px (M2).
+
+**Follow-up pós-merge (nenhum bloqueia merge)**
+- M3: `travarScroll`/`destravarScroll` (28 linhas) e o trap de Tab duplicados entre
+  `MobileMenu.tsx` e `Lightbox.tsx`; `FOCAVEIS_SELETOR` divergente (o do Lightbox inclui
+  `video[controls]`). Consolidar num `lib/overlay.ts`, como a Task 18 fez com `lib/fundoInerte.ts`.
+- M4: `EASE_SAIDA` duplicado em `Lightbox.tsx` e `Faq.tsx`; `STAGGER_STEP` repetido em 3 seções e
+  inline em 2; escala de z-index (50/60/65/70/85/90) coerente por acaso, não por design.
+  Consolidar em `lib/motionTokens.ts` e `lib/zIndex.ts`, com teste contra o `globals.css`.
+- M11: sob reduced-motion, o reset global do `globals.css` comprime para .01ms o fade de
+  opacidade do painel do drawer (CSS), enquanto o Lightbox (Motion, JS) mantém os 200ms que o
+  guia pede. Inconsistência entre os dois overlays; ou exceção para `.sm-panel-scope` no reset,
+  ou aceitar.
+- I4: a galeria WebGL monta na hidratação, não quando a seção entra na viewport (desvio do plano
+  l.62, originado no brief da Task 13). 134 KB de retratos + chunk do `ogl` baixados por quem
+  nunca chega em "Sorrisos". Correção: `IntersectionObserver` com `rootMargin: '100%'` antes de
+  `mostrarWebgl`. **Entra no pacote de decisão de performance do dono do projeto.**
+- R4: teste que rode o grep de padrões proibidos contra o HTML prerenderizado quando ele existir
+  (mesmo padrão condicional do `orcamento.test.ts`) — fecha o gap da copy que vive em componentes
+  e não passa pela whitelist de `lib/content.ts`.
+- `motion.test.tsx`: dois testes provam "não chamou" com `setTimeout(80)`.
+- L7 (Task 1): warning do Vitest sobre `"type": "module"`.
+- L56 (Task 2): ramo `.png` morto em `preparar-assets.mjs:75`.
+- L76 (Task 4): regex do FAQ em `content.test.ts:27` não guarda "duração" nem "emergência".
+- L781 (Task 19): warning `THREE.Clock deprecated` no console, vindo da lib.
+
+**Checklist de publicação (acrescentados nesta review)**
+- Custo do primeiro request de cada AVIF é ~50% maior; confirmar que o cache de `/_next/image`
+  persiste na hospedagem (minor da Task 17, ledger L958 — não estava nesta lista).
+- `AntesDepois.tsx` já afirma "publicadas com autorização dos pacientes": publicar antes da
+  autorização existir torna a frase falsa.
+- `public/` precisa ir no deploy (`Tratamentos.tsx` lê do disco no servidor).
+- Teste manual de `prefers-reduced-motion` e `saveData` em aparelho real (o ambiente nunca
+  compositou frames).
