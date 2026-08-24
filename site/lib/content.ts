@@ -32,9 +32,9 @@ export const FAQ = [
 ] as const;
 
 export const SORRISOS = [
-  '/img/hero-foto.jpg', '/img/retrato-1.jpg', '/img/retrato-2.jpg', '/img/retrato-3.jpg',
-  '/img/retrato-4.jpg', '/img/retrato-5.jpg', '/img/retrato-6.jpg', '/img/retrato-7.jpg',
-  '/img/retrato-8.jpg',
+  '/img/retrato-1.jpg', '/img/retrato-2.jpg', '/img/retrato-3.jpg', '/img/retrato-4.jpg',
+  '/img/retrato-5.jpg', '/img/retrato-6.jpg', '/img/retrato-7.jpg', '/img/retrato-8.jpg',
+  '/img/retrato-9.jpg',
 ].map((img, i) => ({ img, n: String(i + 1).padStart(2, '0') }));
 
 export const DEPOIMENTOS = [

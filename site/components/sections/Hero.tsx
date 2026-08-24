@@ -119,10 +119,10 @@ export function Hero({ onAbrirVideo }: Props) {
                   amostras — mesma fração de largura real (só 5% menor que os
                   348px medidos, imperceptível numa foto). Detalhe completo em
                   task-17-report.md. */}
-              <div className="relative aspect-[944/1122] overflow-hidden rounded-[24px] bg-borda">
+              <div className="relative aspect-[928/1143] overflow-hidden rounded-[24px] bg-borda">
                 <Image
                   src="/img/hero-foto.jpg"
-                  alt="Paciente sorrindo na Smile Ipiranga"
+                  alt="Dr. Vinicius Aracena sorrindo sob o letreiro da Smile Ipiranga"
                   fill
                   sizes="(max-width: 768px) 80vw, 460px"
                   preload

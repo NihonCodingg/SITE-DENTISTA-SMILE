@@ -7,7 +7,15 @@ const OUT = 'site/public/img';
 
 // [origem, destino, largura alvo, qualidade jpeg opcional (padrão 84)]
 const MAPA = [
-  ['Gemini_Generated_Image_j80nk9j80nk9j80n.jpg', 'hero-foto.jpg', 1200],
+  // Hero: a foto que o cliente mandou nomeada 'FOTO HERO.jpg' — é o próprio
+  // Dr. Vinicius, e é a que o design aprovado no Claude Design usa. Até
+  // 24/08 o hero usava a foto de uma paciente no mesmo cenário; a troca
+  // alinhou o site ao design. `withoutEnlargement` protege: o original tem
+  // 928px de largura, sai nos 928 mesmo com alvo 1200.
+  ['FOTO HERO.jpg', 'hero-foto.jpg', 1200],
+  // A paciente que estava no hero continua no site, como o nono retrato da
+  // galeria de sorrisos — onde ela é, de fato, uma paciente.
+  ['Gemini_Generated_Image_j80nk9j80nk9j80n.jpg', 'retrato-9.jpg', 900],
   // foto de tom contínuo (sem transparência): JPEG, não PNG -- PNG aciona
   // quantização por paleta no sharp e degrada a cor sem ganho nenhum aqui.
   // quality 88 (não o padrão 84) porque é uma foto de interior com bastante

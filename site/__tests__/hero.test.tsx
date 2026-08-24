@@ -48,7 +48,7 @@ describe('Hero', () => {
 
   it('descreve a foto do hero para leitor de tela', () => {
     render(<Hero onAbrirVideo={() => {}} />);
-    expect(screen.getByAltText(/Paciente sorrindo na Smile/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/Dr\. Vinicius Aracena sorrindo sob o letreiro/i)).toBeInTheDocument();
   });
 
   it('nao afirma numero que a clinica nao tem', () => {

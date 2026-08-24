@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     url: '/',
     title: 'Smile — Seu novo sorriso começa aqui',
     description: 'Odontologia integrada no Ipiranga, São Paulo. Atendimento humanizado e sorriso com propósito.',
-    images: [{ url: '/img/hero-foto.jpg', width: 944, height: 1122 }],
+    images: [{ url: '/img/hero-foto.jpg', width: 928, height: 1143 }],
   },
   alternates: { canonical: '/' },
 };
