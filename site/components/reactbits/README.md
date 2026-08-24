@@ -1,7 +1,11 @@
 # React Bits — componentes vendorizados
 
+> Os relatórios e guias citados por nome aqui e nos comentários do código (`design-guidance.md`,
+> `task-19-report.md`, `ux-guidance.md`, …) vivem todos em
+> `docs/superpowers/sdd-2026-08-19-site-smile-ipiranga/`, na raiz do repositório.
+
 O registry do shadcn (`npx shadcn add @react-bits/...`) não funciona (devolve o HTML do site, não
-JSON — ver `.superpowers/sdd/2026-08-19-site-smile-ipiranga/reactbits-vendoring.md`). Os arquivos
+JSON — ver `reactbits-vendoring.md`). Os arquivos
 abaixo foram baixados direto do repositório oficial, variante TypeScript + Tailwind
 (`src/ts-tailwind/...`), e vivem aqui por exigência da licença (MIT + Commons Clause: o aviso de
 copyright tem que acompanhar o código — ver `LICENSE.md` nesta pasta).

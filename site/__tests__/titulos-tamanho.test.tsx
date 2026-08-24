@@ -29,7 +29,7 @@ vi.stubGlobal(
 );
 
 /**
- * Bug site-wide (ver .superpowers/sdd/2026-08-19-site-smile-ipiranga/fix-titulos-report.md):
+ * Bug site-wide (ver fix-titulos-report.md):
  * SectionHeading.tsx não definia tamanho de fonte para o `<h2>` — só a Hero
  * (h1) passava `tituloClassName` com um `clamp()` próprio. O preflight do
  * Tailwind v4 zera o tamanho nativo de heading, então todo `<h2>` das outras
