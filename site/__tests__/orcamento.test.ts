@@ -18,6 +18,15 @@ describe('orçamento de performance', () => {
     expect(bytes).toBeLessThan(1_400_000);
   });
 
+  // VERMELHO CONHECIDO, DE PROPÓSITO. Este é o único teste vermelho da suíte.
+  // O LCP *simulado* mede 3847ms contra a meta de 2500ms, já depois das duas
+  // otimizações que renderam ganho medido na Task 17 (AVIF e o `sizes` do
+  // hero). O mesmo LCP com throttling *real* (devtools) mede 2211ms — dentro
+  // da meta. O `simulate` do Lighthouse superestima este caso; a medição real
+  // é a que descreve o que a pessoa vive. Deixado vermelho, e não silenciado,
+  // porque a decisão (aceitar o vermelho documentado, virar `it.fails`, ou
+  // abrir mais uma rodada de performance) é do dono do projeto e ainda não foi
+  // tomada. Números e método em task-17-report.md.
   it('atinge LCP abaixo de 2,5s no mobile simulado', () => {
     const p = './lh-mobile.json';
     if (!existsSync(p)) return;
