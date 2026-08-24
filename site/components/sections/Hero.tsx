@@ -5,6 +5,7 @@ import { waLink, ENDERECO, INSTAGRAM } from '@/lib/contact';
 import { REEL_TOUR } from '@/lib/content';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { HeroBackdrop } from './HeroBackdrop';
+import ScrollExpand from '@/components/reactbits/ScrollExpand';
 import SplitText from '@/components/reactbits/SplitText';
 import Magnet from '@/components/reactbits/Magnet';
 import { useCapability } from '@/lib/useCapability';
@@ -15,7 +16,7 @@ const HEADLINE = 'Seu novo sorriso começa aqui';
 // `id="hero"` é usado pelo WhatsAppFab (lib/layout) para saber exatamente
 // onde a seção termina, em vez de aproximar por 100dvh.
 export function Hero() {
-  const { podeAnimar, pontoFino } = useCapability();
+  const { podeAnimar, pontoFino, montado } = useCapability();
 
   // O texto sempre existe puro no HTML do servidor (SEO/LCP): no primeiro
   // render — servidor e cliente antes da hidratação confirmar podeAnimar —
@@ -172,6 +173,30 @@ export function Hero() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* O fecho do hero: a MESMA foto do card acima se abrindo com o scroll
+          até sangrar a tela (`ScrollExpand` do React Bits — Task 20). Fica
+          dentro do <section id="hero">, não numa seção própria: é o último
+          movimento do topo da página, e a continuidade só existe porque é a
+          mesma foto. Sem título nem legenda sobrepostos — o componente
+          aceita os dois, mas qualquer texto ali seria copy inventada, e a
+          headline já foi dita no card. */}
+      <div className="mt-4 md:mt-6">
+        <ScrollExpand
+          src="/img/hero-foto.jpg"
+          alt=""
+          useWindowScroll
+          reducedMotion={!montado || !podeAnimar}
+          startWidth={64}
+          startHeight={70}
+          startRadius={32}
+          endRadius={0}
+          mediaZoom={1.15}
+          scrollDistance={0.85}
+          holdDistance={0.1}
+          overlayScrim={0.2}
+        />
       </div>
     </section>
   );

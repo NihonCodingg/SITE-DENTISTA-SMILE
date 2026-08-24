@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useCapability } from '@/lib/useCapability';
 import { Reveal } from '@/components/ui/Reveal';
 import { ANTES_DEPOIS } from '@/lib/content';
@@ -42,8 +43,40 @@ const ITENS = ANTES_DEPOIS.map((item) => ({ image: item.img, alt: item.alt }));
  * (ver fix-titulos-report.md) — para ficar visualmente idêntico ao resto do
  * site.
  */
+/**
+ * Medidas do carrossel por faixa de tela. O `DepthCarousel` recebe pixels,
+ * não classes — a conta é aqui.
+ *
+ * O detalhe que não é óbvio: o componente NÃO desenha o cartão no tamanho
+ * pedido. Ele calcula `escala = larguraDisponível / (cardWidth + 2*spread +
+ * 120)` e aplica isso a tudo. Com os defaults (`spread: 90`), um cartão de
+ * 460px virava 188px reais num celular de 375 — 37% da tela, o que o dono do
+ * projeto viu e apontou. Como a escala é uma razão, o tamanho final depende
+ * de `spread` tanto quanto de `cardWidth`: no celular vale encolher o
+ * espalhamento lateral e pedir um cartão grande; no desktop sobra largura, a
+ * escala satura em 1 e o cartão sai no tamanho pedido.
+ */
+function useMedidasCarrossel() {
+  const [medidas, setMedidas] = useState({ cardWidth: 460, spread: 80 });
+
+  useEffect(() => {
+    const medir = () =>
+      setMedidas(
+        window.innerWidth < 768
+          ? { cardWidth: 380, spread: 14 } // medido: ~76% da tela depois da escala
+          : { cardWidth: 460, spread: 80 }
+      );
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, []);
+
+  return medidas;
+}
+
 export function AntesDepois() {
   const { podeAnimar } = useCapability();
+  const { cardWidth, spread } = useMedidasCarrossel();
 
   // `!ANTES_DEPOIS.length` (não `=== 0`): o array vem de `as const` em
   // lib/content.ts, então o TypeScript infere `.length` como o literal `5`
@@ -69,13 +102,21 @@ export function AntesDepois() {
             reducedMotion={!podeAnimar}
             autoplay={podeAnimar}
             autoplayDelay={4200}
-            cardWidth={300}
-            cardHeight={300}
+            cardWidth={cardWidth}
+            cardHeight={cardWidth}
+            spread={spread}
             rotuloCarrossel="Casos de antes e depois"
             showControls
             showIndicators
           />
         </div>
+
+        {/* Dica de uso: o carrossel arrasta, mas nada na tela diz isso — as
+            setas sugerem clique, não gesto. Uma linha curta resolve, e é
+            rótulo de interface, não copy de marketing. */}
+        <p className="mt-4 text-center font-rotulo text-[13px] tracking-[.12em] text-grafite uppercase">
+          Arraste para o lado para ver mais
+        </p>
 
         {/* 14px é a mesma exceção do bloco de contato do rodapé: texto legal
             exigido pela CFO-196/2019, lido uma vez, não corpo de leitura —

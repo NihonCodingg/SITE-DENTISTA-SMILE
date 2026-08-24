@@ -42,20 +42,38 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
 
   return (
     <div className="grid items-center gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-12">
-      <div className="h-[320px] md:h-[420px]">
-        <OptionWheel
-          items={itens.map((t) => t.nome)}
-          defaultSelected={0}
-          onChange={setIndice}
-          rotulo="Tratamentos"
-          side="left"
-          textColor="var(--color-grafite)"
-          activeColor="var(--color-preto)"
-          fontSize={1.6}
-          blur={podeAnimar ? 1.4 : 0}
-          smoothing={podeAnimar ? 220 : 1}
-          loop
-        />
+      <div className="flex flex-col gap-3">
+        <p className="font-rotulo text-[13px] tracking-[.14em] text-grafite uppercase">
+          Escolha um tratamento
+        </p>
+
+        {/* Os defaults do React Bits deixam as opções distantes quase
+            invisíveis (`minOpacity: 0.05`), muito desfocadas (`blur: 2`) e
+            bem giradas (`tilt: 6`, `curve: 1`) — bonito num demo, ilegível
+            numa lista de serviços de clínica, onde a pessoa precisa LER as
+            sete opções para escolher. Os valores abaixo mantêm a
+            profundidade e devolvem a leitura: nenhuma opção some, o giro é
+            sutil e o item ativo é o único em preto. */}
+        <div className="h-[320px] md:h-[400px]">
+          <OptionWheel
+            items={itens.map((t) => t.nome)}
+            defaultSelected={0}
+            onChange={setIndice}
+            rotulo="Tratamentos"
+            side="left"
+            textColor="var(--color-grafite)"
+            activeColor="var(--color-preto)"
+            fontSize={1.45}
+            spacing={1.5}
+            minOpacity={0.42}
+            fade={0.13}
+            blur={podeAnimar ? 0.5 : 0}
+            tilt={3}
+            curve={0.45}
+            smoothing={podeAnimar ? 220 : 1}
+            loop
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-5">

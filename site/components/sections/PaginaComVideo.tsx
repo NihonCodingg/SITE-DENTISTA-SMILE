@@ -1,5 +1,4 @@
 import { Hero } from './Hero';
-import { TourExpandido } from './TourExpandido';
 import { Clinica } from './Clinica';
 import { Depoimentos } from './Depoimentos';
 import { AntesDepois } from './AntesDepois';
@@ -35,7 +34,6 @@ export function PaginaComVideo({ ticker, pilares, tratamentos, sorrisos, profiss
   return (
     <>
       <Hero />
-      <TourExpandido />
       {ticker}
       {pilares}
       {tratamentos}
