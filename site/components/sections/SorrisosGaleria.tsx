@@ -72,6 +72,17 @@ const ITENS_WEBGL = SORRISOS.map((s) => ({ image: urlImagemOtimizada(s.img, 640)
  * conteúdo (9 fotos de pacientes reais) continua no DOM — ninguém que usa
  * leitor de tela fica sem saber que a seção existe.
  */
+/**
+ * A MESMA altura nos dois ramos. Sem isso, a troca do fallback para o WebGL
+ * na hidratação mudava a altura da seção (medido em 375×812: 354px do
+ * scroller contra 568px do canvas) e empurrava tudo abaixo dela — 0,44 de
+ * CLS num único deslocamento, quatro vezes o limite de 0,1 que o Core Web
+ * Vitals considera bom. O canvas precisa de altura explícita porque desenha
+ * em espaço próprio; então é o scroller que se ajusta, centralizando os
+ * cartões na caixa mais alta em vez de depender do próprio conteúdo.
+ */
+const ALTURA_GALERIA = 'h-[min(70vh,640px)]';
+
 export function SorrisosGaleria() {
   const { podePesado, montado } = useCapability();
   const [webglFalhou, setWebglFalhou] = useState(false);
@@ -81,7 +92,7 @@ export function SorrisosGaleria() {
   if (mostrarWebgl) {
     return (
       <>
-        <div className="relative h-[min(70vh,640px)] w-full">
+        <div className={`relative ${ALTURA_GALERIA} w-full`}>
           <CircularGallery items={ITENS_WEBGL} onError={setWebglFalhou} />
         </div>
         <p className="sr-only">
@@ -93,7 +104,9 @@ export function SorrisosGaleria() {
   }
 
   return (
-    <div className="sorrisos-scroller flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-pl-4 px-4 pt-6 pb-10 md:gap-8 md:scroll-pl-8 md:px-8">
+    <div
+      className={`sorrisos-scroller flex ${ALTURA_GALERIA} snap-x snap-mandatory items-center gap-5 overflow-x-auto scroll-pl-4 px-4 md:gap-8 md:scroll-pl-8 md:px-8`}
+    >
       {SORRISOS.map((s, i) => (
         <div key={s.img} className={`shrink-0 snap-start ${TRANSFORMS_FALLBACK[i % TRANSFORMS_FALLBACK.length]}`}>
           <div className="relative aspect-[3/4] w-[min(220px,58vw)] overflow-hidden rounded-[20px] bg-escuro-linha">

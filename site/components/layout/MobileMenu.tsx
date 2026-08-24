@@ -7,7 +7,7 @@ import { waLink } from '@/lib/contact';
 import { useCapability } from '@/lib/useCapability';
 import { useLenis } from '@/lib/motion';
 import { isolarFundo } from '@/lib/fundoInerte';
-import { StaggeredMenu } from '@/components/reactbits/StaggeredMenu';
+import { StaggeredMenu, MOTION_GAVETA } from '@/components/reactbits/StaggeredMenu';
 import type Lenis from 'lenis';
 
 type Item = { rotulo: string; href: string };
@@ -59,6 +59,24 @@ function destravarScroll(lenis: Lenis | null) {
  */
 export function MobileMenu({ items }: { items: readonly Item[] }) {
   const [aberto, setAberto] = useState(false);
+  // Enquanto fechado, o overlay do drawer não é PINTADO (`visibility:hidden`).
+  // Estar pintado desde a hidratação custava 0,107 de CLS no Lighthouse
+  // mobile — o maior deslocamento da página inteira, acima do limite de 0,1
+  // (medido: 0,00003 antes, 0,107 depois de a fronteira client da página
+  // mudar em 24/08, 0 de novo com isto).
+  //
+  // `visibility`, não `display:none`: o GSAP converte `xPercent` usando a
+  // largura medida do elemento, e um elemento com `display:none` mede zero —
+  // a primeira abertura deixava o painel parado fora da tela (testado). Com
+  // `visibility` o layout continua existindo, o GSAP mede certo, e mesmo
+  // assim nada é pintado nem entra na conta de layout shift.
+  //
+  // Não dá para amarrar direto em `aberto`: o painel precisa continuar no
+  // layout durante a animação de fechamento. Por isso `visivel` só desliga
+  // depois que ela termina, e qualquer reabertura no meio cancela o
+  // desligamento (a exigência de "reabrir em menos de 220ms" da Task 6).
+  const [visivel, setVisivel] = useState(false);
+  const timerOcultarRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { podeAnimar, montado } = useCapability();
   const lenis = useLenis();
   const painelId = useId();
@@ -72,6 +90,11 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
 
   const fechar = () => {
     setAberto(false);
+    if (timerOcultarRef.current) clearTimeout(timerOcultarRef.current);
+    timerOcultarRef.current = setTimeout(
+      () => setVisivel(false),
+      MOTION_GAVETA.fechamento * 1000 + 60
+    );
     destravarScroll(lenis);
     // Restaura o fundo ANTES de devolver o foco: com o header ainda inerte,
     // `focus()` no hambúrguer seria um no-op (elemento inerte não é focável).
@@ -81,6 +104,11 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
   };
 
   const abrir = () => {
+    if (timerOcultarRef.current) {
+      clearTimeout(timerOcultarRef.current);
+      timerOcultarRef.current = null;
+    }
+    setVisivel(true);
     setAberto(true);
     travarScroll(lenis);
   };
@@ -143,6 +171,10 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
     aberto: { opacity: 1, transition: { duration: 0.3 } },
   };
 
+  useEffect(() => () => {
+    if (timerOcultarRef.current) clearTimeout(timerOcultarRef.current);
+  }, []);
+
   return (
     <div className="md:hidden">
       <button
@@ -186,7 +218,7 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
               )}
             </AnimatePresence>
 
-            <div className="pointer-events-none fixed inset-0 z-[70] overflow-hidden">
+            <div className={`pointer-events-none fixed inset-0 z-[70] overflow-hidden${visivel ? '' : ' invisible'}`}>
               <StaggeredMenu
                 ref={painelRef}
                 open={aberto}

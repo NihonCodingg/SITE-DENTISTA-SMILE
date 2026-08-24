@@ -71,6 +71,7 @@ export function AntesDepois() {
             autoplayDelay={4200}
             cardWidth={300}
             cardHeight={300}
+            rotuloCarrossel="Casos de antes e depois"
             showControls
             showIndicators
           />

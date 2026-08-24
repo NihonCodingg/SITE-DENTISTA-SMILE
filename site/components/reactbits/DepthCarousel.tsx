@@ -64,6 +64,8 @@ export interface DepthCarouselProps {
   onChange?: (index: number, item: { image: string; alt?: string }) => void;
   /** Vem de `useCapability().podeAnimar` — o componente não consulta matchMedia. */
   reducedMotion?: boolean;
+  /** Nome acessível do carrossel. O original cravava "Depth carousel", em inglês. */
+  rotuloCarrossel?: string;
   className?: string;
 }
 
@@ -119,6 +121,7 @@ const DepthCarousel = ({
   showIndicators = true,
   onChange,
   reducedMotion = false,
+  rotuloCarrossel = 'Carrossel',
   className = ''
 }: DepthCarouselProps) => {
   const data = useMemo(() => (Array.isArray(items) ? items : []).map(normalizeItem), [items]);
@@ -438,7 +441,7 @@ const DepthCarousel = ({
       style={{ perspective: `${perspective}px` }}
       role="group"
       aria-roledescription="carousel"
-      aria-label="Depth carousel"
+      aria-label={rotuloCarrossel}
       tabIndex={0}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -456,7 +459,7 @@ const DepthCarousel = ({
             }}
             style={{ width: cardWidth, height: cardHeight, borderRadius: radius }}
             aria-roledescription="slide"
-            aria-label={`${i + 1} of ${count}`}
+            aria-label={`${i + 1} de ${count}`}
             aria-hidden={active !== i}
             onClick={() => onCardClick(i)}
           >
@@ -484,7 +487,7 @@ const DepthCarousel = ({
           <button
             type="button"
             className="absolute left-4 top-1/2 z-[3000] grid h-[42px] w-[42px] -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[rgba(18,20,26,0.55)] text-white backdrop-blur-md transition-[background,border-color,transform] duration-200 hover:border-white/40 hover:bg-[rgba(28,31,40,0.85)] active:scale-95"
-            aria-label="Previous slide"
+            aria-label="Caso anterior"
             onClick={() => navigateBy(-1)}
           >
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -501,7 +504,7 @@ const DepthCarousel = ({
           <button
             type="button"
             className="absolute right-4 top-1/2 z-[3000] grid h-[42px] w-[42px] -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[rgba(18,20,26,0.55)] text-white backdrop-blur-md transition-[background,border-color,transform] duration-200 hover:border-white/40 hover:bg-[rgba(28,31,40,0.85)] active:scale-95"
-            aria-label="Next slide"
+            aria-label="Próximo caso"
             onClick={() => navigateBy(1)}
           >
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -522,7 +525,7 @@ const DepthCarousel = ({
         <div
           className="absolute bottom-4 left-1/2 z-[3000] flex -translate-x-1/2 gap-2 rounded-full bg-[rgba(14,16,22,0.4)] px-3 py-2 backdrop-blur-sm"
           role="tablist"
-          aria-label="Slides"
+          aria-label="Casos"
         >
           {data.map((_, i) => (
             <button
@@ -530,12 +533,23 @@ const DepthCarousel = ({
               type="button"
               role="tab"
               aria-selected={active === i}
-              aria-label={`Go to slide ${i + 1}`}
-              className={`h-[7px] cursor-pointer rounded-full transition-[width,background] duration-[250ms] ${
-                active === i ? 'w-5 bg-white' : 'w-[7px] bg-white/30'
-              }`}
+              aria-label={`Ir para o caso ${i + 1} de ${count}`}
+              // O ponto continua com 7px de altura, mas o ALVO tem 44px: o
+              // botão é uma caixa transparente com padding e o ponto é um
+              // <span> dentro. No original o botão era o próprio ponto —
+              // 7px, abaixo dos 24px da WCAG 2.5.8 e dos 44px que este
+              // projeto usa (mesma correção que o nav do header levou na
+              // Task 18, F1).
+              className="flex h-11 w-6 cursor-pointer items-center justify-center"
               onClick={() => setFocus(i, true)}
-            />
+            >
+              <span
+                aria-hidden="true"
+                className={`block h-[7px] rounded-full transition-[width,background] duration-[250ms] ${
+                  active === i ? 'w-5 bg-white' : 'w-[7px] bg-white/30'
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}
