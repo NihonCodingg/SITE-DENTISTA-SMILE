@@ -102,13 +102,17 @@ describe('AntesDepois', () => {
     });
   });
 
-  it('o scroller tem overflow-x proprio, nao a secao inteira', () => {
+  // O scroller horizontal com clip-path da Task 14 virou o DepthCarousel do
+  // React Bits (Task 20). O que este teste guardava continua valendo: a seção
+  // em si nunca rola de lado — quem se vira com os próprios limites é o
+  // carrossel, que posiciona os cartões em absoluto dentro do palco.
+  it('a secao nao rola de lado; o carrossel monta um cartao por caso', () => {
     const { container } = render(<AntesDepois />);
     const secao = container.querySelector('section#antes-depois');
-    const scroller = container.querySelector('.antes-depois-scroller');
-    expect(scroller).not.toBeNull();
-    expect(scroller?.className).toMatch(/overflow-x-auto/);
     expect(secao?.className ?? '').not.toMatch(/overflow-x-auto/);
+
+    const cartoes = container.querySelectorAll('[aria-roledescription="slide"]');
+    expect(cartoes).toHaveLength(ANTES_DEPOIS.length);
   });
 });
 

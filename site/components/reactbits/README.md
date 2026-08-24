@@ -64,6 +64,34 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      `__tests__/hero.test.tsx` trava as duas pontas (atributo no `<h1>`, ausente no
      `.split-parent`).
 
+### `DepthCarousel.tsx`
+
+- **Origem:** `src/ts-tailwind/Components/DepthCarousel/DepthCarousel.tsx` (branch `main`)
+- **Usado em:** Task 20 — seção "Resultados reais" (`components/sections/AntesDepois.tsx`), no lugar
+  do scroller horizontal com `clip-path` que a Task 14 tinha construído. Pedido do dono do projeto.
+- **Dependências que arrasta:** `gsap` (já no projeto) e `next/image` (ver modificação nº5).
+  Nenhuma dependência nova.
+- **Rede:** **o original faz** — os `DEFAULT_ITEMS` apontavam para `picsum.photos`. Removidos
+  (modificação nº1); hoje o componente não tem default e nenhuma URL de terceiro.
+- **`matchMedia`/reduced-motion:** o original consultava por conta própria. Virou prop
+  `reducedMotion`, alimentada por `useCapability().podeAnimar` no chamador (modificação nº2) —
+  fonte única preservada.
+- **Cleanup:** o `useEffect` do autoplay já limpava o próprio `setInterval`; os listeners de
+  ponteiro são registrados no elemento e removidos no mesmo efeito. Nada a consertar.
+- **Só `transform`/`opacity`/`filter`:** o layout dos cartões anima `transform`, `opacity` e
+  `filter: blur()` via GSAP — `filter` entra na mesma categoria de exceção aceita que o
+  `background-position` do `GlareHover` (composto pela GPU, não causa reflow).
+- **Modificações:**
+  1. **`DEFAULT_ITEMS` removido** e `items` virou prop obrigatória — o default original eram seis
+     imagens de `picsum.photos`, chamada de rede a host de terceiro, proibida neste projeto.
+  2. **`reducedMotion` virou prop** em vez de `window.matchMedia` interno.
+  3. `'use client'` adicionado no topo (o original não declara).
+  4. **Escrita de ref movida do corpo do render para `useLayoutEffect`** — a regra
+     `react-hooks/refs` do eslint do Next 16 reprova escrever ref durante o render (mesmo motivo
+     que já mudou `SplitText` e `Magnet` na Task 8).
+  5. **`<img>` trocado por `next/image`** — o original serve o arquivo cru; aqui as fotos passam
+     pelo otimizador (AVIF, tamanho certo), como o resto do site.
+
 ### `Magnet.tsx`
 
 - **Origem:** `src/ts-tailwind/Animations/Magnet/Magnet.tsx`
