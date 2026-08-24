@@ -1085,3 +1085,22 @@ ONDA FINAL DE CORREÇÃO — COMPLETA. Commits e20b607..5b59e01 (15 commits, 13 
   levou junto a correção de eslint do stub. Desfeito com reset --soft + restore --staged; cada
   item voltou para o seu commit.
   A 4173 (servidor compartilhado da Task 18) já não estava de pé — morreu com a sessão do agente.
+RE-REVIEW DA ONDA FINAL: 12 ADDRESSED / 1 PARTIAL / 0 NOT. PARTIAL foi o I5.4 — erro meu no
+  progress.md da raiz: contagem de testes da véspera (243/242 em vez de 244/243) e faixa da onda
+  escrita como "e20b607..HEAD", que não identifica nada depois do merge. Corrigido com os números
+  finais. Suíte da re-review: 244/245, 57,5s. Relatório: final-rereview-report.md.
+TROCA DA FOTO DO HERO (pedido do parceiro, 24/08): o Claude Design usa a foto do Dr. Vinicius
+  ("FOTO HERO.jpg" do cliente); o site usava a paciente. Origem da divergência: task de assets do
+  cliente (20/08) decidiu manter a antiga e guardar a nova como hero-alternativa.jpg, sem comparar
+  com o design — não existe cópia local do .dc.html no repositório, então ninguém no build nunca
+  conferiu o resultado contra o design. Vale como lição de processo.
+  ACHADO no levantamento, que nenhuma review pegou: hero-foto.jpg era usado em 4 lugares, um deles
+  a galeria SORRISOS, cujas 9 fotos têm alt "Paciente da Smile sorrindo" — repontar só o hero teria
+  posto o dentista na galeria de pacientes rotulado como paciente. Tratado junto: a paciente virou
+  retrato-9.jpg e segue na galeria; SORRISOS agora é retrato-1..9.
+  Também ajustados: aspect-[928/1143] (proporção mudou; sem isso cortaria o topo do letreiro), alt
+  que NÃO afirma especialidade, dimensões do Open Graph, assets.test e hero.test,
+  hero-alternativa.jpg apagada. Commit 07a3df8. Suíte 245 testes, 244 verdes.
+  Verificado ao vivo (4705): proporção do contêiner idêntica à da foto (0.8119), imagem 200, sem
+  overflow, galeria com 9 pacientes e sem o hero. Captura de tela não foi possível (painel sem
+  compositing) — evidência é de DOM.

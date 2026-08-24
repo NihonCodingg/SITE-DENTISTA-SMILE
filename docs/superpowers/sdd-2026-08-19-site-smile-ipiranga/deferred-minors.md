@@ -90,3 +90,12 @@ Gerado em 2026-08-21 a partir de progress.md. A review final tria: o que bloquei
 - `public/` precisa ir no deploy (`Tratamentos.tsx` lê do disco no servidor).
 - Teste manual de `prefers-reduced-motion` e `saveData` em aparelho real (o ambiente nunca
   compositou frames).
+
+## Follow-up encontrado na troca da foto do hero (24/08)
+- `scripts/preparar-assets.mjs` tem **um mapeamento com fonte inexistente**:
+  `Gemini_Generated_Image_x8t572x8t572x8t5.jpg -> antes-depois-1.jpg`. A fonte saiu da pasta
+  `IMAGENS DO INSTAGRAM/` em algum momento (provavelmente substituída pelas fotos reais do
+  cliente); a saída `antes-depois-1.jpg` continua versionada e correta no repositório. Efeito:
+  rodar o pipeline de ponta a ponta hoje falha nesse item e não processa os seguintes. Pré-existente,
+  não foi introduzido pela troca do hero. Corrigir apontando para a fonte certa ou removendo a
+  linha (a imagem já está gerada).

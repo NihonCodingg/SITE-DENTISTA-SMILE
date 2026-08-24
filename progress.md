@@ -10,7 +10,7 @@ pendências do cliente listadas mais abaixo.
 
 | Medida (estado final) | Valor |
 |---|---|
-| Testes | 26 arquivos · 243 testes · 242 verdes · 1 vermelho de propósito (`orcamento.test.ts`, LCP **simulado**) |
+| Testes | 26 arquivos · 245 testes · 244 verdes · 1 vermelho de propósito (`orcamento.test.ts`, LCP **simulado**) |
 | Lighthouse — acessibilidade | **1.00** mobile · **1.00** desktop, zero audits reprovados |
 | Lighthouse — performance | desktop **0.99** (LCP 0,9s) · mobile 0,64–0,80 no simulado (bimodal em TBT); LCP simulado ~3,85s, LCP com throttling **real** 2,21s — dentro da meta de 2,5s |
 | Lighthouse — best practices / SEO | 1.00 / 1.00 |
@@ -54,7 +54,7 @@ em `task-17-report.md`. Detalhes de build, assets e publicação estão em `site
 | 19 | Emenda: maximizar React Bits + skills de design | `5920512..e35afd3` |
 | 17 | Passada de performance (ablação, AVIF, `sizes`) | `8ac06af..ce7c58d` |
 | 18 | QA: critique dual-agent, 12 correções, re-review | `1b08ec1..b51783d` |
-| — | Onda final pós-review da branch | `e20b607..HEAD` |
+| — | Onda final pós-review da branch + troca da foto do hero | `b51783d..07a3df8` |
 
 Componentes do React Bits vendorizados (MIT + Commons Clause, aviso em
 `site/components/reactbits/LICENSE.md`, modificações documentadas no `README.md` da mesma pasta):
@@ -75,6 +75,9 @@ SplitText, Magnet, GradualBlur, CircularGallery, StaggeredMenu, Silk, ScrollVelo
   O que depende do cliente aparece marcado como pendência ("a confirmar", sublinhado tracejado).
 - **Vídeos:** `preload="none"`, prévia muda só quando entra na viewport, vídeo completo só no
   clique (lightbox). **Mapa:** o iframe só monta ao clicar.
+- **Foto do hero: o Dr. Vinicius**, como no design aprovado. O site chegou a usar a foto de uma
+  paciente no mesmo cenário — divergência introduzida ao integrar as fotos do cliente e corrigida
+  em 24/08. A paciente continua no site, como o nono retrato da galeria de sorrisos.
 
 ## Decisões pendentes (dono do projeto)
 
