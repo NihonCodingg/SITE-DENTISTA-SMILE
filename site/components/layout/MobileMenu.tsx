@@ -218,7 +218,15 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
               )}
             </AnimatePresence>
 
-            <div className={`pointer-events-none fixed inset-0 z-[70] overflow-hidden${visivel ? '' : ' invisible'}`}>
+            {/* `inset-y-0 right-0` com a largura do painel, não `inset-0`: um
+                caixote fixo de viewport inteira mede 100% do bloco recipiente
+                inicial, que INCLUI a barra de rolagem — 380px contra os 375 de
+                `clientWidth`, e esses 5px viravam rolagem horizontal no
+                documento. O painel e as camadas já são `right-0` com esta
+                mesma largura, então nada muda de posição. */}
+            <div
+              className={`pointer-events-none fixed inset-y-0 right-0 z-[70] w-[min(320px,86vw)] overflow-hidden${visivel ? '' : ' invisible'}`}
+            >
               <StaggeredMenu
                 ref={painelRef}
                 open={aberto}

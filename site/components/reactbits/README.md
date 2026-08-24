@@ -92,6 +92,35 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   5. **`<img>` trocado por `next/image`** — o original serve o arquivo cru; aqui as fotos passam
      pelo otimizador (AVIF, tamanho certo), como o resto do site.
 
+### `OptionWheel.tsx`
+
+- **Origem:** `src/ts-tailwind/Components/OptionWheel/OptionWheel.tsx` (branch `main`)
+- **Usado em:** Task 20 — "Soluções que transformam sorrisos"
+  (`components/sections/TratamentosSeletor.tsx`), no lugar das sete linhas de tratamento. Pedido
+  do dono do projeto.
+- **Dependências que arrasta:** nenhuma além de React.
+- **Rede:** nenhuma chamada (depois da modificação nº4 — o original podia baixar um arquivo de som).
+- **`matchMedia`/reduced-motion:** o componente não consulta nada por conta própria; quem chama
+  passa `blur`/`smoothing` já decididos por `useCapability().podeAnimar`.
+- **Cleanup:** o `useEffect` final cancela o `requestAnimationFrame`; o listener de `wheel` é
+  removido no mesmo efeito que o registra. Nada a consertar.
+- **Só `transform`/`opacity`/`filter`:** cada opção recebe `transform`, `opacity` e `filter:
+  blur()` — mesma categoria de exceção aceita do `DepthCarousel`.
+- **Modificações:**
+  1. `'use client'` no topo (o original não declara).
+  2. **Rótulo acessível por prop** (`rotulo`) — o original cravava `aria-label="Option wheel"`, em
+     inglês, num site em português.
+  3. **`aria-activedescendant`** no `role="listbox"`, com `id` em cada `role="option"`. Sem isso o
+     leitor de tela lia a lista mas não anunciava a mudança de seleção pelas setas.
+  4. **Som removido.** O original aceita `soundUrl`/`soundVolume` e toca um clique a cada passo,
+     criando um `new Audio(...)`. A prop e o código de áudio saíram inteiros: som que a pessoa não
+     pediu, num site de clínica, é ruído — e deixar a porta aberta convida a ligá-la sem pensar.
+  5. **Escrita de ref movida do render para `useLayoutEffect`** (regra `react-hooks/refs`, mesma
+     correção do `DepthCarousel`).
+  6. **Laço de animação virou expressão de função nomeada.** O original agendava
+     `requestAnimationFrame(runFrame)` de dentro do próprio `runFrame` — uso antes da declaração,
+     que o eslint deste Next reprova. Um nome próprio (`quadro`) resolve sem ref intermediário.
+
 ### `Magnet.tsx`
 
 - **Origem:** `src/ts-tailwind/Animations/Magnet/Magnet.tsx`

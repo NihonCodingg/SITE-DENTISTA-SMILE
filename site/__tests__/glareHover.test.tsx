@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import GlareHover from '@/components/reactbits/GlareHover';
-import { TratamentoLinha } from '@/components/sections/TratamentoLinha';
+import { TratamentosSeletor } from '@/components/sections/TratamentosSeletor';
 
 function mockMatchMedia({ reduz = false, ponteiroFino = true }: { reduz?: boolean; ponteiroFino?: boolean }) {
   vi.stubGlobal('matchMedia', (q: string) => ({
@@ -61,42 +61,44 @@ describe('GlareHover', () => {
   });
 });
 
-describe('TratamentoLinha — gate de pointer:fine (fonte unica useCapability)', () => {
-  const props = {
-    href: 'https://wa.me/551122740228?text=teste',
-    n: '01',
-    nome: 'Facetas',
-    desc: 'Descrição real do tratamento',
-    img: '/img/trat-facetas.jpg',
-    temFoto: false,
-  };
+// O gate de pointer:fine mudou de casa na Task 20: a linha de tratamento que
+// envolvia o GlareHover virou a roda de opções, e o efeito migrou para a foto
+// do painel. O que este bloco guarda continua sendo o mesmo — quem decide se
+// o hover existe é `useCapability().pontoFino`, nunca o componente.
+describe('TratamentosSeletor — gate de pointer:fine (fonte unica useCapability)', () => {
+  const itens = [
+    { n: '01', nome: 'Facetas', desc: 'Descrição real do tratamento', img: '/img/trat-facetas.webp', temFoto: false },
+    { n: '02', nome: 'Implantes', desc: 'Outra descrição real', img: '/img/trat-implantes.jpg', temFoto: false },
+  ];
+
+  const foto = (container: HTMLElement) =>
+    container.querySelector('[class*="aspect-[4/3]"]') as HTMLElement;
 
   it('com ponteiro fino (desktop/mouse), o GlareHover fica habilitado', async () => {
     mockMatchMedia({ ponteiroFino: true });
-    const { container } = render(<TratamentoLinha {...props} />);
+    const { container } = render(<TratamentosSeletor itens={itens} />);
     await waitFor(() => {
-      // Com pointer:fine, o overlay do GlareHover existe (não-disabled).
-      const wrapper = container.firstElementChild as HTMLElement;
-      expect(wrapper.children.length).toBe(2); // overlay + <a>
+      // Com pointer:fine, o overlay do GlareHover entra como filho extra
+      // (o overlay é uma <div> só com estilo inline, sem classe própria).
+      expect(foto(container).children.length).toBe(2); // overlay + foto
     });
   });
 
   it('sem ponteiro fino (touch), o GlareHover fica desabilitado — sem handler de mouse sintetico', async () => {
     mockMatchMedia({ ponteiroFino: false });
-    const { container } = render(<TratamentoLinha {...props} />);
+    const { container } = render(<TratamentosSeletor itens={itens} />);
     await waitFor(() => {
-      const wrapper = container.firstElementChild as HTMLElement;
-      expect(wrapper.children.length).toBe(1); // só o <a>, sem overlay
+      expect(foto(container).children.length).toBe(1); // só a foto, sem overlay
     });
   });
 
-  it('continua exibindo nome, numero e link corretos independente do gate', () => {
+  it('continua exibindo nome, numero e CTA do tratamento selecionado', () => {
     mockMatchMedia({ ponteiroFino: true });
-    render(<TratamentoLinha {...props} />);
-    const link = screen.getByRole('link', { name: /Facetas/i });
-    expect(link.textContent).toContain('01');
-    expect(link.textContent).toContain(props.desc);
-    expect(link).toHaveAttribute('href', props.href);
-    expect(link.className).toContain('pressable');
+    render(<TratamentosSeletor itens={itens} />);
+    expect(screen.getByRole('heading', { level: 3, name: 'Facetas' })).toBeInTheDocument();
+    expect(screen.getByText('01')).toBeInTheDocument();
+    const cta = screen.getByRole('link', { name: /Falar sobre facetas/i });
+    expect(cta.getAttribute('href')).toContain('wa.me/551122740228');
+    expect(cta.className).toContain('pressable');
   });
 });
