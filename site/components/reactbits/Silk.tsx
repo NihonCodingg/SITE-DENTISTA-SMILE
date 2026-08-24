@@ -18,8 +18,8 @@
  * 1. **Pausa fora da viewport e com a aba oculta** — o original usa
  *    `<Canvas frameloop="always">`, que roda o loop de render do R3F pra
  *    sempre enquanto o componente está montado, sem checar visibilidade
- *    nenhuma. Exigência dura desta task (mesmo padrão de
- *    `components/ui/Silk.tsx`/`Ticker.tsx`/`CircularGallery.tsx`).
+ *    nenhuma. Exigência dura desta task (mesmo padrão de `Ticker.tsx` e
+ *    `CircularGallery.tsx`, e da reimplementação que este arquivo aposentou).
  *    `frameloop` do R3F é reativo — alternar entre `"always"` e `"never"`
  *    pausa/retoma o loop de render SEM destruir o contexto WebGL nem
  *    desmontar o Canvas, então entrar/sair da viewport repetidamente (o

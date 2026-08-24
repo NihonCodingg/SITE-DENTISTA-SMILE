@@ -17,7 +17,7 @@
  *    visibilidade, exatamente o motivo pelo qual não tinha sido vendorizado
  *    antes. Adicionado: um `IntersectionObserver` no container (`parallax`)
  *    e uma checagem de `document.hidden`, no MESMO padrão de
- *    `Silk.tsx`/`Ticker.tsx` (Task 8/9) — o callback do `useAnimationFrame`
+ *    `Silk.tsx`/`Ticker.tsx` — o callback do `useAnimationFrame`
  *    continua sendo chamado a cada frame pelo ticker global da Motion (não
  *    dá pra cancelar o registro sem desmontar o hook), mas agora só
  *    atualiza `baseX` quando visível e com a aba em primeiro plano; fora
@@ -140,7 +140,7 @@ function VelocityText({
     return `${wrap(-copyWidth, 0, v)}px`;
   });
 
-  // Visibilidade: mesmo padrão de Silk.tsx/Ticker.tsx (Task 8/9). Guardado
+  // Visibilidade: mesmo padrão de Silk.tsx/Ticker.tsx. Guardado
   // em refs (não estado) — não precisa re-renderizar nada, só ser lido
   // dentro do callback de useAnimationFrame abaixo.
   const visivelRef = useRef(false);

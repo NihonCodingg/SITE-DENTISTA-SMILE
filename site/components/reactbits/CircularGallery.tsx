@@ -18,7 +18,8 @@
  *      `fonts.googleapis.com` e não temos texto nenhum pra desenhar (nunca
  *      inventamos nome de paciente).
  *   2. O loop de render agora PAUSA fora da viewport e com `document.hidden`
- *      (IntersectionObserver), no mesmo padrão de `components/ui/Silk.tsx`.
+ *      (IntersectionObserver), no mesmo padrão de `Silk.tsx` — que hoje faz isso
+ *      alternando o `frameloop` do R3F, não com um `rAF` próprio.
  *   3. Redimensionamento trocou de `window.resize` para `ResizeObserver` no
  *      container, mesmo padrão de `Silk.tsx`.
  *   4. `destroy()` agora libera o contexto WebGL (`WEBGL_lose_context`), que

@@ -156,7 +156,7 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
 - **Cleanup:** o `destroy()` original cancelava o `rAF` e removia os listeners de
   window/canvas — mas **nunca** liberava o contexto WebGL (`WEBGL_lose_context`) nem pausava o
   loop de render fora da viewport ou com a aba oculta. As duas são exigências duras desta task
-  (mesmo padrão que `components/ui/Silk.tsx`, Task 8) — corrigidas nas modificações nº2 e nº4
+  (mesmo padrão que `Silk.tsx`) — corrigidas nas modificações nº2 e nº4
   abaixo.
 - **Só `transform`/`opacity`:** o componente inteiro é desenhado em WebGL (shader), não CSS — a
   regra "só transform e opacity" do `design-guidance.md` fala de propriedades CSS animadas fora do
@@ -177,7 +177,8 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      pra sempre enquanto o componente estivesse montado — o mesmo problema que
      `reactbits-vendoring.md` já registrou pro `ScrollVelocity` (Task 9) e que este README explica
      acima. Adicionado um `IntersectionObserver` no container (`visivel`) e uma checagem de
-     `document.hidden`, exatamente como `components/ui/Silk.tsx` (Task 8): o `rAF` continua sendo
+     `document.hidden`, mesma ideia do `Silk.tsx` (que consegue expressá-la pelo `frameloop` do
+     R3F, sem `rAF` próprio): o `rAF` continua sendo
      reagendado a cada quadro (retomar precisa ser instantâneo), mas o corpo pesado (`lerp`,
      `media.update`, `renderer.render`) só roda quando a seção está visível e a aba em primeiro
      plano. Provado por teste com `rAF`/`IntersectionObserver` mockados —
@@ -253,7 +254,7 @@ cada um não tinha entrado. O parceiro revisou o acumulado desses quatro motivos
 reverter, em 20/08/2026: *"Pode forçar o máximo possível, depois que o projeto finalizar se houver
 muitos custos técnicos podemos resolver."* (registrado em `emenda-reactbits-e-skills.md`). Os
 quatro foram vendorizados na Task 19 — as implementações à mão que os substituíam
-(`components/ui/Silk.tsx`, o `rAF` manual do antigo `Ticker.tsx`, o CSS de
+(a antiga `components/ui/Silk.tsx` em `ogl`, o `rAF` manual do antigo `Ticker.tsx`, o CSS de
 `.linha-tratamento::after`) foram removidas. O custo medido da troca (KB, chunks, first-load JS)
 está em `task-19-report.md`.
 
@@ -283,7 +284,7 @@ está em `task-19-report.md`.
 - **Só `transform`/`opacity`:** a coreografia de abertura anima `xPercent`/`yPercent`/`rotate` via
   GSAP (equivalentes a `transform`) e a custom property `--sm-num-opacity` (equivalente a
   `opacity`, lida por uma regra CSS) — dentro da regra.
-- **Modificações** (a versão vendorizada tem 325 linhas contra as 588 do original — o que foi
+- **Modificações** (a versão vendorizada tem 410 linhas contra as 588 do original — o que foi
   cortado está listado junto com o motivo):
   1. **`<header>` interno removido** (logo + botão hambúrguer com morph de ícone/texto, e o
      `gsap.timeline` de ~150 linhas que animava esse morph). `MobileMenu.tsx` já tem seu próprio
