@@ -68,7 +68,7 @@ export function TratamentoLinha({
               separador, o nome do computedname (ex.: "... implante" +
               "Solução...") gruda o fim de uma palavra no início da outra,
               sem pausa nenhuma pra quem ouve por leitor de tela. */}
-          <span className="font-corpo text-[15px] text-grafite">{desc}</span>
+          <span className="font-corpo text-[16px] text-grafite">{desc}</span>
         </span>
 
         <span className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-preto">

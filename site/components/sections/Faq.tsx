@@ -77,7 +77,7 @@ function ItemFaq({ pergunta, resposta }: { pergunta: string; resposta: string })
             transition={{ duration: podeAnimar ? 0.25 : 0, ease: EASE_SAIDA }}
             className="overflow-hidden"
           >
-            <p className="max-w-[68ch] pb-5 font-corpo text-[15px] leading-relaxed text-grafite">{resposta}</p>
+            <p className="max-w-[68ch] pb-5 font-corpo text-[16px] leading-relaxed text-grafite">{resposta}</p>
           </motion.div>
         )}
       </AnimatePresence>

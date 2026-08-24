@@ -134,7 +134,11 @@ export function AntesDepois() {
           ))}
         </div>
 
-        <p className="mt-6 max-w-[72ch] font-corpo text-[13.5px] leading-relaxed text-grafite">{AVISO_LEGAL}</p>
+        {/* 14px é a mesma exceção do bloco de contato do rodapé: texto legal
+            exigido pela CFO-196/2019, lido uma vez, não corpo de leitura —
+            registrada na review final da branch (M2). Abaixo de 14px não
+            desce. */}
+        <p className="mt-6 max-w-[72ch] font-corpo text-[14px] leading-relaxed text-grafite">{AVISO_LEGAL}</p>
       </div>
     </section>
   );
