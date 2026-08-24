@@ -26,7 +26,7 @@ export const ANCORA_TOPO = '#topo';
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#F1E7DB] bg-branco/94 backdrop-blur-[8px]">
+    <header className="sticky top-0 z-50 border-b border-borda-header bg-branco/94 backdrop-blur-[8px]">
       <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-[10px] md:px-8">
         <a href={ANCORA_TOPO} className="shrink-0">
           <Image src="/img/logo.png" alt="Smile Ipiranga" width={82} height={46} preload className="h-[46px] w-auto" />
@@ -46,7 +46,7 @@ export function Header() {
               // 44px que o resto deste header já usa (CTA, telefone). Fonte,
               // tamanho, tracking e cor não mudam; a fileira já tem 44px por
               // causa do botão de telefone, então a altura do header não muda.
-              className="inline-flex min-h-11 items-center font-rotulo text-[13px] tracking-[.14em] text-grafite uppercase transition-[color] duration-200 ease-out pointer-fine:hover:text-preto"
+              className="inline-flex min-h-11 items-center font-rotulo text-[13px] tracking-[.14em] text-grafite uppercase transition-[color] duration-200 ease-saida pointer-fine:hover:text-preto"
             >
               {item.rotulo}
             </a>

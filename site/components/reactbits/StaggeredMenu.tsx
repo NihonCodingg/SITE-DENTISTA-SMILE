@@ -365,7 +365,7 @@ export const StaggeredMenu = forwardRef<HTMLElement, StaggeredMenuProps>(functio
         inert={!open}
         className={
           'sm-panel-scope pointer-events-auto absolute inset-y-0 right-0 z-10 flex h-dvh w-[min(320px,86vw)] flex-col justify-between bg-creme px-6 py-6 shadow-[-12px_0_30px_rgba(17,17,17,0.14)]' +
-          (reducedMotion ? ' transition-opacity duration-200 ease-out' : '')
+          (reducedMotion ? ' transition-opacity duration-200 ease-saida' : '')
         }
         style={reducedMotion ? { opacity: open ? 1 : 0 } : undefined}
       >

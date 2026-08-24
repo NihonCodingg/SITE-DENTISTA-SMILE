@@ -9,6 +9,9 @@
   --color-grafite: #5A5A55;
   --color-borda: #EBDFCE;
   --color-borda-forte: #E8DCCA;
+  /* Só a linha inferior do header: mais clara que --color-borda porque
+     divide branco de branco sob o backdrop-filter, e não creme de branco. */
+  --color-borda-header: #F1E7DB;
   --color-escuro-linha: #2A2A28;
   --color-escuro-texto: #B7B7B2;
   --color-escuro-fraco: #8A8A85;
