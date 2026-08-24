@@ -144,6 +144,23 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      `poster`): o site não hospeda vídeo desde 24/08, e manter o ramo convidaria a reintroduzir um.
   4. **Escrita de ref movida do render para `useLayoutEffect`** (regra `react-hooks/refs`, mesma
      correção do `DepthCarousel` e do `OptionWheel`).
+  5. **Slot `midia`.** O original só sabe expandir uma imagem. Aqui quem se abre é o HERO INTEIRO —
+     card creme, headline, foto do doutor, colunas — com a foto parada no lugar onde o design a
+     colocou. Com `midia`, o que cresce é conteúdo, não um arquivo.
+  6. **`startOffsetY`** (pontos percentuais) desloca o quadro inicial para baixo, decaindo até zero
+     na abertura. O original só sabe centralizar. Não é usado hoje pelo hero, mas é o que permite
+     alinhar o quadro com um elemento que não está no centro vertical da tela.
+
+**Duas restrições deste componente, descobertas medindo — quem for mexer no hero precisa saber:**
+
+- **O conteúdo tem que caber numa tela.** O palco é `sticky` com a altura da janela. O hero em
+  tamanho normal media 1296px numa tela de 900px e nascia cortado; por isso a variante que se abre
+  usa título e foto menores (`compacto` em `Hero.tsx`), o que o traz para 786px. Decisão tomada com
+  o dono do projeto.
+- **Não convive com o fundo WebGL.** O canvas do R3F se dimensiona pelo retângulo JÁ ESCALADO do
+  container (medido: 859px de canvas num card de 1022), e como a escala muda a cada quadro,
+  corrigir por medição volta a quebrar no quadro seguinte. O `Silk` fica fora da variante que se
+  abre e continua na normal (celular, reduced-motion).
 
 ### `Magnet.tsx`
 

@@ -15,6 +15,10 @@
  *    otimizador (AVIF, tamanho certo) não é detalhe. O modo `video` foi
  *    REMOVIDO junto: o site não hospeda vídeo (ver `ui/VideoCard.tsx`), e
  *    manter o ramo convidaria a reintroduzir um.
+ * 5. **Slot `midia`.** O original só expande uma imagem. O hero deste site
+ *    precisa que o BLOCO INTEIRO se abra — card creme, headline, foto do
+ *    doutor, colunas — com a foto parada no lugar onde o design a colocou.
+ *    Com `midia`, o que cresce é conteúdo, não um arquivo.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
@@ -59,6 +63,12 @@ export interface ScrollExpandProps {
   enabled?: boolean;
   /** Vem de `useCapability().podeAnimar` — o componente não consulta matchMedia. */
   reducedMotion?: boolean;
+  /**
+   * Conteúdo que se abre no lugar da imagem. O original só sabe expandir uma
+   * mídia (`src`); aqui o hero inteiro — card creme, headline, foto, colunas —
+   * entra por este slot e é ELE que cresce. Quando presente, `src` é ignorado.
+   */
+  midia?: ReactNode;
   children?: ReactNode;
   className?: string;
   style?: CSSProperties;
@@ -82,6 +92,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   useWindowScroll = false,
   enabled = true,
   reducedMotion = false,
+  midia,
   children,
   className = '',
   style,
@@ -91,7 +102,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   const trackRef = useRef<HTMLDivElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
-  const mediaRef = useRef<HTMLImageElement & HTMLVideoElement>(null);
+  const mediaRef = useRef<HTMLImageElement & HTMLVideoElement & HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const scrimRef = useRef<HTMLDivElement | null>(null);
@@ -246,7 +257,17 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
     };
   }, [applyProgress, useWindowScroll, reducedMotion]);
 
-  const media = (
+  const media = midia ? (
+    // `mediaRef` é o que recebe o `scale` do percurso — então o wrapper do
+    // conteúdo tem que ser ele, não um filho. `h-full` porque o palco tem a
+    // altura da janela e o conteúdo se organiza dentro dela.
+    <div
+      ref={mediaRef as unknown as React.RefObject<HTMLDivElement>}
+      className="absolute inset-0 h-full w-full origin-center [will-change:transform]"
+    >
+      {midia}
+    </div>
+  ) : (
     <Image
       ref={mediaRef}
       className="absolute inset-0 h-full w-full origin-center select-none object-cover [will-change:transform]"

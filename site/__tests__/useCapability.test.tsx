@@ -113,10 +113,11 @@ describe('useCapability', () => {
    * diferente por consulta (ao contrário de `mockMatchMedia`, que ignora o
    * argumento) para provar que as duas fontes não se confundem.
    */
-  function mockMatchMediaPorConsulta(reduzido: boolean, ponteiroFino: boolean) {
+  function mockMatchMediaPorConsulta(reduzido: boolean, ponteiroFino: boolean, telaLarga = true) {
     const mqls: Record<string, { matches: boolean; addEventListener: ReturnType<typeof vi.fn>; removeEventListener: ReturnType<typeof vi.fn> }> = {
       '(prefers-reduced-motion: reduce)': { matches: reduzido, addEventListener: vi.fn(), removeEventListener: vi.fn() },
       '(pointer: fine)': { matches: ponteiroFino, addEventListener: vi.fn(), removeEventListener: vi.fn() },
+      '(min-width: 768px)': { matches: telaLarga, addEventListener: vi.fn(), removeEventListener: vi.fn() },
     };
     vi.stubGlobal('matchMedia', (q: string) => mqls[q]);
     return mqls;
@@ -127,6 +128,20 @@ describe('useCapability', () => {
     vi.stubGlobal('navigator', { deviceMemory: 8, hardwareConcurrency: 8, connection: { saveData: false } });
     const { result } = renderHook(() => useCapability());
     expect(result.current.pontoFino).toBe(true);
+  });
+
+  // `telaLarga` é o corte de 768px (o mesmo do `md:` do Tailwind). O Hero
+  // decide por ele se a abertura com scroll acontece.
+  it('reconhece tela larga e estreita pelo corte de 768px, sem confundir com as outras consultas', () => {
+    mockMatchMediaPorConsulta(false, true, true);
+    vi.stubGlobal('navigator', { deviceMemory: 8, hardwareConcurrency: 8, connection: { saveData: false } });
+    expect(renderHook(() => useCapability()).result.current.telaLarga).toBe(true);
+
+    mockMatchMediaPorConsulta(false, true, false);
+    const estreita = renderHook(() => useCapability());
+    expect(estreita.result.current.telaLarga).toBe(false);
+    expect(estreita.result.current.pontoFino).toBe(true);
+    expect(estreita.result.current.podeAnimar).toBe(true);
   });
 
   it('reconhece ausência de ponteiro fino (touch) mesmo com reduced-motion desligado', () => {

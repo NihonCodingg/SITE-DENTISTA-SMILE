@@ -16,7 +16,16 @@ const HEADLINE = 'Seu novo sorriso começa aqui';
 // `id="hero"` é usado pelo WhatsAppFab (lib/layout) para saber exatamente
 // onde a seção termina, em vez de aproximar por 100dvh.
 export function Hero() {
-  const { podeAnimar, pontoFino, montado } = useCapability();
+  const { podeAnimar, pontoFino, montado, telaLarga } = useCapability();
+
+  // A abertura com scroll usa um palco com a ALTURA DA JANELA: o hero precisa
+  // caber nela, senão nasce cortado. Medido em 1265×900, o hero em tamanho
+  // normal tem 1296px — 44% mais alto que a tela. Por isso o modo com
+  // abertura usa uma variante compacta (título e foto menores, ver `compacto`
+  // abaixo), decidida com o dono do projeto. No celular as colunas empilham e
+  // nada disso cabe: lá o hero fica como sempre foi, sem abertura.
+  const abrirComScroll = telaLarga && montado && podeAnimar;
+  const compacto = abrirComScroll;
 
   // O texto sempre existe puro no HTML do servidor (SEO/LCP): no primeiro
   // render — servidor e cliente antes da hidratação confirmar podeAnimar —
@@ -40,10 +49,15 @@ export function Hero() {
   // efeito visual nenhum. pontoFino vem do useCapability(), fonte única.
   const magnetAtivo = podeAnimar && pontoFino;
 
-  return (
-    <section id="hero" className="bg-branco px-3 pt-4 pb-10 md:px-6 md:pt-6 md:pb-14">
+  const miolo = (
       <div className="relative mx-auto max-w-[1360px] overflow-hidden rounded-[32px] bg-creme px-[clamp(20px,4vw,64px)] pt-[clamp(24px,5vw,56px)] pb-[clamp(28px,5vw,56px)]">
-        <HeroBackdrop />
+        {/* O fundo WebGL não convive com a variante que se abre: o canvas do
+            R3F se dimensiona pelo retângulo JÁ ESCALADO do container, então
+            durante a abertura ele cobre só uma fração do card (medido: 859px
+            de canvas num card de 1022). Como a escala muda a cada quadro,
+            corrigir por medição volta a quebrar no quadro seguinte. Na
+            variante normal — celular e reduced-motion — ele continua. */}
+        {!compacto && <HeroBackdrop />}
 
         <div className="relative">
           <SectionHeading
@@ -57,7 +71,7 @@ export function Hero() {
             // (Task 18, A1). No ramo de texto puro o conteúdo já é o nome.
             tituloAriaLabel={podeAnimar ? HEADLINE : undefined}
             className="mx-auto"
-            tituloClassName="mx-auto max-w-[14ch] text-[clamp(42px,7.6vw,104px)]"
+            tituloClassName={`mx-auto max-w-[14ch] ${compacto ? 'text-[clamp(36px,5.2vw,72px)]' : 'text-[clamp(42px,7.6vw,104px)]'}`}
           >
             <Image
               src="/img/sorriso-arco.png"
@@ -101,7 +115,7 @@ export function Hero() {
             </div>
 
             {/* Coluna 2 — foto (LCP) com o card do tour sobreposto */}
-            <div className="relative mx-auto w-full md:max-w-[460px]">
+            <div className={`relative mx-auto w-full ${compacto ? 'md:w-auto' : 'md:max-w-[460px]'}`}>
               {/* Task 17 (H2): "100vw" superestimava a largura real. O próprio
                   boundingRect do audit de LCP mediu 348px num viewport de 412
                   (85vw): padding do section (px-3, 12px) + padding do card
@@ -118,7 +132,14 @@ export function Hero() {
                   amostras — mesma fração de largura real (só 5% menor que os
                   348px medidos, imperceptível numa foto). Detalhe completo em
                   task-17-report.md. */}
-              <div className="relative aspect-[928/1143] overflow-hidden rounded-[24px] bg-borda">
+              <div
+                className={`relative aspect-[928/1143] overflow-hidden rounded-[24px] bg-borda ${
+                  // No modo compacto quem manda é a ALTURA (fração da janela),
+                  // não a largura: é a altura que precisa caber no palco, e a
+                  // largura sai do aspecto da foto.
+                  compacto ? 'mx-auto h-[38vh] max-h-[400px] w-auto' : ''
+                }`}
+              >
                 <Image
                   src="/img/hero-foto.jpg"
                   alt="Dr. Vinicius Aracena sorrindo sob o letreiro da Smile Ipiranga"
@@ -174,30 +195,49 @@ export function Hero() {
           </div>
         </div>
       </div>
+  );
 
-      {/* O fecho do hero: a MESMA foto do card acima se abrindo com o scroll
-          até sangrar a tela (`ScrollExpand` do React Bits — Task 20). Fica
-          dentro do <section id="hero">, não numa seção própria: é o último
-          movimento do topo da página, e a continuidade só existe porque é a
-          mesma foto. Sem título nem legenda sobrepostos — o componente
-          aceita os dois, mas qualquer texto ali seria copy inventada, e a
-          headline já foi dita no card. */}
-      <div className="mt-4 md:mt-6">
-        <ScrollExpand
-          src="/img/hero-foto.jpg"
-          alt=""
-          useWindowScroll
-          reducedMotion={!montado || !podeAnimar}
-          startWidth={64}
-          startHeight={70}
-          startRadius={32}
-          endRadius={0}
-          mediaZoom={1.15}
-          scrollDistance={0.85}
-          holdDistance={0.1}
-          overlayScrim={0.2}
-        />
-      </div>
+  if (!abrirComScroll) {
+    return (
+      <section id="hero" className="bg-branco px-3 pt-4 pb-10 md:px-6 md:pt-6 md:pb-14">
+        {miolo}
+      </section>
+    );
+  }
+
+  return (
+    // Quem se abre com o scroll é o HERO INTEIRO — o card creme com a
+    // headline, a foto do doutor no centro e as três colunas —, não uma
+    // imagem. O `ScrollExpand` do React Bits só sabia expandir mídia; a versão
+    // vendorizada ganhou o slot `midia` para receber conteúdo (ver
+    // components/reactbits/README.md). A foto não é tocada: continua o card
+    // retrato no meio da grade, como no design aprovado.
+    //
+    // `mediaZoom` casa com `startHeight`: a janela inicial mostra 84% da
+    // altura do palco, então o conteúdo entra em 0,84 para caber INTEIRO
+    // dentro dela — a headline não pode nascer pela metade. Os dois chegam a
+    // 100% juntos, e é aí que a variante compacta se paga: em tamanho normal
+    // o hero tem 1296px e não caberia na tela nem totalmente aberto.
+    <section id="hero" className="bg-branco">
+      <ScrollExpand
+        useWindowScroll
+        reducedMotion={!podeAnimar}
+        startWidth={84}
+        startHeight={84}
+        startRadius={32}
+        endRadius={0}
+        mediaZoom={0.84}
+        scrollDistance={0.8}
+        holdDistance={0.1}
+        overlayScrim={0}
+        midia={
+          // `w-full` no filho: num container flex o card encolheria para a
+          // largura do conteúdo, e a grade de três colunas empilharia.
+          <div className="flex h-full items-center px-3 py-4 md:px-6 md:py-6">
+            <div className="w-full">{miolo}</div>
+          </div>
+        }
+      />
     </section>
   );
 }
