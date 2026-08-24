@@ -62,6 +62,15 @@ function ItemFaq({ pergunta, resposta }: { pergunta: string; resposta: string })
         </span>
       </summary>
 
+      {/* DESVIO ACEITO da regra "só transform, opacity e clip-path": esta é a
+          única animação de `height` do projeto (M1 da review final da
+          branch). São 250ms, duas perguntas, abaixo da dobra, e o layout
+          reflui uma vez por abertura — custo real desprezível. A alternativa
+          (`clip-path: inset()`) exigiria medir a altura do conteúdo em JS
+          para animar sem cortar texto, trocando um reflow barato por
+          complexidade e um caminho novo de bug. Se o FAQ crescer para muitas
+          perguntas, ou se algum item passar a abrir acima da dobra, vale
+          reavaliar. */}
       <AnimatePresence
         initial={false}
         onExitComplete={() => {
