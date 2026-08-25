@@ -73,6 +73,11 @@ export function Hero() {
         // do CTA, com `top` em porcentagem (ver a nota do componente sobre
         // padding em porcentagem, que se resolve pela largura).
         overlayClassName="block"
+        // Sem a aparência do original: o título aqui é o `SectionHeading`,
+        // preto sobre creme. As classes padrão são de texto BRANCO sobre
+        // foto e trazem uma sombra de 24px que, herdada por um `<h1>` preto,
+        // vira um borrão escuro em volta das letras.
+        titleClassName=""
         startWidth={startWidth}
         startHeight={startHeight}
         // Teto em pixels da moldura fechada (Task 24, pedido do dono do
@@ -143,7 +148,12 @@ export function Hero() {
           // dono do projeto num monitor alto, 25/08/2026). Os números são
           // acoplados de propósito: 27% = 54/2 e 31% = 62/2 (useMoldura),
           // 280px = 560/2 (maxStartHeightPx). Mudou lá, muda aqui.
-          <div className="absolute inset-x-0 top-[calc(50%_-_min(27%,280px)_+_40px)] mx-auto flex w-[min(86vw_-_28px,380px)] flex-col items-center gap-3 md:top-[calc(50%_-_min(31%,280px)_+_28px)] md:w-[min(44vw_-_40px,520px)] md:gap-4">
+          //
+          // A folga do celular é 90px e não 40px desde 25/08/2026: com 40, o
+          // grupo (título, arco, CTA e prova social) terminava a 536px de uma
+          // tela de 852 e deixava 316px — 37% da tela — de creme vazio
+          // embaixo, apontado numa captura de aparelho real.
+          <div className="absolute inset-x-0 top-[calc(50%_-_min(27%,280px)_+_90px)] mx-auto flex w-[min(86vw_-_28px,380px)] flex-col items-center gap-3 md:top-[calc(50%_-_min(31%,280px)_+_28px)] md:w-[min(44vw_-_40px,520px)] md:gap-4">
           <SectionHeading
             as="h1"
             align="center"
@@ -177,9 +187,17 @@ export function Hero() {
             quem atende, o que a clínica faz e onde fica, e é de lá que sai o
             link (pedido do dono do projeto). `brilho` liga o reflexo
             especular; ele só monta de verdade onde há ponteiro para seguir. */}
-        {/* As porcentagens saem da medição do bloco de cima: no celular o
-            título termina em ~43% da tela, no desktop em ~56%. */}
-        <div className="absolute inset-x-0 top-[47%] mx-auto flex w-[min(86vw_-_28px,420px)] flex-col items-center gap-4 md:top-[58%] md:w-[min(44vw_-_40px,520px)]">
+        {/* No CELULAR este bloco é ancorado no MESMO ponto do título mais a
+            altura do bloco dele com folga para TRÊS linhas de headline —
+            que é o que acontece a 360px de largura, onde a fonte já bateu no
+            piso do `clamp` e o texto não tem mais como encolher. Antes era
+            `top-[47%]`, uma porcentagem solta: medido a 360x600, o bloco do
+            CTA começava 71px ACIMA do fim do título, ou seja, um em cima do
+            outro. Ancorados juntos, os dois descem na mesma
+            proporção e a distância entre eles fica constante em qualquer
+            altura. No desktop `58%` continua: lá a moldura é mais alta e o
+            teto de 560px não morde do mesmo jeito. */}
+        <div className="absolute inset-x-0 top-[calc(50%_-_min(27%,280px)_+_285px)] mx-auto flex w-[min(86vw_-_28px,420px)] flex-col items-center gap-4 md:top-[58%] md:w-[min(44vw_-_40px,520px)]">
           <CtaAgendamento tema="amarelo" brilho compacto />
           <ProvaSocial />
         </div>

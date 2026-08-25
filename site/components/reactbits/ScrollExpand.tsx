@@ -30,6 +30,15 @@
  *    execução (que é como o hero muda a moldura entre celular e desktop) não
  *    repinta nada — a moldura fica com a porcentagem antiga até o próximo
  *    evento de scroll.
+ * 14. **`titleClassName`.** O original desenha o título como texto BRANCO
+ *    sobre foto, e para garantir contraste sobre qualquer imagem aplica
+ *    `text-shadow: 0 2px 24px rgba(0,0,0,0.45)` no elemento que embrulha o
+ *    slot. Quem passa um título já estilizado herda essa sombra: neste site
+ *    o `<h1>` é PRETO sobre creme, e a sombra virava um borrão escuro em
+ *    volta das letras — visível no celular, onde o fundo é chapado (achado
+ *    numa captura de aparelho real, 25/08/2026). `titleClassName` substitui
+ *    o bloco de aparência (cor, sombra, peso, corpo) e preserva o de
+ *    posição, no mesmo espírito de `overlayClassName`.
  * 11. **`fadeTitle` e `overlayClassName`.** O original apaga o título
  *    conforme a moldura abre e centraliza os `children` no palco — os dois
  *    ocupam o mesmo lugar de propósito, um substituindo o outro. Este hero
@@ -113,6 +122,11 @@ export interface ScrollExpandProps {
   /** Posicionamento do bloco de `children` dentro do palco. */
   overlayClassName?: string;
   /**
+   * SUBSTITUI as classes de APARÊNCIA do título (cor, sombra, peso, corpo),
+   * mantendo as de posição. Ver a modificação 14 no topo do arquivo.
+   */
+  titleClassName?: string;
+  /**
    * Teto em PIXELS para a moldura fechada (ver modificação 12). `startWidth` e
    * `startHeight` são porcentagens da janela: numa tela larga elas crescem
    * junto e a moldura descola do conteúdo. Com um teto em pixels, ela para de
@@ -151,6 +165,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   reducedMotion = false,
   fadeTitle = true,
   overlayClassName = '',
+  titleClassName,
   maxStartWidthPx = 0,
   maxStartHeightPx = 0,
   midia,
@@ -445,7 +460,10 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
           {title ? (
             <div
               ref={titleRef}
-              className="absolute inset-0 flex items-center justify-center m-0 px-[6%] text-center font-bold leading-none tracking-[-0.03em] text-white [font-size:var(--se-title-size)] [text-shadow:0_2px_24px_rgba(0,0,0,0.45)] pointer-events-none [will-change:opacity,transform]"
+              className={`absolute inset-0 flex items-center justify-center m-0 px-[6%] text-center pointer-events-none [will-change:opacity,transform] ${
+                titleClassName ??
+                'font-bold leading-none tracking-[-0.03em] text-white [font-size:var(--se-title-size)] [text-shadow:0_2px_24px_rgba(0,0,0,0.45)]'
+              }`}
             >
               {title}
             </div>
