@@ -9,8 +9,8 @@ import DriftWall from '@/components/reactbits/DriftWall';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
 import { CtaAgendamento } from '@/components/ui/CtaAgendamento';
 import { ProvaSocial } from '@/components/ui/ProvaSocial';
-import { useEffect, useState } from 'react';
 import { useCapability } from '@/lib/useCapability';
+import { useTelaLarga } from '@/lib/useTelaLarga';
 
 const HEADLINE = 'Seu novo sorriso começa aqui';
 
@@ -38,25 +38,16 @@ const FOTOS_PAREDE = [
  * e alta demais deixa de parecer uma moldura e vira a tela inteira, e aí a
  * abertura não tem para onde crescer.
  */
-function useMoldura() {
-  const [moldura, setMoldura] = useState({ startWidth: 44, startHeight: 62 });
-
-  useEffect(() => {
-    const medir = () =>
-      setMoldura(window.innerWidth < 768 ? { startWidth: 86, startHeight: 54 } : { startWidth: 44, startHeight: 62 });
-    medir();
-    window.addEventListener('resize', medir);
-    return () => window.removeEventListener('resize', medir);
-  }, []);
-
-  return moldura;
+function useMoldura(telaLarga: boolean) {
+  return telaLarga ? { startWidth: 44, startHeight: 62 } : { startWidth: 86, startHeight: 54 };
 }
 
 // `id="hero"` é usado pela IlhaContato (components/layout) para saber
 // exatamente onde a seção termina, em vez de aproximar por 100dvh.
 export function Hero() {
   const { podeAnimar, pontoFino } = useCapability();
-  const { startWidth, startHeight } = useMoldura();
+  const telaLarga = useTelaLarga();
+  const { startWidth, startHeight } = useMoldura(telaLarga);
 
   // Headline como texto preto puro, sempre — decisão do dono do projeto
   // ("se não puder centralizar, desfaça"): a versão mascarada
@@ -123,12 +114,17 @@ export function Hero() {
                 <DriftWall
                   decorativo
                   items={FOTOS_PAREDE}
-                  // 10 colunas para a parede SANGRAR a tela inteira (pedido
-                  // do dono do projeto: "pode repetir as fotos, precisa
-                  // estar a tela cheia"): 10 × (150+14) × escala 1,18 ≈
-                  // 1.935px de plano, cobrindo até ultrawide. As 12 fotos se
-                  // repetem em ciclo por coluna — repetição autorizada.
-                  columns={10}
+                  // Colunas suficientes para a parede SANGRAR a tela (pedido
+                  // do dono do projeto: "pode repetir as fotos, precisa estar
+                  // a tela cheia") e nem uma a mais. Cada coluna mede
+                  // (150+14) × escala 1,18 ≈ 194px de plano: 10 cobrem até
+                  // ultrawide, 4 cobrem 774px — mais que o dobro de uma tela
+                  // de celular. Não é detalhe de estilo: cada coluna traz sete
+                  // azulejos, e cada azulejo é um nó transformado a cada
+                  // quadro. Dez colunas num celular são 84 azulejos desenhados
+                  // para uma tela de 375px. As 12 fotos se repetem em ciclo
+                  // por coluna — repetição autorizada.
+                  columns={telaLarga ? 10 : 4}
                   tileWidth={150}
                   tileHeight={190}
                   gap={14}

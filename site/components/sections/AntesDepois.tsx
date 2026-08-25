@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useCapability } from '@/lib/useCapability';
+import { useTelaLarga } from '@/lib/useTelaLarga';
 import { Reveal } from '@/components/ui/Reveal';
 import { ANTES_DEPOIS } from '@/lib/content';
 import { TITULO_TAMANHO_PADRAO, TITULO_TRACKING } from '@/components/ui/SectionHeading';
@@ -76,30 +76,21 @@ const MEDIDAS: { celular: Medida; tela: Medida } = {
 /** Folga acima e abaixo do cartão: sombra projetada, indicadores e ar. */
 const FOLGA_VERTICAL = 96;
 
-function useMedidasCarrossel() {
-  const [medidas, setMedidas] = useState({ ...MEDIDAS.tela, altura: MEDIDAS.tela.cardWidth + FOLGA_VERTICAL });
-
-  useEffect(() => {
-    const medir = () => {
-      const celular = window.innerWidth < 768;
-      const base = celular ? MEDIDAS.celular : MEDIDAS.tela;
-      // A mesma largura útil que a seção dá ao carrossel: o `max-w-[1360px]`
-      // do contêiner menos o padding lateral (px-4 no celular, px-8 acima).
-      const largura = Math.min(window.innerWidth, 1360) - (celular ? 32 : 64);
-      const escala = Math.min(1, Math.max(0.4, largura / (base.cardWidth + base.spread * 2 + base.gutter)));
-      setMedidas({ ...base, altura: Math.round(base.cardWidth * escala) + FOLGA_VERTICAL });
-    };
-    medir();
-    window.addEventListener('resize', medir);
-    return () => window.removeEventListener('resize', medir);
-  }, []);
-
-  return medidas;
+function useMedidasCarrossel(telaLarga: boolean) {
+  const base = telaLarga ? MEDIDAS.tela : MEDIDAS.celular;
+  // A mesma largura útil que a seção dá ao carrossel: o `max-w-[1360px]` do
+  // contêiner menos o padding lateral (px-4 no celular, px-8 acima). Sem
+  // janela (servidor), assume a faixa que o hook devolve por padrão.
+  const janela = typeof window === 'undefined' ? (telaLarga ? 1360 : 375) : window.innerWidth;
+  const largura = Math.min(janela, 1360) - (telaLarga ? 64 : 32);
+  const escala = Math.min(1, Math.max(0.4, largura / (base.cardWidth + base.spread * 2 + base.gutter)));
+  return { ...base, altura: Math.round(base.cardWidth * escala) + FOLGA_VERTICAL };
 }
 
 export function AntesDepois() {
   const { podeAnimar } = useCapability();
-  const { cardWidth, spread, gutter, altura } = useMedidasCarrossel();
+  const telaLarga = useTelaLarga();
+  const { cardWidth, spread, gutter, altura } = useMedidasCarrossel(telaLarga);
 
   // `!ANTES_DEPOIS.length` (não `=== 0`): o array vem de `as const` em
   // lib/content.ts, então o TypeScript infere `.length` como o literal `5`

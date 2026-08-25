@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { TRATAMENTOS } from '@/lib/content';
 import { useCapability } from '@/lib/useCapability';
 import TextLoop from '@/components/reactbits/TextLoop';
+import { useTelaLarga } from '@/lib/useTelaLarga';
 
 /**
  * Faixa decorativa dos 7 tratamentos, logo abaixo do Hero. É repetida (o
@@ -56,18 +56,6 @@ const MEDIDAS_FITA = {
   tela: { fontSize: 22, ribbonWidth: 64, curviness: 40, letterSpacing: 3, altura: 'h-[190px]' },
 };
 
-function useTelaLarga() {
-  const [larga, setLarga] = useState(false);
-
-  useEffect(() => {
-    const medir = () => setLarga(window.innerWidth >= 768);
-    medir();
-    window.addEventListener('resize', medir);
-    return () => window.removeEventListener('resize', medir);
-  }, []);
-
-  return larga;
-}
 
 function textoTratamentos(): string {
   return TRATAMENTOS.map((t) => t.nome).join(SEPARADOR);

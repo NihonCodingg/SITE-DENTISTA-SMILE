@@ -19,14 +19,22 @@ describe('orçamento de performance', () => {
   });
 
   // VERMELHO CONHECIDO, DE PROPÓSITO. Este é o único teste vermelho da suíte.
-  // O LCP *simulado* mede 3847ms contra a meta de 2500ms, já depois das duas
-  // otimizações que renderam ganho medido na Task 17 (AVIF e o `sizes` do
-  // hero). O mesmo LCP com throttling *real* (devtools) mede 2211ms — dentro
-  // da meta. O `simulate` do Lighthouse superestima este caso; a medição real
-  // é a que descreve o que a pessoa vive. Deixado vermelho, e não silenciado,
-  // porque a decisão (aceitar o vermelho documentado, virar `it.fails`, ou
-  // abrir mais uma rodada de performance) é do dono do projeto e ainda não foi
-  // tomada. Números e método em task-17-report.md.
+  // O LCP *simulado* mede ~3,3s contra a meta de 2500ms. O mesmo LCP com
+  // throttling *real* (devtools) mediu 2211ms na Task 17 — dentro da meta. O
+  // `simulate` do Lighthouse superestima este caso; a medição real é a que
+  // descreve o que a pessoa vive. Deixado vermelho, e não silenciado, porque a
+  // decisão (aceitar o vermelho documentado, virar `it.fails`, ou abrir uma
+  // rodada só de LCP) é do dono do projeto e ainda não foi tomada.
+  //
+  // Estado na Task 22, três amostras iguais no mobile simulado (o número que
+  // interessa aqui é a ESTABILIDADE — as medições da Task 17 eram bimodais,
+  // 0,55 a 0,88, e não dava para confiar numa amostra):
+  //   performance 92 · TBT 20-30ms · CLS 0 · TTI 3,4s · 380KB
+  // contra o estado imediatamente anterior, no mesmo método:
+  //   performance 69 · TBT 920ms · CLS 0,061 · TTI 7,0s · 914KB
+  // O que mudou foi tirar o `three`/@react-three/fiber do celular e cortar a
+  // parede de fotos de 84 azulejos para ~34 lá. Método e números completos em
+  // progress.md, Task 22.
   it('atinge LCP abaixo de 2,5s no mobile simulado', () => {
     const p = './lh-mobile.json';
     if (!existsSync(p)) return;

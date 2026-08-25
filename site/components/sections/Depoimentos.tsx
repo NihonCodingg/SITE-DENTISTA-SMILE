@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { DEPOIMENTOS } from '@/lib/content';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
 import { useCapability } from '@/lib/useCapability';
+import { useTelaLarga } from '@/lib/useTelaLarga';
 import AccordionGallery from '@/components/reactbits/AccordionGallery';
 
 /**
@@ -47,26 +47,10 @@ import AccordionGallery from '@/components/reactbits/AccordionGallery';
  *     dois fechados viram faixas de ~93px, que é exatamente o que se quer num
  *     celular: um painel grande de verdade e a prova visível de que há mais.
  */
-function useMedidasSanfona() {
-  const [medidas, setMedidas] = useState<{
-    orientation: 'horizontal' | 'vertical';
-    height: number;
-    expandRatio: number;
-  }>({ orientation: 'horizontal', height: 560, expandRatio: 0.48 });
-
-  useEffect(() => {
-    const medir = () =>
-      setMedidas(
-        window.innerWidth < 768
-          ? { orientation: 'vertical', height: 620, expandRatio: 0.7 }
-          : { orientation: 'horizontal', height: 560, expandRatio: 0.48 }
-      );
-    medir();
-    window.addEventListener('resize', medir);
-    return () => window.removeEventListener('resize', medir);
-  }, []);
-
-  return medidas;
+function useMedidasSanfona(telaLarga: boolean) {
+  return telaLarga
+    ? { orientation: 'horizontal' as const, height: 560, expandRatio: 0.48 }
+    : { orientation: 'vertical' as const, height: 620, expandRatio: 0.7 };
 }
 
 /**
@@ -84,7 +68,8 @@ const PAINEIS = DEPOIMENTOS.map((d) => ({
 
 export function Depoimentos() {
   const { podeAnimar, pontoFino } = useCapability();
-  const { orientation, height, expandRatio } = useMedidasSanfona();
+  const telaLarga = useTelaLarga();
+  const { orientation, height, expandRatio } = useMedidasSanfona(telaLarga);
 
   return (
     <section id="depoimentos" className="bg-creme px-4 py-16 md:px-8 md:py-24">
