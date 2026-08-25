@@ -1,10 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { TRATAMENTOS } from '@/lib/content';
-import { waLink } from '@/lib/contact';
 import { Reveal } from '@/components/ui/Reveal';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { TratamentosSeletor } from '@/components/sections/TratamentosSeletor';
+import { CtaAgendamento } from '@/components/ui/CtaAgendamento';
 
 /**
  * As 7 imagens `trat-*` existem em `public/img` (entregues pelo cliente —
@@ -65,13 +65,10 @@ export function Tratamentos() {
           />
         </Reveal>
 
+        {/* Mesmo CTA do hero (Task 21): abre o cartao com quem atende, o que a
+            clinica faz e onde fica, e e de la que sai o link do WhatsApp. */}
         <div className="mt-10 flex justify-center">
-          <a
-            href={waLink()}
-            className="pressable inline-flex min-h-11 items-center justify-center rounded-full bg-preto px-7 font-rotulo text-[13px] font-medium tracking-[.08em] text-branco uppercase pointer-fine:hover:bg-escuro-linha"
-          >
-            Agendar minha avaliação
-          </a>
+          <CtaAgendamento tema="preto" />
         </div>
       </div>
     </section>

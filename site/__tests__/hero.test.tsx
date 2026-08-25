@@ -18,10 +18,15 @@ describe('Hero', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
-  it('leva o CTA principal ao WhatsApp', () => {
+  // Task 21: o CTA principal deixou de ser um link direto para o WhatsApp e
+  // virou o gatilho de um cartão (CtaAgendamento) — o link do WhatsApp mora
+  // dentro dele. O que este teste protege é que o CTA continua existindo e
+  // continua sendo o botão que abre esse caminho; o caminho em si está
+  // testado em ctaAgendamento.test.tsx.
+  it('tem o CTA principal, agora abrindo o cartão de agendamento', () => {
     render(<Hero />);
-    expect(screen.getByRole('link', { name: /Agendar minha avaliação/i }))
-      .toHaveAttribute('href', expect.stringContaining('wa.me/551122740228'));
+    const cta = screen.getByRole('button', { name: /Agendar minha avaliação/i });
+    expect(cta).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('leva o tour para o reel no Instagram, em aba nova', () => {

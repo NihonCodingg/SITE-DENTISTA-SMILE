@@ -19,6 +19,12 @@
  *    precisa que o BLOCO INTEIRO se abra — card creme, headline, foto do
  *    doutor, colunas — com a foto parada no lugar onde o design a colocou.
  *    Com `midia`, o que cresce é conteúdo, não um arquivo.
+ * 9. **O overlay fica inerte enquanto está invisível.** No original o bloco
+ *    do CTA é desenhado com `opacity` vinda do scroll, mas continua clicável e
+ *    focável em `opacity: 0` — desde o topo da página existe um botão
+ *    transparente por cima da headline, que o Tab alcança e que o toque acerta
+ *    sem querer. Agora `pointer-events: none` + `inert` acompanham a
+ *    opacidade.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
@@ -167,6 +173,13 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
       const inn = smoothstep(0.68, 1, p);
       overlayRef.current.style.opacity = `${inn}`;
       overlayRef.current.style.transform = `translate3d(0, ${18 * (1 - inn)}px, 0)`;
+      // Enquanto o overlay está invisível, ele não pode continuar clicável nem
+      // focável (modificação 9): o CTA que mora aqui fica exatamente sobre a
+      // headline, e sem isto existe um botão transparente por cima dela desde
+      // o topo da página — que o Tab alcança e que o toque acerta sem querer.
+      const oculto = inn < 0.05;
+      overlayRef.current.style.pointerEvents = oculto ? 'none' : '';
+      overlayRef.current.inert = oculto;
     }
   }, []);
 

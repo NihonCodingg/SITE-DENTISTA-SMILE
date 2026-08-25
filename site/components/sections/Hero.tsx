@@ -1,13 +1,13 @@
 'use client';
 
-import { waLink, ENDERECO, INSTAGRAM } from '@/lib/contact';
+import { ENDERECO, INSTAGRAM } from '@/lib/contact';
 import { REEL_TOUR } from '@/lib/content';
 import Image from 'next/image';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { HeroBackdrop } from './HeroBackdrop';
 import DriftWall from '@/components/reactbits/DriftWall';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
-import Magnet from '@/components/reactbits/Magnet';
+import { CtaAgendamento } from '@/components/ui/CtaAgendamento';
 import { useCapability } from '@/lib/useCapability';
 
 const HEADLINE = 'Seu novo sorriso começa aqui';
@@ -34,10 +34,6 @@ export function Hero() {
   // que escala e centra por flex, e a combinação nunca assentou — o texto
   // puro centra por natureza e é o que o design aprovado mostra.
   const titulo = HEADLINE;
-
-  // Magnet sem sentido em touch — só custaria um listener de mousemove sem
-  // efeito visual nenhum. pontoFino vem do useCapability(), fonte única.
-  const magnetAtivo = podeAnimar && pontoFino;
 
   return (
     <section id="hero" className="bg-branco">
@@ -152,14 +148,11 @@ export function Hero() {
           </div>
         }
       >
-        <Magnet disabled={!magnetAtivo} padding={90} magnetStrength={3}>
-          <a
-            href={waLink()}
-            className="pressable inline-flex min-h-11 items-center rounded-full bg-amarelo px-7 font-rotulo text-[13px] font-medium tracking-[.08em] text-preto uppercase pointer-fine:hover:bg-dourado"
-          >
-            Agendar minha avaliação
-          </a>
-        </Magnet>
+        {/* O botão não sai mais direto para o WhatsApp: ele abre um cartão com
+            quem atende, o que a clínica faz e onde fica, e é de lá que sai o
+            link (pedido do dono do projeto). O `Magnet` continua, agora por
+            dentro do CtaAgendamento — envolvendo só o botão, não o cartão. */}
+        <CtaAgendamento tema="amarelo" magnetico />
       </ScrollExpand>
 
       {/* As três colunas do design aprovado, logo abaixo da moldura:

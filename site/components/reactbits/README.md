@@ -160,6 +160,12 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      com zero e só ganham altura no efeito: a página saltava ~2 telas depois da hidratação, o que
      rendeu **0,96 de CLS** no Lighthouse mobile (medido). O `measure()` continua mandando — só
      não há mais um quadro com altura zero.
+  9. **O overlay fica inerte enquanto está invisível** (Task 21). O bloco do CTA é desenhado com
+     `opacity` vinda do scroll, mas no original continua clicável e focável em `opacity: 0` — do
+     topo da página existe um botão transparente exatamente por cima da headline, que o Tab
+     alcança e que o toque acerta sem querer. `pointer-events: none` + `inert` passaram a
+     acompanhar a opacidade. Ficou visível ao pôr um cartão que abre nesse botão (Task 21), mas o
+     defeito já estava lá desde a Task 20.
 
 **Restrições deste componente, descobertas medindo — quem for mexer no hero precisa saber:**
 
@@ -175,7 +181,6 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
 - **Não convive com o fundo WebGL** se o conteúdo for escalado: o canvas do R3F se dimensiona pelo
   retângulo JÁ ESCALADO do container (medido: 859px num card de 1022) e a escala muda a cada
   quadro. Não é problema no arranjo atual — o `Silk` não está dentro do palco.
-
 ### `TextLoop.tsx`
 
 - **Origem:** `src/ts-tailwind/TextAnimations/TextLoop/TextLoop.tsx` (branch `main`)
