@@ -5,11 +5,22 @@ import { REEL_TOUR } from '@/lib/content';
 import Image from 'next/image';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { HeroBackdrop } from './HeroBackdrop';
+import DriftWall from '@/components/reactbits/DriftWall';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
 import Magnet from '@/components/reactbits/Magnet';
 import { useCapability } from '@/lib/useCapability';
 
 const HEADLINE = 'Seu novo sorriso começa aqui';
+
+// A parede de fotos do fundo (DriftWall) usa SÓ imagens que o site já
+// exibe em outras seções — nada novo entra por aqui, e as pendências de
+// autorização de imagem continuam as mesmas da galeria e do antes/depois.
+const FOTOS_PAREDE = [
+  '/img/retrato-1.jpg', '/img/retrato-2.jpg', '/img/retrato-3.jpg',
+  '/img/retrato-4.jpg', '/img/retrato-5.jpg', '/img/retrato-6.jpg',
+  '/img/retrato-7.jpg', '/img/retrato-8.jpg', '/img/retrato-9.jpg',
+  '/img/fachada.jpg', '/img/clinica-interior.jpg', '/img/dr-vinicius.jpg',
+].map((image) => ({ image }));
 
 // `id="hero"` é usado pelo WhatsAppFab (lib/layout) para saber exatamente
 // onde a seção termina, em vez de aproximar por 100dvh.
@@ -68,6 +79,31 @@ export function Hero() {
         midia={
           <div className="relative h-full w-full bg-creme">
             <HeroBackdrop />
+            {/* A parede de fotos (DriftWall, pedido do dono do projeto)
+                deriva por cima do Silk e por trás do scrim/headline. Só
+                monta quando o aparelho aguenta o resto do peso do hero —
+                mesma régua do canvas. */}
+            {podeAnimar && (
+              <div className="absolute inset-0 opacity-[0.5]">
+                <DriftWall
+                  decorativo
+                  items={FOTOS_PAREDE}
+                  columns={4}
+                  tileWidth={150}
+                  tileHeight={190}
+                  gap={14}
+                  radius={16}
+                  tilt={14}
+                  turn={-12}
+                  speed={26}
+                  variance={0.35}
+                  parallax={pontoFino ? 0.5 : 0}
+                  dim={0.3}
+                  overlayColor="var(--color-preto)"
+                  reducedMotion={!podeAnimar}
+                />
+              </div>
+            )}
           </div>
         }
         scrollHint={

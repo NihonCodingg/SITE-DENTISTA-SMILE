@@ -254,6 +254,28 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   5. **Modo `video` removido** (o site não hospeda vídeo) e **`<img>` → `next/image`**.
   6. **Escrita de ref movida do render para `useLayoutEffect`** (regra `react-hooks/refs`).
 
+### `DriftWall.tsx`
+
+- **Origem:** `src/ts-tailwind/Components/DriftWall/DriftWall.tsx` (branch `main`)
+- **Usado em:** Task 20 — a parede de fotos derivando no fundo amarelo do hero (dentro do palco do
+  `ScrollExpand`, sobre o Silk, atrás da headline). Só monta com `podeAnimar`, e só usa fotos que o
+  site já exibe em outras seções — as pendências de autorização de imagem não mudam.
+- **Dependências que arrasta:** `next/image` (já no projeto). Nenhuma nova.
+- **Rede:** **o original faz** — os `DEFAULT_ITEMS` eram 15 imagens de `picsum.photos`. Removidos;
+  `items` é obrigatória.
+- **`matchMedia`/reduced-motion:** o original consultava em DOIS lugares; virou prop
+  `reducedMotion`. Sob redução, o quadro é aplicado uma vez e o laço PARA — o original seguia
+  rodando rAF para sempre mesmo reduzido.
+- **Cleanup:** rAF, observer e listener saem no cleanup (o rAF e o ResizeObserver o original já
+  limpava; o observer de viewport e o `visibilitychange` são das modificações).
+- **Só `transform`/`opacity`:** colunas e plano animam `translate3d`/`rotate*`; o realce do
+  azulejo é `transform`+`opacity` por classe.
+- **Modificações:** as sete listadas no cabeçalho do arquivo — as de política: itens obrigatórios
+  (rede), `reducedMotion` por prop, pausa por viewport/aba, **modo `decorativo`** (o original põe
+  `tabIndex={0} role="button"` em cada azulejo mesmo sem ação — dezenas de falsos botões na
+  tabulação; decorativo os torna `<div>` puros e esconde o contêiner do leitor de tela),
+  `next/image`, `overlayColor` sem default fora da paleta, rótulo sem inglês cravado.
+
 ### `Magnet.tsx`
 
 - **Origem:** `src/ts-tailwind/Animations/Magnet/Magnet.tsx`
