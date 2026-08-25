@@ -37,6 +37,12 @@ export function Sorrisos() {
       <div className="mt-10 md:mt-14">
         <SorrisosGaleria />
       </div>
+      {/* Dica de uso (pedido do dono do projeto): a galeria arrasta, mas nada
+          na tela dizia isso. Rótulo de interface sobre o fundo preto — a cor
+          é a mesma do texto secundário do rodapé, que já passou AA aqui. */}
+      <p className="mt-6 text-center font-rotulo text-[13px] tracking-[.12em] text-escuro-texto uppercase">
+        Arraste para o lado para ver mais sorrisos
+      </p>
     </section>
   );
 }

@@ -46,6 +46,9 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
         <p className="font-rotulo text-[13px] tracking-[.14em] text-grafite uppercase">
           Escolha um tratamento
         </p>
+        <p className="font-rotulo text-[12px] tracking-[.12em] text-grafite/80 uppercase">
+          Arraste para ver mais opções
+        </p>
 
         {/* Os defaults do React Bits deixam as opções distantes quase
             invisíveis (`minOpacity: 0.05`), muito desfocadas (`blur: 2`) e
@@ -63,6 +66,10 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
             side="left"
             textColor="var(--color-grafite)"
             activeColor="var(--color-preto)"
+            // Brilho amarelo no item selecionado (pedido do dono do
+            // projeto). O OptionWheel pinta o ativo via custom property; o
+            // brilho entra por text-shadow, mirando só o aria-selected.
+            className="[&_[aria-selected='true']]:[text-shadow:0_0_18px_var(--color-amarelo),0_0_42px_var(--color-amarelo)]"
             fontSize={1.45}
             spacing={1.5}
             minOpacity={0.42}
