@@ -64,6 +64,19 @@ describe('HeroBackdrop', () => {
     await waitFor(() => expect(queryByTestId('silk-stub')).toBeNull());
   });
 
+  // A textura da marca NUNCA some — este é o contrato que faltava e que
+  // teria pego o celular sem dourado: o canvas tem três portões (montagem,
+  // aparelho, largura), e todo caminho barrado precisa cair na IMAGEM
+  // estática da mesma seda, não num creme chapado.
+  it('a textura estatica esta presente em aparelho capaz E em aparelho fraco', async () => {
+    for (const memoria of [8, 2]) {
+      cap(false, memoria);
+      const { container, unmount } = render(<HeroBackdrop />);
+      expect(container.querySelector('img[src*="seda-dourada"]')).not.toBeNull();
+      unmount();
+    }
+  });
+
   it('fica sempre fora da arvore de acessibilidade', () => {
     cap(false, 8);
     const { container } = render(<HeroBackdrop />);

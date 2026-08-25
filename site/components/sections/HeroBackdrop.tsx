@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useCapability } from '@/lib/useCapability';
 import { useTelaLarga } from '@/lib/useTelaLarga';
@@ -62,6 +63,19 @@ export function HeroBackdrop() {
     // O container existe sempre, com aria-hidden, para que o layout não mude
     // quando o canvas entra (nada de layout shift no LCP do hero).
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[32px]">
+      {/* A TEXTURA ESTÁTICA, sempre presente — é uma captura do próprio Silk
+          (creme + seda dourada a 22%, public/img/seda-dourada.webp, 8KB).
+          Existe porque o canvas animado tem três portões (montagem, aparelho,
+          largura de tela) e TODO caminho barrado caía num creme chapado: foi
+          assim que o celular ficou sem o dourado da marca desde que a parede
+          de fotos saiu — o portão de largura era da época em que a textura
+          ficava escondida atrás dela (achado do dono, em aparelho real,
+          25/08/2026). Agora o pior caso é a MESMA imagem, parada: o celular
+          ganha o dourado por 8KB, o desktop ganha primeiro quadro instantâneo
+          enquanto o three.js carrega, e o canvas anima por cima. `priority`
+          porque é o fundo do primeiro ecrã — 8KB não disputam banda com nada
+          que importe. */}
+      <Image src="/img/seda-dourada.webp" alt="" fill priority sizes="100vw" className="object-cover" />
       {montado && aguentaPeso && telaLarga && (
         // opacity:.22 mantém o dourado como textura, não protagonista — a
         // headline preta continua com contraste sobre o creme (verificado
