@@ -250,6 +250,11 @@ const SpecularButton = forwardRef<HTMLButtonElement, SpecularButtonProps>(functi
 
     let pointerAngle: number | null = null;
     let proximityT = 0;
+    // O despertador nasce inofensivo e só ganha corpo no ramo COM animação
+    // (vira `rodar`, lá embaixo). Sob movimento reduzido o efeito retorna
+    // antes de `rodar` existir, mas o listener de ponteiro continua vivo —
+    // chamar a const direto seria ReferenceError de zona morta temporal.
+    let acordar: () => void = () => {};
     const onPointerMove = (e: PointerEvent) => {
       const rect = btn.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
@@ -266,6 +271,10 @@ const SpecularButton = forwardRef<HTMLButtonElement, SpecularButtonProps>(functi
       }
       const t = Math.max(0, 1 - dist / Math.max(propsRef.current.proximity, 1));
       proximityT = t * t * (3 - 2 * t);
+      // Acorda o laço se ele dormiu apagado (ver o sono em `update`): quem
+      // dita a proximidade é exatamente este evento, então ele é o único
+      // lugar de onde a luz pode voltar.
+      if (proximityT > 0) acordar();
     };
     // Modificação 7: só escuta a página se houver para quem seguir.
     if (followMouse) window.addEventListener('pointermove', onPointerMove);
@@ -329,6 +338,14 @@ const SpecularButton = forwardRef<HTMLButtonElement, SpecularButtonProps>(functi
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
       desenhar(dt);
+      // Sono de apagado (investigação de travamento): sem `autoAnimate`, o
+      // brilho só existe perto do ponteiro (`proximityT`). Longe dele,
+      // `bright` decai exponencialmente para zero e o shader passa a
+      // desenhar... nada, a 60fps. Quando a luz esgota, o laço para;
+      // `onPointerMove` religa na hora em que o ponteiro se aproximar. O
+      // limiar fica abaixo de meio passo de 8 bits (1/255 ≈ 0,004), então
+      // nenhum quadro visível é perdido.
+      if (!propsRef.current.autoAnimate && proximityT === 0 && bright < 0.004) parar();
     };
 
     const parar = () => {
@@ -336,6 +353,7 @@ const SpecularButton = forwardRef<HTMLButtonElement, SpecularButtonProps>(functi
       rodando = false;
       cancelAnimationFrame(raf);
       raf = 0;
+      delete btn.dataset.brilhoAtivo;
     };
 
     const rodar = () => {
@@ -343,7 +361,13 @@ const SpecularButton = forwardRef<HTMLButtonElement, SpecularButtonProps>(functi
       rodando = true;
       last = performance.now();
       raf = requestAnimationFrame(update);
+      // Estado observável do laço (`data-brilho-ativo`): o canvas WebGL não
+      // tem como ser lido de fora (sem preserveDrawingBuffer, toDataURL
+      // devolve vazio), e o dorme/acorda do brilho precisa ser verificável
+      // por teste. Muda só quando o laço liga/desliga — custo zero por quadro.
+      btn.dataset.brilhoAtivo = '1';
     };
+    acordar = rodar;
 
     const observer =
       typeof IntersectionObserver === 'undefined'

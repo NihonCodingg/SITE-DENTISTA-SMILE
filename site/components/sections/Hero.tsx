@@ -10,7 +10,6 @@ import { CtaAgendamento } from '@/components/ui/CtaAgendamento';
 import { ProvaSocial } from '@/components/ui/ProvaSocial';
 import { useCapability } from '@/lib/useCapability';
 import { useTelaLarga } from '@/lib/useTelaLarga';
-import { useSyncExternalStore } from 'react';
 
 const HEADLINE = 'Seu novo sorriso começa aqui';
 
@@ -38,22 +37,6 @@ export function Hero() {
   const { podeAnimar } = useCapability();
   const telaLarga = useTelaLarga();
   const { startWidth, startHeight } = useMoldura(telaLarga);
-
-  // EXPERIMENTO EM AVALIAÇÃO (25/08/2026): `?versao=amarela` troca o fundo
-  // da moldura do creme para o amarelo da marca — o dono do projeto gostou
-  // da cor do cartão final ("Vamos cuidar do seu sorriso?") e pediu uma
-  // versão do hero nela para comparar lado a lado. O CTA vira `preto`
-  // porque um botão amarelo sobre fundo amarelo desaparece — o mesmo
-  // contraste do cartão que inspirou o pedido. `useSyncExternalStore`
-  // porque a URL é estado externo ao React: o servidor responde `false`
-  // (HTML único para todo mundo) e o cliente lê a query uma vez — a URL de
-  // uma página não muda sem navegação, então a inscrição é vazia. Quando
-  // uma das duas versões for escolhida, isto sai e a escolhida vira a única.
-  const versaoAmarela = useSyncExternalStore(
-    () => () => {},
-    () => new URLSearchParams(location.search).get('versao') === 'amarela',
-    () => false
-  );
 
   // Headline como texto preto puro, sempre — decisão do dono do projeto
   // ("se não puder centralizar, desfaça"): a versão mascarada
@@ -129,7 +112,7 @@ export function Hero() {
         // colunas de conteúdo, abaixo. O componente está no histórico do git
         // (components/reactbits/DriftWall.tsx) se algum dia voltar.
         midia={
-          <div className={`relative h-full w-full ${versaoAmarela ? 'bg-amarelo' : 'bg-creme'}`}>
+          <div className="relative h-full w-full bg-creme">
             <HeroBackdrop />
           </div>
         }
@@ -197,7 +180,7 @@ export function Hero() {
         {/* As porcentagens saem da medição do bloco de cima: no celular o
             título termina em ~43% da tela, no desktop em ~56%. */}
         <div className="absolute inset-x-0 top-[47%] mx-auto flex w-[min(86vw_-_28px,420px)] flex-col items-center gap-4 md:top-[58%] md:w-[min(44vw_-_40px,520px)]">
-          <CtaAgendamento tema={versaoAmarela ? 'preto' : 'amarelo'} brilho compacto />
+          <CtaAgendamento tema="amarelo" brilho compacto />
           <ProvaSocial />
         </div>
 

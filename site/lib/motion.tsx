@@ -167,6 +167,13 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
+    // CHAVE DE DIAGNÓSTICO `?teste=semlenis` (ver ModoDiagnostico.tsx): abre
+    // o site com rolagem NATIVA, sem Lenis. Existe para separar duas causas
+    // de engasgo que parecem iguais na mão: rolagem suave em thread principal
+    // congela junto com qualquer tarefa longa (hidratação inclusive),
+    // enquanto a rolagem nativa é do compositor e sobrevive a elas. Sem o
+    // Lenis os ScrollTrigger seguem funcionando pelos eventos nativos.
+    if (new URLSearchParams(location.search).get('teste')?.split(',').includes('semlenis')) return;
     const l = new Lenis({ duration: 1.05, smoothWheel: true, touchMultiplier: 1.6 });
     store.set(l);
 

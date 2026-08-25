@@ -10,6 +10,8 @@ import { useEffect } from 'react';
  * desligam UMA fonte de custo por chave:
  *
  *   semsilk      — remove a textura WebGL dourada do hero (só desktop a tem)
+ *   semlenis     — rolagem nativa, sem Lenis (a chave mora em lib/motion.tsx,
+ *                  que decide antes de criar a instância; aqui só o registro)
  *   semgaleria   — remove a galeria WebGL de "Sorrisos feitos aqui"
  *   comblur      — devolve o backdrop-blur ao header (removido por custo)
  *
@@ -22,7 +24,7 @@ import { useEffect } from 'react';
 // As chaves da parede de fotos (semparede, paredeparada) existiram e saíram
 // junto com ela: foi o teste `?teste=semparede` no aparelho do dono
 // ("liso e perfeito", 25/08/2026) que decidiu a remoção.
-const CHAVES = ['semsilk', 'semgaleria', 'comblur'] as const;
+const CHAVES = ['semsilk', 'semgaleria', 'comblur', 'semlenis'] as const;
 
 export function ModoDiagnostico() {
   useEffect(() => {

@@ -266,6 +266,13 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
       const oculto = inn < 0.05;
       overlayRef.current.style.pointerEvents = oculto ? 'none' : '';
       overlayRef.current.inert = oculto;
+      // `visibility` junto com o resto (investigação de travamento):
+      // IntersectionObserver considera `opacity: 0` como VISÍVEL, então tudo
+      // que mora aqui dentro e se pausa por interseção — o brilho WebGL do
+      // SpecularButton — rodava a 60fps atrás de um overlay invisível
+      // durante a fase fechada inteira do hero. `visibility: hidden` é o que
+      // tira o elemento da interseção; a opacidade segue sendo quem anima.
+      overlayRef.current.style.visibility = oculto ? 'hidden' : '';
     }
   }, []);
 

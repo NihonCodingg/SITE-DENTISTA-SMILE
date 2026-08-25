@@ -25,7 +25,16 @@ describe('Hero', () => {
   // testado em ctaAgendamento.test.tsx.
   it('tem o CTA principal, agora abrindo o cartão de agendamento', () => {
     render(<Hero />);
-    const cta = screen.getByRole('button', { name: /Agendar minha avaliação/i });
+    // Desde 25/08/2026, com a moldura fechada (p=0, o estado do jsdom) o
+    // overlay do CTA fica `visibility: hidden` de propósito — botão inerte
+    // não deve ser anunciado nem alcançável, e um elemento assim tem NOME
+    // ACESSÍVEL VAZIO por definição. Por isso a busca é por papel (com
+    // `hidden`) + conteúdo, não por nome: o que o teste protege é que o
+    // botão existe e nasce fechado.
+    const cta = screen
+      .getAllByRole('button', { hidden: true })
+      .find((b) => /Agendar minha avaliação/i.test(b.textContent ?? ''));
+    expect(cta).toBeTruthy();
     expect(cta).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -36,7 +45,12 @@ describe('Hero', () => {
     // celular (quem esconde uma delas é o CSS, que o jsdom não aplica). As
     // duas precisam apontar para o mesmo reel — se uma divergir, metade dos
     // visitantes recebe o link errado.
-    const links = screen.getAllByRole('link', { name: /Tour pela clínica/i });
+    // `hidden` + filtro por conteúdo, pela mesma razão do teste do CTA: a
+    // cópia do palco nasce dentro do overlay `visibility: hidden` em p=0 e
+    // por isso tem nome acessível vazio.
+    const links = screen
+      .getAllByRole('link', { hidden: true })
+      .filter((l) => /Tour pela clínica/i.test(l.textContent ?? ''));
     expect(links).toHaveLength(2);
     for (const link of links) {
       expect(link).toHaveAttribute('href', REEL_TOUR);
