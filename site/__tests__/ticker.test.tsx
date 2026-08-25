@@ -15,10 +15,15 @@ describe('Ticker', () => {
   it('lista os sete tratamentos', () => {
     mockMatchMedia(false);
     render(<Ticker />);
-    // A fita renderiza em maiúsculas (`uppercase` do TextLoop), então a
-    // comparação é sobre o texto normalizado — o que importa é que os sete
-    // tratamentos estejam lá, não a caixa das letras.
-    const txt = (screen.getByTestId('ticker').textContent ?? '').toLowerCase();
+    // A fita renderiza em maiúsculas (`uppercase` do TextLoop) e alarga o
+    // espaço INTERNO de cada nome com inquebráveis, para as palavras não
+    // colarem sobre a curva (ver `textoTratamentos` no componente). A
+    // comparação normaliza as duas coisas: o que importa é que os sete
+    // tratamentos estejam lá, não a caixa das letras nem a largura do espaço
+    // do desenho.
+    const txt = (screen.getByTestId('ticker').textContent ?? '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
     ['Facetas', 'Implantes', 'Protocolo de implante', 'Próteses', 'Ortodontia', 'Limpeza profissional', 'Clareamento']
       .forEach((t) => expect(txt).toContain(t.toLowerCase()));
   });

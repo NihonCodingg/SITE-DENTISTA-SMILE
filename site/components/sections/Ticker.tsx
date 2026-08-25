@@ -55,17 +55,57 @@ const SEPARADOR = ' ✦ ';
  * passava a subir e descer em ângulos íngremes, difícil de ler numa linha
  * curta. A curviness do celular é praticamente a mesma do desktop: a fita
  * ondula de leve e as letras continuam quase na horizontal.
+ *
+ * REVISÃO DE 25/08/2026 (captura de aparelho real, "a fita amarela"): três
+ * coisas juntas faziam ela parecer errada no celular.
+ *  - O invólucro tinha `mx-3` e cantos arredondados: 12px de branco de cada
+ *    lado, e a onda era cortada no meio do ciclo nas duas pontas. Agora ela
+ *    SANGRA de borda a borda no celular, como faixa decorativa deve fazer.
+ *  - Texto de ~13px dentro de faixa de ~53px: muito amarelo, pouca palavra.
+ *    Agora ~17px de texto em ~49px de faixa.
+ *  - O invólucro media 92px para uma faixa de 53px — 39px de vazio que
+ *    somavam ao respiro das seções vizinhas e afastavam a fita de tudo.
+ *    Agora 58px, colado na altura real da faixa.
  */
 const MEDIDAS_FITA = {
-  // 351px de contêiner ÷ 1200 da caixa = escala 0,29.
-  celular: { fontSize: 42, ribbonWidth: 171, curviness: 34, letterSpacing: 13, altura: 'h-[92px]' },
+  // Sangrando de borda a borda, o contêiner é a largura da tela: 393 ÷ 1200
+  // = escala 0,33. Texto 46 → ~15px na tela; fita 150 → ~49px; ondulação
+  // 20 → ~6,5px de amplitude; espacejamento 16 → ~5px.
+  //
+  // O espacejamento acompanha o corpo, não é livre: a razão entre os dois é
+  // o que decide se as letras respiram. Numa tentativa com corpo 52 e
+  // espacejamento 11 (razão 0,21 contra os 0,31 de antes) as palavras
+  // colavam sobre a curva — "PROTOCOLO DE IMPLANTE" virava um bloco só.
+  celular: { fontSize: 46, ribbonWidth: 150, curviness: 20, letterSpacing: 16, altura: 'h-[58px]' },
   // Acima de 768px a caixa praticamente não é reduzida (escala ~1).
   tela: { fontSize: 22, ribbonWidth: 64, curviness: 40, letterSpacing: 3, altura: 'h-[190px]' },
 };
 
 
+/**
+ * O texto da fita, com o espaço INTERNO de cada nome alargado.
+ *
+ * Por que: o `letterSpacing` da fita separa TODOS os caracteres, inclusive o
+ * espaço — então a distância entre letras cresce e a distância entre palavras
+ * fica igual, e as duas se confundem. Na tela, "PROTOCOLO DE IMPLANTE" virava
+ * um bloco só. Dois ` ` (espaço inquebrável) devolvem a hierarquia:
+ * inquebrável, e não espaço comum, porque o SVG colapsa espaços repetidos ao
+ * traçar texto sobre curva — o inquebrável sobrevive.
+ *
+ * Vale só na FITA CURVA, e por isso mora em `textoFita` e não em
+ * `textoTratamentos`: a faixa reta do movimento reduzido desenha texto em
+ * linha, onde o espaço normal já separa as palavras — alargar ali só criaria
+ * buracos. E vale só na cópia decorativa: a fita é `aria-hidden`, e a lista
+ * de verdade, que leitor de tela e busca leem, está na seção de Tratamentos
+ * com os nomes intactos.
+ */
 function textoTratamentos(): string {
   return TRATAMENTOS.map((t) => t.nome).join(SEPARADOR);
+}
+
+/** Só a fita curva alarga o espaço; a faixa reta usa o texto como ele é. */
+function textoFita(): string {
+  return TRATAMENTOS.map((t) => t.nome.replace(/ /g, '  ')).join(SEPARADOR);
 }
 
 function TrilhaEstatica({ texto }: { texto: string }) {
@@ -80,6 +120,7 @@ export function Ticker() {
   const { podeAnimar, montado } = useCapability();
   const telaLarga = useTelaLarga();
   const texto = textoTratamentos();
+  const paraFita = textoFita();
   const medidas = telaLarga ? MEDIDAS_FITA.tela : MEDIDAS_FITA.celular;
   const mostrarFita = montado && podeAnimar;
 
@@ -87,7 +128,10 @@ export function Ticker() {
     <div
       data-testid="ticker"
       aria-hidden="true"
-      className={`mx-3 mt-1.5 overflow-hidden rounded-[16px] font-rotulo text-[14px] font-medium tracking-[.22em] text-preto uppercase${
+      // Sangra no celular (sem margem nem canto); em tela larga mantém a
+      // margem e o arredondamento, onde a fita é um bloco contido e não uma
+      // faixa que atravessa a tela.
+      className={`mt-1.5 overflow-hidden font-rotulo text-[14px] font-medium tracking-[.22em] text-preto uppercase md:mx-3 md:rounded-[16px]${
         mostrarFita ? '' : ' bg-amarelo'
       }`}
     >
@@ -106,7 +150,7 @@ export function Ticker() {
         <div className={`relative overflow-hidden ${medidas.altura}`}>
           <div className="absolute top-1/2 left-0 w-full -translate-y-1/2">
             <TextLoop
-              text={texto}
+              text={paraFita}
               shape="wave"
               separator={SEPARADOR.trim()}
               speed={90}
