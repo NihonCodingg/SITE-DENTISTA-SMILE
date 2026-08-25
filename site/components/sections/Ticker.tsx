@@ -62,22 +62,32 @@ export function Ticker() {
         // ela. A fita desenha o próprio fundo amarelo, então o `bg-amarelo`
         // do envoltório sai neste ramo — sobrariam duas faixas amarelas, uma
         // reta atrás da curva.
-        <TextLoop
-          text={texto}
-          shape="wave"
-          separator={SEPARADOR.trim()}
-          speed={90}
-          curviness={40}
-          fontSize={22}
-          fontWeight={600}
-          letterSpacing={3}
-          color="var(--color-preto)"
-          ribbon
-          ribbonColor="var(--color-amarelo)"
-          ribbonWidth={64}
-          reducedMotion={!podeAnimar}
-          className="w-full"
-        />
+        // A caixa do SVG da fita é fixa em 1200×520 — em tela cheia isso
+        // vira ~43% da largura em ALTURA, quase toda vazia acima e abaixo da
+        // onda (achado do dono do projeto: "não pode tomar tanto espaço
+        // assim"). O invólucro corta para a faixa útil: altura própria,
+        // overflow escondido, e o SVG centralizado verticalmente — a onda
+        // fica, o vazio some.
+        <div className="relative h-[150px] overflow-hidden md:h-[190px]">
+          <div className="absolute top-1/2 left-0 w-full -translate-y-1/2">
+            <TextLoop
+              text={texto}
+              shape="wave"
+              separator={SEPARADOR.trim()}
+              speed={90}
+              curviness={40}
+              fontSize={22}
+              fontWeight={600}
+              letterSpacing={3}
+              color="var(--color-preto)"
+              ribbon
+              ribbonColor="var(--color-amarelo)"
+              ribbonWidth={64}
+              reducedMotion={!podeAnimar}
+              className="w-full"
+            />
+          </div>
+        </div>
       ) : (
         <TrilhaEstatica texto={texto} />
       )}

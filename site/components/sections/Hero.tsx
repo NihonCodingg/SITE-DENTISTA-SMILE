@@ -38,7 +38,13 @@ export function Hero() {
       duration={0.9}
       stagger={0.08}
       weight={400}
-      textScale={0.16}
+      // 0,125, medido: a palavra mais larga ("SORRISO", 7 glifos de Archivo
+      // Black) media 471px numa caixa de 380 com 0,16 — estourava pela
+      // direita (o "borrão" fora da moldura era o recorte preenchido
+      // vazando) e impedia o centramento. Com 0,125 ela assenta em ~368px e
+      // todas as linhas centram de verdade. A razão é constante, então vale
+      // para qualquer largura de tela.
+      textScale={0.125}
       fillScale={1.18}
       drift={10}
       parallax={pontoFino ? 14 : 0}

@@ -67,9 +67,12 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
             textColor="var(--color-grafite)"
             activeColor="var(--color-preto)"
             // Brilho amarelo no item selecionado (pedido do dono do
-            // projeto). O OptionWheel pinta o ativo via custom property; o
-            // brilho entra por text-shadow, mirando só o aria-selected.
-            className="[&_[aria-selected='true']]:[text-shadow:0_0_18px_var(--color-amarelo),0_0_42px_var(--color-amarelo)]"
+            // projeto; reforçado a pedido — "precisa ser mais amarelo"):
+            // quatro camadas de text-shadow, as internas densas no amarelo
+            // puro da marca e a externa no dourado. Camadas empilhadas é o
+            // que faz brilho parecer LUZ — uma única sombra larga vira névoa
+            // bege, que foi a primeira versão.
+            className="[&_[aria-selected='true']]:[text-shadow:0_0_1px_var(--color-amarelo),0_0_6px_var(--color-amarelo),0_0_14px_var(--color-amarelo),0_0_28px_var(--color-dourado)]"
             fontSize={1.45}
             spacing={1.5}
             minOpacity={0.42}

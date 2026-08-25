@@ -101,7 +101,13 @@ export function AntesDepois() {
           <TituloFlutuante texto="Resultados reais" />
         </Reveal>
 
-        <div className="mt-10 md:mt-14">
+        {/* Altura explícita, dimensionada pela PROJEÇÃO, não pelo cartão: o
+            DepthCarousel aproxima o cartão central da câmera (translateZ), e
+            um cartão de 460px mede ~725px na tela (fator ~1,58, medido). Sem
+            isso ele cobria o título e o aviso legal (achado do dono do
+            projeto). 1,6 + 40px de folga cobrem a projeção, a sombra e os
+            indicadores. */}
+        <div className="mt-10 md:mt-14" style={{ height: Math.round(cardWidth * 1.6) + 40 }}>
           <DepthCarousel
             items={ITENS}
             reducedMotion={!podeAnimar}
