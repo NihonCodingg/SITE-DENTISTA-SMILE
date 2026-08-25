@@ -73,24 +73,37 @@ const MEDIDAS: { celular: Medida; tela: Medida } = {
   tela: { cardWidth: 460, spread: 80, gutter: 120 },
 };
 
-/** Folga acima e abaixo do cartão: sombra projetada, indicadores e ar. */
-const FOLGA_VERTICAL = 96;
+/**
+ * A altura da caixa do carrossel, em CSS puro — e não em JS.
+ *
+ * A conta é a MESMA que o componente usa para escalar:
+ *   escala = larguraÚtil / (cardWidth + 2·spread + gutter)
+ *   altura = cardWidth · escala + folga
+ * No celular, `larguraÚtil = 100vw − 32` (o padding da seção) e o denominador
+ * é 380 + 28 + 24 = 432. Substituindo, com 96px de folga para a sombra, os
+ * indicadores e o ar:
+ *   altura = 380 · (100vw − 32) / 432 + 96 = 87,96vw + 67,85px
+ * que é o `calc()` abaixo — confere com a medição: 398px numa tela de 375.
+ * Acima de 768px a escala satura em 1 e a altura é fixa: 460 + 96 = 556.
+ *
+ * Por que não em JS, que era como estava: a versão anterior lia
+ * `window.innerWidth` durante o render para calcular a escala. Isso produz um
+ * número no servidor e outro no cliente, e o React reclamou em voz alta —
+ * "server rendered HTML didn't match", com `height:400` de um lado e
+ * `height:"398px"` do outro. Altura de layout é trabalho de CSS: o navegador
+ * já sabe a largura da janela sem ninguém perguntar, e sem risco de os dois
+ * lados discordarem.
+ */
+const ALTURA_CARROSSEL = 'h-[calc(87.96vw+67.85px)] md:h-[556px]';
 
 function useMedidasCarrossel(telaLarga: boolean) {
-  const base = telaLarga ? MEDIDAS.tela : MEDIDAS.celular;
-  // A mesma largura útil que a seção dá ao carrossel: o `max-w-[1360px]` do
-  // contêiner menos o padding lateral (px-4 no celular, px-8 acima). Sem
-  // janela (servidor), assume a faixa que o hook devolve por padrão.
-  const janela = typeof window === 'undefined' ? (telaLarga ? 1360 : 375) : window.innerWidth;
-  const largura = Math.min(janela, 1360) - (telaLarga ? 64 : 32);
-  const escala = Math.min(1, Math.max(0.4, largura / (base.cardWidth + base.spread * 2 + base.gutter)));
-  return { ...base, altura: Math.round(base.cardWidth * escala) + FOLGA_VERTICAL };
+  return telaLarga ? MEDIDAS.tela : MEDIDAS.celular;
 }
 
 export function AntesDepois() {
   const { podeAnimar } = useCapability();
   const telaLarga = useTelaLarga();
-  const { cardWidth, spread, gutter, altura } = useMedidasCarrossel(telaLarga);
+  const { cardWidth, spread, gutter } = useMedidasCarrossel(telaLarga);
 
   // `!ANTES_DEPOIS.length` (não `=== 0`): o array vem de `as const` em
   // lib/content.ts, então o TypeScript infere `.length` como o literal `5`
@@ -116,10 +129,10 @@ export function AntesDepois() {
         </Reveal>
 
         {/* Altura explícita e calculada pela MESMA conta que o carrossel usa
-            para escalar (ver `useMedidasCarrossel`): sem isso a caixa fica
+            para escalar (ver `ALTURA_CARROSSEL`): sem isso a caixa fica
             grande demais no celular e sobra vazio, ou pequena demais e o
             cartão cobre o título — as duas coisas já aconteceram. */}
-        <div className="mt-10 md:mt-14" style={{ height: altura }}>
+        <div className={`mt-10 md:mt-14 ${ALTURA_CARROSSEL}`}>
           <DepthCarousel
             items={ITENS}
             reducedMotion={!podeAnimar}
