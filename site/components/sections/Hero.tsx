@@ -10,6 +10,7 @@ import { CtaAgendamento } from '@/components/ui/CtaAgendamento';
 import { ProvaSocial } from '@/components/ui/ProvaSocial';
 import { useCapability } from '@/lib/useCapability';
 import { useTelaLarga } from '@/lib/useTelaLarga';
+import { useSyncExternalStore } from 'react';
 
 const HEADLINE = 'Seu novo sorriso começa aqui';
 
@@ -37,6 +38,22 @@ export function Hero() {
   const { podeAnimar } = useCapability();
   const telaLarga = useTelaLarga();
   const { startWidth, startHeight } = useMoldura(telaLarga);
+
+  // EXPERIMENTO EM AVALIAÇÃO (25/08/2026): `?versao=amarela` troca o fundo
+  // da moldura do creme para o amarelo da marca — o dono do projeto gostou
+  // da cor do cartão final ("Vamos cuidar do seu sorriso?") e pediu uma
+  // versão do hero nela para comparar lado a lado. O CTA vira `preto`
+  // porque um botão amarelo sobre fundo amarelo desaparece — o mesmo
+  // contraste do cartão que inspirou o pedido. `useSyncExternalStore`
+  // porque a URL é estado externo ao React: o servidor responde `false`
+  // (HTML único para todo mundo) e o cliente lê a query uma vez — a URL de
+  // uma página não muda sem navegação, então a inscrição é vazia. Quando
+  // uma das duas versões for escolhida, isto sai e a escolhida vira a única.
+  const versaoAmarela = useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(location.search).get('versao') === 'amarela',
+    () => false
+  );
 
   // Headline como texto preto puro, sempre — decisão do dono do projeto
   // ("se não puder centralizar, desfaça"): a versão mascarada
@@ -112,7 +129,7 @@ export function Hero() {
         // colunas de conteúdo, abaixo. O componente está no histórico do git
         // (components/reactbits/DriftWall.tsx) se algum dia voltar.
         midia={
-          <div className="relative h-full w-full bg-creme">
+          <div className={`relative h-full w-full ${versaoAmarela ? 'bg-amarelo' : 'bg-creme'}`}>
             <HeroBackdrop />
           </div>
         }
@@ -131,7 +148,19 @@ export function Hero() {
           // (86% no celular, 44% em tela larga), menos uma folga interna.
           // Preso em 380px, como estava, num monitor de 1280 o texto vinha em
           // quatro linhas espremidas dentro de uma moldura de 563px de largura.
-          <div className="absolute inset-x-0 top-[28%] mx-auto flex w-[min(86vw_-_28px,380px)] flex-col items-center gap-3 md:top-[22%] md:w-[min(44vw_-_40px,520px)] md:gap-4">
+          //
+          // O `top` faz a MESMA conta do topo da moldura, não uma porcentagem
+          // solta da tela. A moldura é centrada com altura
+          // `min(startHeight%, 560px)` (ver maxStartHeightPx), então o topo
+          // dela fica em `50% - min(startHeight/2 %, 280px)`; o título ancora
+          // nisso mais uma folga. Com o antigo `top-[28%]`/`md:top-[22%]`,
+          // numa janela ALTA o teto de 560px prendia a moldura no centro
+          // enquanto o título subia junto com a porcentagem — medido em
+          // 1280×1200, ele nascia 56px PARA FORA da moldura (apontado pelo
+          // dono do projeto num monitor alto, 25/08/2026). Os números são
+          // acoplados de propósito: 27% = 54/2 e 31% = 62/2 (useMoldura),
+          // 280px = 560/2 (maxStartHeightPx). Mudou lá, muda aqui.
+          <div className="absolute inset-x-0 top-[calc(50%_-_min(27%,280px)_+_40px)] mx-auto flex w-[min(86vw_-_28px,380px)] flex-col items-center gap-3 md:top-[calc(50%_-_min(31%,280px)_+_28px)] md:w-[min(44vw_-_40px,520px)] md:gap-4">
           <SectionHeading
             as="h1"
             align="center"
@@ -168,7 +197,7 @@ export function Hero() {
         {/* As porcentagens saem da medição do bloco de cima: no celular o
             título termina em ~43% da tela, no desktop em ~56%. */}
         <div className="absolute inset-x-0 top-[47%] mx-auto flex w-[min(86vw_-_28px,420px)] flex-col items-center gap-4 md:top-[58%] md:w-[min(44vw_-_40px,520px)]">
-          <CtaAgendamento tema="amarelo" brilho compacto />
+          <CtaAgendamento tema={versaoAmarela ? 'preto' : 'amarelo'} brilho compacto />
           <ProvaSocial />
         </div>
 
@@ -188,13 +217,13 @@ export function Hero() {
         </div>
       </ScrollExpand>
 
-      {/* A faixa abaixo da moldura. Em tela larga as colunas de texto agora
-          moram DENTRO do palco (acima), então aqui fica só a foto do doutor —
-          repetir o mesmo texto a uma rolagem de distância pareceria bug. No
-          celular a faixa continua inteira, como sempre foi: lá as colunas
-          não entram no palco. */}
-      <div className="mx-auto grid max-w-[1360px] grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] items-center gap-8 px-4 py-12 md:px-8 md:py-16">
-        <div className="md:hidden">
+      {/* A faixa abaixo da moldura — SÓ NO CELULAR. Em tela larga as colunas
+          moram dentro do palco e a foto do doutor que sobrava aqui saiu por
+          pedido do dono do projeto ("remova isso", 25/08/2026): sozinha entre
+          o hero e a fita, ela parecia órfã. No celular a faixa continua
+          inteira, como sempre foi. */}
+      <div className="mx-auto grid max-w-[1360px] grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] items-center gap-8 px-4 py-12 md:hidden">
+        <div>
           <ColunaProposta />
         </div>
 
@@ -211,7 +240,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="md:hidden">
+        <div>
           <ColunaContato />
         </div>
       </div>

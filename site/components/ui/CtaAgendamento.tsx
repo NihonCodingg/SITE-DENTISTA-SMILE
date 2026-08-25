@@ -195,15 +195,18 @@ function Gatilho({ tema, brilho }: { tema: 'amarelo' | 'preto'; brilho: boolean 
         // que o `rounded-full` das classes.
         radius={999}
         // O botão pinta o PRÓPRIO fundo (o original nasce transparente). Sem
-        // isto, a classe `bg-amarelo` e o `background` que o componente emite
-        // disputariam a mesma cascata.
-        tint="var(--color-amarelo)"
+        // isto, a classe `bg-amarelo`/`bg-preto` e o `background` que o
+        // componente emite disputariam a mesma cascata. As cores seguem o
+        // `tema` — antes ficavam fixas no amarelo e o tema `preto` só valia
+        // no ramo sem brilho, o que apareceu na versão de fundo amarelo do
+        // hero: o botão sumia no fundo.
+        tint={tema === 'amarelo' ? 'var(--color-amarelo)' : 'var(--color-preto)'}
         tintOpacity={1}
-        textColor="var(--color-preto)"
-        // Reflexo branco sobre um traço dourado escuro: é o amarelo da marca
-        // ganhando luz, não um botão cinza de demonstração.
+        textColor={tema === 'amarelo' ? 'var(--color-preto)' : 'var(--color-branco)'}
+        // Reflexo branco sobre um traço mais escuro que o fundo: o amarelo
+        // ganha traço dourado; o preto, um traço de grafite.
         lineColor="#FFFFFF"
-        baseColor="var(--color-dourado)"
+        baseColor={tema === 'amarelo' ? 'var(--color-dourado)' : 'var(--color-grafite)'}
         intensity={1.15}
         thickness={1.4}
         proximity={280}
