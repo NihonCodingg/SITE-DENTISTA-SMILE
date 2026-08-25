@@ -35,6 +35,17 @@ describe('orçamento de performance', () => {
   // O que mudou foi tirar o `three`/@react-three/fiber do celular e cortar a
   // parede de fotos de 84 azulejos para ~34 lá. Método e números completos em
   // progress.md, Task 22.
+  //
+  // ATUALIZAÇÃO 25/08/2026 (revisão de desempenho pré-deploy; a parede de
+  // fotos já saiu do site inteiro). Mediana de 5 amostras, protocolo limpo:
+  //   performance 87 · TBT 320ms · LCP simulado 3,2s · CLS 0,001 · 489KB
+  // E a prova de que o vermelho é do simulador, não da página: com
+  // PerformanceObserver em Chrome real, o H1 emite UM ÚNICO candidato a LCP,
+  // aos 368ms, sem nenhum repaint posterior — não existe candidato tardio
+  // para otimizar. `display: optional` na fonte do título foi testado e não
+  // moveu o número (mediana 3,6s; revertido). O que sobra é o modelo de rede
+  // do lantern penalizando LCP de texto. A decisão sobre este vermelho
+  // continua sendo do dono do projeto.
   it('atinge LCP abaixo de 2,5s no mobile simulado', () => {
     const p = './lh-mobile.json';
     if (!existsSync(p)) return;
