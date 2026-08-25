@@ -41,7 +41,11 @@ export function Sorrisos() {
       {/* Dica de uso (pedido do dono do projeto): a galeria arrasta, mas nada
           na tela dizia isso. Rótulo de interface sobre o fundo preto — a cor
           é a mesma do texto secundário do rodapé, que já passou AA aqui. */}
-      <p className="mt-6 text-center font-rotulo text-[13px] tracking-[.12em] text-escuro-texto uppercase">
+      {/* `px-4`: a galeria sangra até a borda, mas o texto não pode — sem o
+          padding esta linha media 375px numa tela de 375 e encostava nos dois
+          lados (medido). O `mx-auto max-w-` mantém a linha curta em tela
+          larga. */}
+      <p className="mx-auto mt-6 max-w-[46ch] px-4 text-center font-rotulo text-[13px] tracking-[.12em] text-escuro-texto uppercase">
         Arraste para o lado para ver mais sorrisos
       </p>
     </section>

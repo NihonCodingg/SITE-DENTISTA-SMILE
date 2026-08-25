@@ -95,6 +95,13 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      que já mudou `SplitText` e `Magnet` na Task 8).
   5. **`<img>` trocado por `next/image`** — o original serve o arquivo cru; aqui as fotos passam
      pelo otimizador (AVIF, tamanho certo), como o resto do site.
+  6. **Controles de 42px passaram a 44px** (Task 21) — tamanho mínimo de alvo de toque do WCAG
+     2.5.8, que é a régua do resto do site (`min-h-11` em todo botão).
+  7. **A folga lateral de 120px virou a prop `gutter`** (Task 21). A escala do carrossel é
+     `largura / (cardWidth + 2·spread + 120)`, com esse 120 cravado. Faz sentido numa tela larga;
+     num contêiner de 343px ele sozinho come 35% da largura, e o cartão da frente nascia com 240px
+     numa seção de 343 — pequeno, que foi o que o dono do projeto apontou. Com a folga ajustável, o
+     celular pede 24 e o cartão passa a 304px (medido).
 
 ### `OptionWheel.tsx`
 
@@ -124,6 +131,12 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   6. **Laço de animação virou expressão de função nomeada.** O original agendava
      `requestAnimationFrame(runFrame)` de dentro do próprio `runFrame` — uso antes da declaração,
      que o eslint deste Next reprova. Um nome próprio (`quadro`) resolve sem ref intermediário.
+  7. **`touch-action` deixou de ser sempre `none`** (Task 21). O original marca a roda com
+     `[touch-action:none]` fixo, mesmo com `draggable` desligado. Num celular isso é uma armadilha
+     de rolagem: a roda ocupa boa parte da tela, e o dedo que sobe para rolar a página não move
+     nada — parece site travado. Agora o `none` só vale com o arraste ligado; sem ele a roda declara
+     `pan-y`, a página rola, e a escolha continua inteira (toque na opção, seta do teclado).
+     `TratamentosSeletor.tsx` passa `draggable={pontoFino}`.
 
 ### `ScrollExpand.tsx`
 
@@ -166,6 +179,10 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      alcança e que o toque acerta sem querer. `pointer-events: none` + `inert` passaram a
      acompanhar a opacidade. Ficou visível ao pôr um cartão que abre nesse botão (Task 21), mas o
      defeito já estava lá desde a Task 20.
+  10. **A geometria entra nas dependências do efeito** (Task 21). O original só reage a scroll e
+      resize; trocar `startWidth`/`startHeight` em tempo de execução — que é como o hero muda o
+      tamanho da moldura entre celular e desktop — não repinta nada, e a moldura fica com a
+      porcentagem da faixa anterior até o próximo evento de scroll.
 
 **Restrições deste componente, descobertas medindo — quem for mexer no hero precisa saber:**
 

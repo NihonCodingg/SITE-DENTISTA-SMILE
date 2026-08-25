@@ -45,28 +45,50 @@ const ITENS = ANTES_DEPOIS.map((item) => ({ image: item.img, alt: item.alt }));
  * site.
  */
 /**
- * Medidas do carrossel por faixa de tela. O `DepthCarousel` recebe pixels,
- * não classes — a conta é aqui.
+ * Medidas do carrossel por faixa de tela, e a altura que a seção reserva para
+ * ele. O `DepthCarousel` recebe pixels — a conta é aqui.
  *
  * O detalhe que não é óbvio: o componente NÃO desenha o cartão no tamanho
- * pedido. Ele calcula `escala = larguraDisponível / (cardWidth + 2*spread +
- * 120)` e aplica isso a tudo. Com os defaults (`spread: 90`), um cartão de
- * 460px virava 188px reais num celular de 375 — 37% da tela, o que o dono do
- * projeto viu e apontou. Como a escala é uma razão, o tamanho final depende
- * de `spread` tanto quanto de `cardWidth`: no celular vale encolher o
- * espalhamento lateral e pedir um cartão grande; no desktop sobra largura, a
- * escala satura em 1 e o cartão sai no tamanho pedido.
+ * pedido. Ele calcula `escala = larguraDisponível / (cardWidth + 2·spread +
+ * gutter)` e aplica isso a tudo. Duas consequências que já custaram caro:
+ *
+ * 1. **`gutter` (a folga lateral) pesa tanto quanto `cardWidth`.** No original
+ *    do React Bits ela é 120px cravada; num contêiner de 343px isso sozinho
+ *    come 35% da largura, e um cartão de 380px nascia com 240 na tela. Por
+ *    isso o componente ganhou a prop (modificação 7) e o celular pede 24.
+ * 2. **A altura tem que sair da MESMA conta.** A versão anterior reservava
+ *    `cardWidth × 1,6 + 40` — um número herdado do desktop. No celular isso
+ *    dava 648px de caixa para um cartão de 240: mais de 400px de vazio, metade
+ *    acima e metade abaixo. Agora a altura é a do cartão JÁ ESCALADO mais 96px
+ *    de folga (sombra, indicadores e ar).
+ *
+ * Medido depois da mudança: celular 375px → cartão da frente com 302px de
+ * largura numa seção de 343 (88%); desktop 1061px → 460px, o tamanho pedido,
+ * porque a escala satura em 1.
  */
+type Medida = { cardWidth: number; spread: number; gutter: number };
+
+const MEDIDAS: { celular: Medida; tela: Medida } = {
+  celular: { cardWidth: 380, spread: 14, gutter: 24 },
+  tela: { cardWidth: 460, spread: 80, gutter: 120 },
+};
+
+/** Folga acima e abaixo do cartão: sombra projetada, indicadores e ar. */
+const FOLGA_VERTICAL = 96;
+
 function useMedidasCarrossel() {
-  const [medidas, setMedidas] = useState({ cardWidth: 460, spread: 80 });
+  const [medidas, setMedidas] = useState({ ...MEDIDAS.tela, altura: MEDIDAS.tela.cardWidth + FOLGA_VERTICAL });
 
   useEffect(() => {
-    const medir = () =>
-      setMedidas(
-        window.innerWidth < 768
-          ? { cardWidth: 380, spread: 14 } // medido: ~76% da tela depois da escala
-          : { cardWidth: 460, spread: 80 }
-      );
+    const medir = () => {
+      const celular = window.innerWidth < 768;
+      const base = celular ? MEDIDAS.celular : MEDIDAS.tela;
+      // A mesma largura útil que a seção dá ao carrossel: o `max-w-[1360px]`
+      // do contêiner menos o padding lateral (px-4 no celular, px-8 acima).
+      const largura = Math.min(window.innerWidth, 1360) - (celular ? 32 : 64);
+      const escala = Math.min(1, Math.max(0.4, largura / (base.cardWidth + base.spread * 2 + base.gutter)));
+      setMedidas({ ...base, altura: Math.round(base.cardWidth * escala) + FOLGA_VERTICAL });
+    };
     medir();
     window.addEventListener('resize', medir);
     return () => window.removeEventListener('resize', medir);
@@ -77,7 +99,7 @@ function useMedidasCarrossel() {
 
 export function AntesDepois() {
   const { podeAnimar } = useCapability();
-  const { cardWidth, spread } = useMedidasCarrossel();
+  const { cardWidth, spread, gutter, altura } = useMedidasCarrossel();
 
   // `!ANTES_DEPOIS.length` (não `=== 0`): o array vem de `as const` em
   // lib/content.ts, então o TypeScript infere `.length` como o literal `5`
@@ -101,13 +123,11 @@ export function AntesDepois() {
           <TituloFlutuante texto="Resultados reais" />
         </Reveal>
 
-        {/* Altura explícita, dimensionada pela PROJEÇÃO, não pelo cartão: o
-            DepthCarousel aproxima o cartão central da câmera (translateZ), e
-            um cartão de 460px mede ~725px na tela (fator ~1,58, medido). Sem
-            isso ele cobria o título e o aviso legal (achado do dono do
-            projeto). 1,6 + 40px de folga cobrem a projeção, a sombra e os
-            indicadores. */}
-        <div className="mt-10 md:mt-14" style={{ height: Math.round(cardWidth * 1.6) + 40 }}>
+        {/* Altura explícita e calculada pela MESMA conta que o carrossel usa
+            para escalar (ver `useMedidasCarrossel`): sem isso a caixa fica
+            grande demais no celular e sobra vazio, ou pequena demais e o
+            cartão cobre o título — as duas coisas já aconteceram. */}
+        <div className="mt-10 md:mt-14" style={{ height: altura }}>
           <DepthCarousel
             items={ITENS}
             reducedMotion={!podeAnimar}
@@ -116,6 +136,7 @@ export function AntesDepois() {
             cardWidth={cardWidth}
             cardHeight={cardWidth}
             spread={spread}
+            gutter={gutter}
             rotuloCarrossel="Casos de antes e depois"
             showControls
             showIndicators

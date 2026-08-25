@@ -18,6 +18,13 @@
  *    `Audio` que ela criava — som que a pessoa não pediu, num site de
  *    clínica, é ruído, e manter a porta aberta convida a ligá-la sem
  *    pensar.
+ * 5. **`touch-action` deixou de ser sempre `none`** (Task 21). O original
+ *    marca a roda com `[touch-action:none]` fixo, mesmo com `draggable`
+ *    desligado. Num celular isso é uma armadilha de rolagem: a roda ocupa
+ *    boa parte da tela, e o dedo que sobe para rolar a página não move nada
+ *    — parece site travado. Agora o `none` só vale quando o arraste está
+ *    ligado; sem ele a roda declara `pan-y` e a página rola normalmente,
+ *    com a escolha feita por toque na opção (que o componente já suportava).
  */
 
 import { useId, useRef, useState, useCallback, useEffect, useLayoutEffect, type CSSProperties } from 'react';
@@ -317,7 +324,10 @@ const OptionWheel = ({
       tabIndex={0}
       aria-label={rotulo}
       aria-activedescendant={`${idBase}-${selectedIndex}`}
-      className={`relative h-full w-full select-none overflow-hidden outline-none [touch-action:none] ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}${className ? ` ${className}` : ''}`}
+      className={`relative h-full w-full select-none overflow-hidden outline-none ${
+        // Ver modificação 5: `none` só quando o arraste está ligado.
+        draggable ? '[touch-action:none]' : '[touch-action:pan-y]'
+      } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}${className ? ` ${className}` : ''}`}
       style={
         {
           '--ow-text-color': textColor,

@@ -48,6 +48,29 @@ describe('Hero', () => {
     expect(container.textContent).not.toMatch(/★|estrelas/);
   });
 
+  // Regressão da Task 21 (achado do dono do projeto): numa tela de 375px a
+  // moldura fechada nascia com 44% de largura — 165px — enquanto a headline
+  // media 300. O texto aparecia INTEIRO POR FORA da moldura. A correção é uma
+  // moldura por faixa de tela; o que se lê aqui é o `clip-path` que o
+  // ScrollExpand escreve de verdade, não a prop que o Hero passa.
+  it.each([
+    { largura: 375, esperado: 7, faixa: 'celular' },   // (100 - 86) / 2
+    { largura: 1280, esperado: 28, faixa: 'desktop' }, // (100 - 44) / 2
+  ])('a moldura fechada usa a largura da faixa $faixa', ({ largura, esperado }) => {
+    const original = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { value: largura, configurable: true });
+
+    const { container } = render(<Hero />);
+    const moldura = container.querySelector<HTMLElement>('[style*="clip-path"]');
+    expect(moldura).not.toBeNull();
+
+    const lados = moldura!.style.clipPath.match(/[\d.]+%/g) ?? [];
+    // inset(<vertical>% <horizontal>% ...) — o segundo valor é o recuo lateral.
+    expect(Math.round(parseFloat(lados[1]))).toBe(esperado);
+
+    Object.defineProperty(window, 'innerWidth', { value: original, configurable: true });
+  });
+
   it('sob prefers-reduced-motion, a headline continua identica: texto puro', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({
       matches: q.includes('reduce'),

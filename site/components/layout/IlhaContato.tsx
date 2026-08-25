@@ -48,6 +48,12 @@ import type { SizePresets } from '@/components/cultui/DynamicIsland';
  *   HTML válido, e uma ilha que às vezes é botão e às vezes é painel obriga a
  *   pessoa a reaprender o que ela faz a cada seção.
  */
+/** Fora das seções abaixo, a ilha volta a este formato. `compactLong` (300px)
+ *  e não `compact` (235px): medido, "Agendar avaliação" a 12px com o tracking
+ *  da marca não cabe nos 167px que sobram dentro de um `compact` depois do
+ *  ícone e das margens — vinha "AGENDAR AVALIAÇ…" na tela. */
+const TAMANHO_PADRAO: SizePresets = 'compactLong';
+
 const SECOES: Array<{ id: string; tamanho: SizePresets; contexto: string; acao: string }> = [
   {
     id: 'tratamentos',
@@ -77,9 +83,18 @@ const SECOES: Array<{ id: string; tamanho: SizePresets; contexto: string; acao: 
 
 const MENSAGEM_ILHA = 'Olá! Vim pelo site e quero falar sobre um tratamento.';
 
+/**
+ * A seção do convite final. Enquanto ela está na tela, a ilha se recolhe: o
+ * bloco grande de agendamento fica exatamente onde a pílula flutua, e a ilha
+ * só cobriria o botão dele. Dois CTAs para o mesmo WhatsApp, um por cima do
+ * outro, não somam nada.
+ */
+const SECAO_CONVITE = 'agendar';
+
 export function IlhaContato() {
   const { podeAnimar, montado } = useCapability();
   const [visivel, setVisivel] = useState(false);
+  const [recolhida, setRecolhida] = useState(false);
   const sentinelaRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -112,6 +127,21 @@ export function IlhaContato() {
     return () => observer.disconnect();
   }, [montado]);
 
+  // Some enquanto o convite final está na tela (ver SECAO_CONVITE).
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const convite = document.getElementById(SECAO_CONVITE);
+    if (!convite) return;
+
+    const observer = new IntersectionObserver(([entrada]) => setRecolhida(entrada.isIntersecting), {
+      threshold: 0,
+    });
+    observer.observe(convite);
+    return () => observer.disconnect();
+  }, []);
+
+  const aparente = visivel && !recolhida;
+
   return (
     <>
       {/* Fallback: só é observado se #hero não existir na página. */}
@@ -119,12 +149,17 @@ export function IlhaContato() {
 
       <div
         className={
-          'fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4 transition-[transform,opacity] duration-[280ms] ease-saida ' +
-          (visivel ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 ' + (podeAnimar ? 'scale-95' : 'scale-100'))
+          // Centro embaixo no celular (é onde o polegar chega) e canto
+          // direito em tela larga, que é onde o botão flutuante morava. Ao
+          // centro numa tela grande a ilha cai exatamente sobre o conteúdo
+          // centralizado das seções — os indicadores do carrossel de
+          // resultados, por exemplo.
+          'fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4 md:justify-end md:pr-6 transition-[transform,opacity] duration-[280ms] ease-saida ' +
+          (aparente ? 'opacity-100 scale-100' : 'pointer-events-none opacity-0 ' + (podeAnimar ? 'scale-95' : 'scale-100'))
         }
       >
-        <DynamicIslandProvider initialSize="compact" reducedMotion={!podeAnimar}>
-          <ConteudoIlha ativa={visivel} />
+        <DynamicIslandProvider initialSize={TAMANHO_PADRAO} reducedMotion={!podeAnimar}>
+          <ConteudoIlha ativa={aparente} />
         </DynamicIslandProvider>
       </div>
     </>
@@ -153,7 +188,7 @@ function ConteudoIlha({ ativa }: { ativa: boolean }) {
         });
         const atual = SECOES.find((s) => dentro.has(s.id)) ?? null;
         setSecao(atual);
-        setSize(atual ? atual.tamanho : 'compact');
+        setSize(atual ? atual.tamanho : TAMANHO_PADRAO);
       },
       { rootMargin: '-33% 0px -33% 0px', threshold: 0 }
     );

@@ -12,6 +12,7 @@ import { ComoFunciona } from '@/components/sections/ComoFunciona';
 import { Localizacao } from '@/components/sections/Localizacao';
 import { Faq } from '@/components/sections/Faq';
 import { CtaFinal } from '@/components/sections/CtaFinal';
+import { TITULO_TAMANHO_PADRAO } from '@/components/ui/SectionHeading';
 
 vi.stubGlobal('matchMedia', (q: string) => ({
   matches: false,
@@ -82,11 +83,15 @@ describe('Todo <h2> de seção carrega tamanho de fonte próprio (regressão sit
     const { container } = render(<Hero />);
     const h1 = container.querySelector('h1');
     expect(h1).not.toBeNull();
-    // O clamp mudou na Task 20, quando o hero virou o ScrollExpand: a
-    // headline passou a ficar SOBRE a foto, num palco com a altura da
-    // janela, e o tamanho antigo (até 104px) não cabia. O que este teste
-    // guarda continua sendo o mesmo — o h1 tem clamp PRÓPRIO, não herda o
-    // default de h2 do SectionHeading.
-    expect(h1!.className).toMatch(/text-\[clamp\(28px,4\.4vw,64px\)\]/);
+    // O clamp do h1 já mudou duas vezes por motivo de layout — na Task 20,
+    // quando o hero virou o ScrollExpand e o tamanho antigo (até 104px) não
+    // cabia mais no palco, e na Task 21, quando o mínimo desceu para 26px
+    // para a headline caber dentro da moldura fechada no celular. Cravar os
+    // três números aqui só fazia o teste quebrar a cada ajuste visual sem
+    // proteger nada. O que ele guarda de verdade — e continua guardando — é
+    // que o h1 tem clamp PRÓPRIO, diferente do default de h2 do
+    // SectionHeading (importado, nunca repetido como literal).
+    expect(h1!.className).toMatch(CLASSE_TAMANHO);
+    expect(h1!.className).not.toContain(TITULO_TAMANHO_PADRAO);
   });
 });

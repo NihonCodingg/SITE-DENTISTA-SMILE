@@ -8,6 +8,7 @@ import { HeroBackdrop } from './HeroBackdrop';
 import DriftWall from '@/components/reactbits/DriftWall';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
 import { CtaAgendamento } from '@/components/ui/CtaAgendamento';
+import { useEffect, useState } from 'react';
 import { useCapability } from '@/lib/useCapability';
 
 const HEADLINE = 'Seu novo sorriso começa aqui';
@@ -22,10 +23,39 @@ const FOTOS_PAREDE = [
   '/img/fachada.jpg', '/img/clinica-interior.jpg', '/img/dr-vinicius.jpg',
 ].map((image) => ({ image }));
 
+/**
+ * O tamanho da moldura fechada, por faixa de tela.
+ *
+ * Por que o celular precisa de outro número: a moldura é uma porcentagem da
+ * janela, mas o texto dentro dela não encolhe na mesma proporção. Medido numa
+ * tela de 375px com os 44% do desktop, a moldura nascia com 165px de largura e
+ * a headline com 300 — ela aparecia INTEIRA POR FORA da moldura, que foi o que
+ * o dono do projeto apontou. Com 86%, a moldura fechada mede 322px e o texto
+ * cabe dentro dela desde o primeiro quadro.
+ *
+ * A altura desce junto (62% → 54%): uma moldura quase tão larga quanto a tela
+ * e alta demais deixa de parecer uma moldura e vira a tela inteira, e aí a
+ * abertura não tem para onde crescer.
+ */
+function useMoldura() {
+  const [moldura, setMoldura] = useState({ startWidth: 44, startHeight: 62 });
+
+  useEffect(() => {
+    const medir = () =>
+      setMoldura(window.innerWidth < 768 ? { startWidth: 86, startHeight: 54 } : { startWidth: 44, startHeight: 62 });
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, []);
+
+  return moldura;
+}
+
 // `id="hero"` é usado pela IlhaContato (components/layout) para saber
 // exatamente onde a seção termina, em vez de aproximar por 100dvh.
 export function Hero() {
   const { podeAnimar, pontoFino } = useCapability();
+  const { startWidth, startHeight } = useMoldura();
 
   // Headline como texto preto puro, sempre — decisão do dono do projeto
   // ("se não puder centralizar, desfaça"): a versão mascarada
@@ -53,8 +83,8 @@ export function Hero() {
       <ScrollExpand
         useWindowScroll
         reducedMotion={!podeAnimar}
-        startWidth={44}
-        startHeight={62}
+        startWidth={startWidth}
+        startHeight={startHeight}
         startRadius={24}
         endRadius={0}
         // `mediaZoom={1}`: sem escala na mídia. Não é preferência — o canvas
@@ -118,7 +148,11 @@ export function Hero() {
           // SplitText monta — o GSAP esconde as palavras fatiadas do leitor
           // de tela e o nome volta pelo heading, onde `aria-label` é válido
           // (Task 18, A1).
-          <div className="absolute inset-x-0 top-[28%] flex flex-col items-center gap-4">
+          // A largura do bloco do título acompanha a da MOLDURA em cada faixa
+          // (86% no celular, 44% em tela larga), menos uma folga interna.
+          // Preso em 380px, como estava, num monitor de 1280 o texto vinha em
+          // quatro linhas espremidas dentro de uma moldura de 563px de largura.
+          <div className="absolute inset-x-0 top-[30%] mx-auto flex w-[min(86vw_-_28px,380px)] flex-col items-center gap-3 md:top-[28%] md:w-[min(44vw_-_40px,520px)] md:gap-4">
           <SectionHeading
             as="h1"
             align="center"
@@ -132,7 +166,7 @@ export function Hero() {
             // valia 0,176 de CLS em dois saltos (medido; um por fonte).
             // Ancorado, o texto só cresce para baixo: a distância de
             // deslocamento é zero, e é a distância que o CLS mede.
-            tituloClassName="mx-auto max-w-[min(80vw,380px)] text-[clamp(28px,4.4vw,64px)]"
+            tituloClassName="mx-auto w-full text-[clamp(26px,4.4vw,64px)]"
           />
 
           {/* O sorriso da marca, embaixo da headline. `alt=""` porque é

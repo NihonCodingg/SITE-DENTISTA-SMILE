@@ -21,6 +21,17 @@
  * 5. **`<img>` trocado por `next/image`** — o original serve o arquivo cru;
  *    aqui as fotos passam pelo otimizador (AVIF, tamanho certo), que é o que
  *    o resto do site já faz e o que o orçamento de performance exige.
+ * 6. **Controles de 42px passaram a 44px** (Task 21). Tamanho mínimo de
+ *    alvo de toque do WCAG 2.5.8, que é a régua do resto do site (`min-h-11`
+ *    em todo botão). Dois pixels, mas é a diferença entre passar e não
+ *    passar, e é o polegar de quem usa celular que paga.
+ * 7. **A folga lateral de 120px virou a prop `gutter`** (Task 21). A escala do
+ *    carrossel é `largura / (cardWidth + 2·spread + 120)`, com esse 120
+ *    cravado. Faz sentido numa tela larga; num contêiner de 343px ele sozinho
+ *    come 35% da largura, e o cartão da frente nascia com 240px numa seção de
+ *    343 — pequeno, que foi o que o dono do projeto apontou. Com a folga
+ *    ajustável, o celular pede 24 e o cartão passa a ocupar a largura de
+ *    verdade.
  */
 
 import {
@@ -52,6 +63,8 @@ export interface DepthCarouselProps {
   tiltDirection?: TiltDirection;
   perspective?: number;
   visibleCards?: number;
+  /** Folga lateral reservada ao redor do cartão da frente (ver modificação 7). */
+  gutter?: number;
   falloff?: number;
   blur?: number;
   duration?: number;
@@ -110,6 +123,7 @@ const DepthCarousel = ({
   tiltDirection = 'right',
   perspective = 1400,
   visibleCards = 4,
+  gutter = 120,
   falloff = 0.2,
   blur = 6,
   duration = 700,
@@ -275,13 +289,13 @@ const DepthCarousel = ({
     const ro = new ResizeObserver(entries => {
       const w = entries[0].contentRect.width;
       const cfg = cfgRef.current;
-      const needed = cfg.cardWidth + Math.abs(cfg.spread) * 2 + 120;
+      const needed = cfg.cardWidth + Math.abs(cfg.spread) * 2 + gutter;
       scaleRef.current = clamp(w / needed, 0.4, 1);
       layout(posRef.current);
     });
     ro.observe(root);
     return () => ro.disconnect();
-  }, [layout]);
+  }, [layout, gutter]);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -486,7 +500,7 @@ const DepthCarousel = ({
         <>
           <button
             type="button"
-            className="absolute left-4 top-1/2 z-[3000] grid h-[42px] w-[42px] -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[rgba(18,20,26,0.55)] text-white backdrop-blur-md transition-[background,border-color,transform] duration-200 hover:border-white/40 hover:bg-[rgba(28,31,40,0.85)] active:scale-95"
+            className="absolute left-4 top-1/2 z-[3000] grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[rgba(18,20,26,0.55)] text-white backdrop-blur-md transition-[background,border-color,transform] duration-200 hover:border-white/40 hover:bg-[rgba(28,31,40,0.85)] active:scale-95"
             aria-label="Caso anterior"
             onClick={() => navigateBy(-1)}
           >
@@ -503,7 +517,7 @@ const DepthCarousel = ({
           </button>
           <button
             type="button"
-            className="absolute right-4 top-1/2 z-[3000] grid h-[42px] w-[42px] -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[rgba(18,20,26,0.55)] text-white backdrop-blur-md transition-[background,border-color,transform] duration-200 hover:border-white/40 hover:bg-[rgba(28,31,40,0.85)] active:scale-95"
+            className="absolute right-4 top-1/2 z-[3000] grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[rgba(18,20,26,0.55)] text-white backdrop-blur-md transition-[background,border-color,transform] duration-200 hover:border-white/40 hover:bg-[rgba(28,31,40,0.85)] active:scale-95"
             aria-label="Próximo caso"
             onClick={() => navigateBy(1)}
           >

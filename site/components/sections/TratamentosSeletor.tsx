@@ -46,8 +46,13 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
         <p className="font-rotulo text-[13px] tracking-[.14em] text-grafite uppercase">
           Escolha um tratamento
         </p>
+        {/* A instrução muda com o aparelho porque o que funciona muda com o
+            aparelho: no toque, o arraste fica DESLIGADO de propósito (ver a
+            prop `draggable` abaixo) e a escolha é por toque na opção. Dizer
+            "arraste" para quem não pode arrastar é pior do que não dizer
+            nada. */}
         <p className="font-rotulo text-[12px] tracking-[.12em] text-grafite/80 uppercase">
-          Arraste para ver mais opções
+          {pontoFino ? 'Arraste para ver mais opções' : 'Toque no tratamento para ver'}
         </p>
 
         {/* Os defaults do React Bits deixam as opções distantes quase
@@ -64,6 +69,13 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
             onChange={setIndice}
             rotulo="Tratamentos"
             side="left"
+            // Arraste só com ponteiro fino. Num celular, a roda declara
+            // `touch-action: none` quando arrastável — e como ela ocupa boa
+            // parte da tela, o dedo que sobe para rolar a página não move
+            // nada, e o site parece travado. Sem arraste ela declara `pan-y`,
+            // a página rola, e a escolha continua inteira: toque na opção,
+            // seta do teclado, ou o `aria-activedescendant` do listbox.
+            draggable={pontoFino}
             textColor="var(--color-grafite)"
             activeColor="var(--color-preto)"
             // Brilho amarelo no item selecionado (pedido do dono do

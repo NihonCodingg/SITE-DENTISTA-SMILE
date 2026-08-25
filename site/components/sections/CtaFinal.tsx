@@ -15,7 +15,10 @@ import { TITULO_TRACKING } from '@/components/ui/SectionHeading';
  */
 export function CtaFinal() {
   return (
-    <section className="bg-branco px-4 py-16 md:px-8 md:py-24">
+    // `id="agendar"`: a IlhaContato observa esta seção para SUMIR enquanto
+    // ela está na tela — quando o convite grande está à vista, a pílula
+    // flutuante só cobriria o botão dele.
+    <section id="agendar" className="bg-branco px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1080px]">
         <Reveal
           as="div"

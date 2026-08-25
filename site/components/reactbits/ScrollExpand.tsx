@@ -25,6 +25,11 @@
  *    transparente por cima da headline, que o Tab alcança e que o toque acerta
  *    sem querer. Agora `pointer-events: none` + `inert` acompanham a
  *    opacidade.
+ * 10. **A geometria entra nas dependências do efeito.** O original só
+ *    reage a scroll e resize; trocar `startWidth`/`startHeight` em tempo de
+ *    execução (que é como o hero muda a moldura entre celular e desktop) não
+ *    repinta nada — a moldura fica com a porcentagem antiga até o próximo
+ *    evento de scroll.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
@@ -271,7 +276,11 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
       window.removeEventListener('resize', onResize);
       ro.disconnect();
     };
-  }, [applyProgress, useWindowScroll, reducedMotion]);
+    // A geometria entra nas dependências (modificação 10): quando o hero troca
+    // o tamanho da moldura por faixa de tela, o efeito precisa medir e
+    // repintar. Sem isso o `clip-path` só é reescrito no próximo scroll ou
+    // resize — e a moldura fica com a porcentagem da faixa anterior.
+  }, [applyProgress, useWindowScroll, reducedMotion, startWidth, startHeight, startRadius, endRadius, mediaZoom, scrollDistance, holdDistance]);
 
   const media = midia ? (
     // `mediaRef` é o que recebe o `scale` do percurso — então o wrapper do

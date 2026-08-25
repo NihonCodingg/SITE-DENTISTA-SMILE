@@ -27,7 +27,10 @@ export function Clinica() {
         </Reveal>
 
         <Reveal delay={0.08} className="mx-auto w-full">
-          <div className="relative mx-auto aspect-[9/16] w-[min(360px,100%)] overflow-hidden rounded-[24px]">
+          {/* `aspect-[9/14]`, o MESMO do card. Com 9/16 aqui, a caixa ficava 76px
+              mais alta que o card no celular (medido) e o gradiente e o rótulo,
+              que são posicionados por ela, caíam abaixo da foto. */}
+          <div className="relative mx-auto aspect-[9/14] w-[min(360px,100%)] overflow-hidden rounded-[24px]">
             <VideoCard
               slug="recepcao"
               titulo="Conheça a recepção"

@@ -7,6 +7,14 @@ type Props = {
   legenda: string;
   /** URL do reel no Instagram da clínica. */
   reel: string;
+  /**
+   * `sizes` do `next/image`. Precisa descrever a largura REAL do card no
+   * layout de quem chama — o default veio do carrossel de depoimentos, que
+   * não existe mais. Errar aqui não quebra nada visível de imediato: o
+   * navegador só busca um arquivo menor do que precisa e o pôster fica
+   * borrado no celular (medido: 292px de arquivo para 343px de card).
+   */
+  sizes?: string;
 };
 
 /**
@@ -29,7 +37,7 @@ type Props = {
  *
  * Server Component: não tem estado nem evento. Não precisa de `'use client'`.
  */
-export function VideoCard({ slug, titulo, legenda, reel }: Props) {
+export function VideoCard({ slug, titulo, legenda, reel, sizes = '(max-width: 768px) 92vw, 360px' }: Props) {
   return (
     <a
       href={reel}
@@ -42,7 +50,7 @@ export function VideoCard({ slug, titulo, legenda, reel }: Props) {
         src={`/videos/posters/${slug}.webp`}
         alt={legenda}
         fill
-        sizes="(max-width: 768px) 78vw, 260px"
+        sizes={sizes}
         className="pointer-events-none object-cover"
       />
 
