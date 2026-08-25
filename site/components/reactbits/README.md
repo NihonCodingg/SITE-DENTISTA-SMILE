@@ -218,7 +218,16 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      do axe da Task 18, A1); o nome acessível vai no heading pai, automático quando `flutuar`
      está ligado.
 
-### `MaskedHeading.tsx`
+### `MaskedHeading.tsx` — REMOVIDO na mesma Task 20 em que entrou
+
+> Tentado na headline do hero (letras preenchidas pela foto da marca) e desfeito por decisão do
+> dono do projeto ("se não puder centralizar, desfaça"). O recorte é desenhado em coordenadas
+> absolutas de um `<text>` de SVG dentro de um palco que escala e centra por flex — duas rodadas
+> de calibragem medida (tamanho pela palavra mais larga, raiz em bloco) não assentaram a
+> composição. A headline voltou a texto preto puro. O histórico abaixo fica pelas lições:
+> conteúdo de span precisa de `block` para o autoajuste não afundar no piso, o texto tem de ir
+> em maiúsculas (o SVG não passa pelo `text-transform`), e as palavras sem espaço real exigem a
+> blindagem de aria (nº3).
 
 - **Origem:** `src/ts-tailwind/TextAnimations/MaskedHeading/MaskedHeading.tsx` (branch `main`)
 - **Usado em:** Task 20 — a headline do hero: as letras viram o recorte por onde a foto da marca

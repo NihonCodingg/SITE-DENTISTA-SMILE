@@ -9,20 +9,12 @@ vi.stubGlobal('matchMedia', (q: string) => ({
 
 describe('Hero', () => {
   it('usa a headline da marca como h1 unico', () => {
-    const { container } = render(<Hero />);
-    // Task 20: a headline é o MaskedHeading (components/reactbits/
-    // MaskedHeading.tsx) — as letras viram o recorte por onde a foto da
-    // marca aparece. O componente espalha as palavras em spans SEM espaço
-    // real entre elas (o espaço é `content` de CSS), então o conteúdo visual
-    // inteiro fica aria-hidden (modificação nº3 da vendorização) e o nome
-    // acessível vai no próprio <h1>, onde aria-label é válido — a MESMA
-    // blindagem do SplitText que ele substituiu (Task 18, A1). Igualdade
-    // exata: trava que o atributo está no lugar certo.
-    const mascarado = container.querySelector('h1 [aria-hidden="true"]');
-    expect(mascarado).not.toBeNull();
-    const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1).toHaveAttribute('aria-label', 'Seu novo sorriso começa aqui');
-    expect(screen.getByRole('heading', { level: 1, name: 'Seu novo sorriso começa aqui' })).toBe(h1);
+    render(<Hero />);
+    // A headline é texto preto puro — a versão mascarada (MaskedHeading) foi
+    // tentada e desfeita por decisão do dono do projeto (ver o comentário no
+    // Hero). Texto real dispensa aria-label: o conteúdo já é o nome.
+    const h1 = screen.getByRole('heading', { level: 1, name: 'Seu novo sorriso começa aqui' });
+    expect(h1).not.toHaveAttribute('aria-label');
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
 
@@ -51,7 +43,7 @@ describe('Hero', () => {
     expect(container.textContent).not.toMatch(/★|estrelas/);
   });
 
-  it('sob prefers-reduced-motion, a headline continua um h1 puro (sem mascara)', () => {
+  it('sob prefers-reduced-motion, a headline continua identica: texto puro', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({
       matches: q.includes('reduce'),
       media: q,
@@ -61,11 +53,8 @@ describe('Hero', () => {
     const { container } = render(<Hero />);
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading).toHaveTextContent('Seu novo sorriso começa aqui');
-    // Sem podeAnimar, o MaskedHeading não monta — nada de recorte de SVG nem
-    // imagem dentro do h1, só o texto puro que o servidor já mandou.
     expect(container.querySelector('h1 svg')).toBeNull();
     expect(container.querySelector('h1 img')).toBeNull();
-    // E sem a máscara o aria-label seria redundante — o texto já é o nome.
     expect(heading).not.toHaveAttribute('aria-label');
 
     vi.stubGlobal('matchMedia', (q: string) => ({

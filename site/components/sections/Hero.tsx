@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { HeroBackdrop } from './HeroBackdrop';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
-import MaskedHeading from '@/components/reactbits/MaskedHeading';
 import Magnet from '@/components/reactbits/Magnet';
 import { useCapability } from '@/lib/useCapability';
 
@@ -17,49 +16,13 @@ const HEADLINE = 'Seu novo sorriso começa aqui';
 export function Hero() {
   const { podeAnimar, pontoFino } = useCapability();
 
-  // O texto sempre existe puro no HTML do servidor (SEO/LCP): no primeiro
-  // render — servidor e cliente antes da hidratação confirmar podeAnimar —
-  // isto é só a string. O MaskedHeading assume depois, via re-render:
-  // as letras viram o recorte por onde a foto da marca (o letreiro neon
-  // sobre o muro verde) aparece, com o reveal de subida por palavra que o
-  // SplitText fazia antes — o SplitText saiu junto com ele (Task 20).
-  //
-  // MAIÚSCULAS no texto de propósito: o recorte é desenhado num <text> de
-  // SVG, que NÃO passa pelo `text-transform: uppercase` do h1 — se o texto
-  // fosse minúsculo, a medida (uppercase via CSS) e o recorte (minúsculo
-  // cru) desenhariam glifos diferentes e o preenchimento sairia do lugar.
-  const titulo = podeAnimar ? (
-    <MaskedHeading
-      text={HEADLINE.toUpperCase()}
-      tag="span"
-      src="/img/hero-foto.jpg"
-      reveal="rise"
-      trigger="mount"
-      duration={0.9}
-      stagger={0.08}
-      weight={400}
-      // 0,125, medido: a palavra mais larga ("SORRISO", 7 glifos de Archivo
-      // Black) media 471px numa caixa de 380 com 0,16 — estourava pela
-      // direita (o "borrão" fora da moldura era o recorte preenchido
-      // vazando) e impedia o centramento. Com 0,125 ela assenta em ~368px e
-      // todas as linhas centram de verdade. A razão é constante, então vale
-      // para qualquer largura de tela.
-      textScale={0.125}
-      fillScale={1.18}
-      drift={10}
-      parallax={pontoFino ? 14 : 0}
-      brightness={0.92}
-      reducedMotion={!podeAnimar}
-      // `block`: a raiz do MaskedHeading é um <span> aqui (para viver dentro
-      // do h1), e span inline ignora o `w-full` do componente — o autoajuste
-      // de tamanho (fontSize = largura × textScale) media a própria caixa de
-      // texto, entrava em retroalimentação e afundava no piso de 20px
-      // (medido). Como bloco, a largura vem do h1 e a conta fecha.
-      className="block"
-    />
-  ) : (
-    HEADLINE
-  );
+  // Headline como texto preto puro, sempre — decisão do dono do projeto
+  // ("se não puder centralizar, desfaça"): a versão mascarada
+  // (MaskedHeading, letras preenchidas pela foto) foi tentada e desfeita.
+  // O recorte dela é desenhado em coordenadas absolutas dentro de um palco
+  // que escala e centra por flex, e a combinação nunca assentou — o texto
+  // puro centra por natureza e é o que o design aprovado mostra.
+  const titulo = HEADLINE;
 
   // Magnet sem sentido em touch — só custaria um listener de mousemove sem
   // efeito visual nenhum. pontoFino vem do useCapability(), fonte única.
@@ -125,7 +88,6 @@ export function Hero() {
             tema="claro"
             sobretitulo="Odontologia integrada no Ipiranga"
             titulo={titulo}
-            tituloAriaLabel={podeAnimar ? HEADLINE : undefined}
             className="mx-auto flex w-full flex-col"
             // Topo ANCORADO, não centralizado. Centralizado, qualquer
             // mudança de altura do bloco o desloca — e as duas fontes da
