@@ -22,10 +22,15 @@
  *    ("Drifting wall of tiles") não é emitido.
  * 6. **`<img>` → `next/image`** com o tamanho do azulejo (AVIF, sem excesso).
  * 7. `overlayColor` sem default fora da paleta — quem chama passa o token.
+ * 12. **`next/image` trocado por `<img>` cru com a URL do otimizador**
+ *    (revisão de entrega). Ver a nota no `renderTile`. Reverte parcialmente a
+ *    modificação 6: o que interessava dela — passar pelo otimizador do Next —
+ *    continua valendo via `lib/imgOtimizada.ts`; o que saiu foi a camada de
+ *    componente de cliente, multiplicada por dezenas de azulejos.
  */
 
 import { CSSProperties, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
+import { urlImagemOtimizada } from '@/lib/imgOtimizada';
 
 export interface DriftWallItem {
   image: string;
@@ -344,12 +349,26 @@ const DriftWall = ({
   const renderTile = (item: DriftWallItem, id: string, colIndex: number) => {
     const inner = (
       <span className={innerClass}>
-        <Image
-          src={item.image}
+        {/* `<img>` cru com a URL do otimizador, e não `next/image`
+            (modificação 12). A parede desenha dezenas de azulejos — 92 num
+            monitor largo, 36 num celular — e cada `next/image` é um
+            componente de cliente que o React precisa hidratar. Medido: era o
+            maior bloco de nós da página inteira (464 de 1.079) e engordava a
+            tarefa de hidratação, que é o que faz a página parecer travada.
+            `urlImagemOtimizada` monta a MESMA rota `/_next/image` que o
+            componente geraria, com a largura do azulejo (que a função arredonda
+            para o próximo tamanho que o otimizador aceita) — o ganho de peso
+            (AVIF, tamanho certo) continua igual; some só a camada de React.
+            É a mesma solução que a `CircularGallery` já usava por outro
+            motivo (WebGL precisa de um HTMLImageElement cru). */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={urlImagemOtimizada(item.image, tileWidth)}
           alt={item.title ?? ''}
           width={tileWidth}
           height={tileHeight}
           loading="lazy"
+          decoding="async"
           draggable={false}
           className={imgClass}
         />

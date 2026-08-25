@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -57,9 +58,15 @@ export default function Home() {
           sorrisos={<Sorrisos />}
           profissional={<Profissional />}
         />
-        <Localizacao />
-        <Faq />
-        <CtaFinal />
+        <Suspense>
+          <Localizacao />
+        </Suspense>
+        <Suspense>
+          <Faq />
+        </Suspense>
+        <Suspense>
+          <CtaFinal />
+        </Suspense>
       </main>
       <Footer />
       <IlhaContato />

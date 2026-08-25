@@ -51,10 +51,16 @@ function ItemFaq({ pergunta, resposta }: { pergunta: string; resposta: string })
         className="pressable flex min-h-11 cursor-pointer list-none items-center justify-between gap-6 py-4 font-rotulo text-[16px] text-preto [&::-webkit-details-marker]:hidden"
       >
         <span>{pergunta}</span>
+        {/* 24px, e não 22: neste dourado o glifo tem 3,96:1 sobre o creme, o
+            que basta para "texto grande" (3:1) mas não para texto normal
+            (4,5:1). A fronteira da norma é 24px em peso normal — a 22px ele
+            caía do lado errado dela. Sendo `aria-hidden`, dava para defender
+            que vale a régua de 3:1 de elemento gráfico; 24px encerra a dúvida
+            sem mexer na cor da marca nem no peso da fonte. */}
         <span
           aria-hidden="true"
           className={
-            'shrink-0 font-titulo text-[22px] leading-none text-dourado-escuro transition-transform duration-200 ease-[var(--ease-saida)] ' +
+            'shrink-0 font-titulo text-[24px] leading-none text-dourado-escuro transition-transform duration-200 ease-[var(--ease-saida)] ' +
             (aberto ? 'rotate-45' : '')
           }
         >

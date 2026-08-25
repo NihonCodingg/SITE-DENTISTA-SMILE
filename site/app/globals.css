@@ -61,6 +61,17 @@ body {
   transform: scale(0.97);
 }
 
+/* O fade do <Reveal> sob `prefers-reduced-motion`.
+   É uma ANIMAÇÃO e não uma transição de propósito: transição exigiria que o
+   elemento já estivesse em opacidade 0 esperando o gatilho, e a regra desta
+   base é que sob movimento reduzido o conteúdo NUNCA é escondido antes da
+   hora — se o observador falhar, a página não pode sumir. A animação parte do
+   zero só no instante em que começa, e o estado de repouso continua visível. */
+@keyframes reveal-suave {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {

@@ -118,23 +118,26 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
     // Navegação direta para uma URL que JÁ chega com hash (link de bio/story
     // do Instagram, reload, back/forward do navegador) nunca dispara nenhum
     // evento de `click` — é o navegador quem faz o salto nativo pro
-    // elemento sozinho. Os ScrollTrigger de cada <Reveal> (Reveal.tsx)
+    // elemento sozinho. Os ScrollTrigger que ainda existem na página
+    // (ScrollFloat.tsx nos títulos, ComoFunciona.tsx na barra de progresso)
     // calculam a posição de disparo contra o layout NAQUELE instante da
     // montagem; se o layout ainda não assentou (fontes carregando, imagens
     // sem decodificar), essa posição fica errada, e sem ninguém chamar
-    // `.refresh()` depois, ela nunca se corrige — a seção renderiza presa
-    // em opacity:0 mesmo com a pessoa já rolada até ela.
+    // `.refresh()` depois, ela nunca se corrige — o título renderiza preso
+    // em opacity:0 mesmo com a pessoa já rolada até ele.
     //
     // Correção de review (este bloco morava inteiro dentro do guard de
-    // `podeAnimar`, abaixo): <Reveal> cria um ScrollTrigger de verdade
-    // INDEPENDENTE de `podeAnimar` — as duas branches do `gsap.fromTo` de
-    // Reveal.tsx têm `scrollTrigger: {...once:true}`, porque "reduzir não é
-    // zerar": o reveal continua existindo sob `prefers-reduced-motion`, só
-    // sem o deslocamento. Then, o bug de hash-na-montagem também afeta quem
-    // tem movimento reduzido — e é o pior segmento pra deixar quebrado,
-    // porque em geral essa preferência é ligada por necessidade, não
-    // estética. Por isso este bloco roda sempre que há `ScrollTrigger` na
-    // página (ou seja, sempre que `montado`), não só quando o Lenis existe.
+    // `podeAnimar`, abaixo): o ScrollFloat cria o trigger dele INDEPENDENTE
+    // de `podeAnimar`, então o bug de hash-na-montagem também afeta quem tem
+    // movimento reduzido — e é o pior segmento pra deixar quebrado, porque
+    // em geral essa preferência é ligada por necessidade, não estética. Por
+    // isso este bloco roda sempre que há `ScrollTrigger` na página (ou seja,
+    // sempre que `montado`), não só quando o Lenis existe.
+    //
+    // Os <Reveal> saíram desta conta na revisão de entrega: passaram a usar
+    // um IntersectionObserver compartilhado (lib/observadorReveal.ts), e o
+    // navegador reavalia interseção sozinho a cada mudança de layout — não
+    // sobra posição congelada pra corrigir.
     //
     // `cancelado` evita chamar `ScrollTrigger.refresh()` depois que este
     // efeito já foi desmontado (StrictMode, ou a capacidade mudando entre
@@ -146,10 +149,9 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
         // UMA chamada só, depois da espera — ScrollTrigger.refresh() é caro
         // (recalcula TODOS os triggers da página), então nunca deve rodar em
         // loop nem em resposta a scroll; aqui é uma vez por montagem, só
-        // quando existe hash. `once: true` em cada <Reveal> (Reveal.tsx) já
-        // mata o próprio ScrollTrigger assim que dispara — um refresh()
-        // depois disso não reanima nada que já tenha completado, só corrige
-        // os triggers que ainda não tiveram chance de disparar.
+        // quando existe hash. Um trigger que já disparou e se matou
+        // (`once: true`) não é reanimado por um refresh() posterior — ele só
+        // corrige os que ainda não tiveram chance de disparar.
         ScrollTrigger.refresh();
       });
     }
@@ -196,12 +198,12 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       l.scrollTo(href, {
         offset: -(alturaHeader + 16),
         // Bug real (achado de review em navegador, fix-titulos-report.md):
-        // cada <Reveal> cria seu próprio ScrollTrigger (`start: 'top 88%'`)
-        // com a posição de disparo calculada em pixel de documento no
-        // instante em que ele monta — sem saber que o Lenis ainda vai rolar
-        // a página até `href`. Sem recalcular depois que o scroll pára, uma
-        // seção cujo Reveal ainda não tinha tido chance de disparar podia
-        // ficar presa em opacity:0 mesmo com o scroll parado bem nela.
+        // um ScrollTrigger calcula a posição de disparo em pixel de
+        // documento no instante em que monta — sem saber que o Lenis ainda
+        // vai rolar a página até `href`. Sem recalcular depois que o scroll
+        // pára, um título cujo ScrollFloat ainda não tinha tido chance de
+        // disparar podia ficar preso em opacity:0 mesmo com o scroll parado
+        // bem nele.
         // `onComplete` do próprio Lenis (não um `setTimeout` chutado) é o
         // sinal certo de "a animação de scroll realmente terminou" — chamar
         // cedo demais recalcularia contra uma posição de scroll que ainda

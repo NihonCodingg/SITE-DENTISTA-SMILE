@@ -12,11 +12,23 @@
  * parâmetros `url`/`w`/`q` são o contrato documentado do otimizador
  * (node_modules/next/dist/docs/.../image.md), não um detalhe interno.
  *
- * `largura` deve ser um valor de `deviceSizes`/`imageSizes` (config padrão:
- * 640, 750, 828, 1080…) — outros valores também funcionam (o otimizador
- * arredonda pro próximo permitido), mas usar um valor exato evita esse
- * arredondamento silencioso.
+ * ⚠️ `largura` PRECISA ser um valor de `deviceSizes`/`imageSizes`. O
+ * comentário aqui dizia que "outros valores também funcionam, o otimizador
+ * arredonda pro próximo permitido" — **é falso**, e custou um hero sem parede
+ * de fotos: `/_next/image?...&w=300` responde **400 Bad Request**, e os 92
+ * azulejos ficaram invisíveis. Conferido contra o servidor de produção:
+ * w=256 → 200, w=300 → 400, w=384 → 200.
+ *
+ * Por isso a função agora ARREDONDA ela mesma, para cima, até o próximo valor
+ * permitido — quem chama passa a largura que precisa e não precisa decorar a
+ * lista.
  */
+const LARGURAS_PERMITIDAS = [
+  // `imageSizes` e `deviceSizes` padrão do Next (image-config), em ordem.
+  16, 32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840,
+] as const;
+
 export function urlImagemOtimizada(src: string, largura: number, qualidade = 75): string {
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${largura}&q=${qualidade}`;
+  const permitida = LARGURAS_PERMITIDAS.find((l) => l >= largura) ?? LARGURAS_PERMITIDAS[LARGURAS_PERMITIDAS.length - 1];
+  return `/_next/image?url=${encodeURIComponent(src)}&w=${permitida}&q=${qualidade}`;
 }

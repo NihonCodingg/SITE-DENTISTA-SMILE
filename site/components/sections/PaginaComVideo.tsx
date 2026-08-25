@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Hero } from './Hero';
 import { Clinica } from './Clinica';
 import { Depoimentos } from './Depoimentos';
@@ -33,16 +34,27 @@ type Props = {
 export function PaginaComVideo({ ticker, pilares, tratamentos, sorrisos, profissional }: Props) {
   return (
     <>
+      {/* O hero hidrata junto com a página: é o que a pessoa vê primeiro.
+          Tudo abaixo dele entra em fronteiras de <Suspense> próprias — ver a
+          nota sobre hidratação fatiada no topo deste arquivo. */}
       <Hero />
-      {ticker}
-      {pilares}
-      {tratamentos}
-      <Clinica />
-      {sorrisos}
-      {profissional}
-      <Depoimentos />
-      <AntesDepois />
-      <ComoFunciona />
+      <Suspense>{ticker}</Suspense>
+      <Suspense>{pilares}</Suspense>
+      <Suspense>{tratamentos}</Suspense>
+      <Suspense>
+        <Clinica />
+      </Suspense>
+      <Suspense>{sorrisos}</Suspense>
+      <Suspense>{profissional}</Suspense>
+      <Suspense>
+        <Depoimentos />
+      </Suspense>
+      <Suspense>
+        <AntesDepois />
+      </Suspense>
+      <Suspense>
+        <ComoFunciona />
+      </Suspense>
     </>
   );
 }
