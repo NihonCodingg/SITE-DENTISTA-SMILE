@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { waLink } from '@/lib/contact';
@@ -213,7 +214,16 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
                   animate="aberto"
                   exit="fechado"
                   variants={variantesFundo}
-                  className="fixed inset-0 z-[65] bg-preto/40"
+                  /* 92%, não os 40% da gaveta anterior (Task 23): com o
+                      BubbleMenu o painel é TRANSPARENTE — as bolhas flutuam e
+                      o toque ENTRE elas atravessa até aqui, que é o que fecha
+                      o menu. Com o fundo claro a página continuava legível por
+                      trás, e a bolha da logo caía em cima da logo do header,
+                      que segue pintada (inerte, mas visível): duas logos
+                      empilhadas. A 92% resta só a insinuação de que a página
+                      continua ali, e as pílulas brancas ficam com o contraste
+                      que um modal precisa ter. */
+                  className="fixed inset-0 z-[65] bg-preto/92"
                 />
               )}
             </AnimatePresence>
@@ -237,24 +247,19 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
                 panelId={painelId}
                 items={items.map((item) => ({ label: item.rotulo, ariaLabel: item.rotulo, link: item.href }))}
                 onItemClick={fechar}
+                onClose={fechar}
                 reducedMotion={!podeAnimar}
-                cabecalho={
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={fechar}
-                      aria-label="Fechar menu"
-                      className="pressable flex h-11 w-11 items-center justify-center rounded-full border border-borda-forte bg-branco text-preto"
-                    >
-                      <HamburgerIcon aberto />
-                    </button>
-                  </div>
+                /* A logo entra na bolha, como no original. `next/image` com
+                   dimensões reais do arquivo (430x242) — a bolha limita a
+                   altura a 60% dela, e a largura acompanha. */
+                logo={
+                  <Image src="/img/logo.png" alt="Smile Ipiranga" width={82} height={46} className="h-auto" />
                 }
-                footer={
+                rodape={
                   <a
                     href={waLink()}
                     onClick={fechar}
-                    className="pressable flex min-h-12 items-center justify-center rounded-full bg-amarelo px-6 font-rotulo text-[13px] font-medium tracking-[.08em] text-preto uppercase"
+                    className="pressable flex min-h-[64px] w-full items-center justify-center rounded-[999px] bg-amarelo px-6 font-rotulo text-[14px] font-medium tracking-[.08em] text-preto uppercase shadow-[0_4px_14px_rgba(0,0,0,0.1)]"
                   >
                     Agendar avaliação
                   </a>

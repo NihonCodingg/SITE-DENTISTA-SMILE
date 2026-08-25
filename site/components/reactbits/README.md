@@ -694,47 +694,63 @@ está em `task-19-report.md`.
 - **Origem:** `src/ts-tailwind/Components/BubbleMenu/BubbleMenu.tsx` (branch `main`)
 - **Usado em:** Task 23 — o menu do celular, via `layout/MobileMenu.tsx`, no lugar do
   `StaggeredMenu` (pedido do dono do projeto).
-- **Dependências que arrasta:** `gsap` (já no projeto).
+- **Dependencias que arrasta:** `gsap` (ja no projeto).
 - **Rede:** nenhuma chamada.
 - **`matchMedia`/reduced-motion:** virou a prop `reducedMotion`, alimentada por
-  `useCapability().podeAnimar`. Sob movimento reduzido as pílulas aparecem sem o estouro — o menu
+  `useCapability().podeAnimar`. Sob movimento reduzido as pilulas aparecem sem o estouro — o menu
   continua abrindo e fechando.
-- **Só `transform`/`opacity`:** a animação é `scale` nas pílulas e `y`/`autoAlpha` nos rótulos.
-- **Régua de motion:** `MOTION_BOLHAS`, travada por `__tests__/bubbleMenu.test.ts`. Os defaults do
+- **So `transform`/`opacity`:** `scale` nas bolhas e `y`/`autoAlpha` nos rotulos.
+- **Regua de motion:** `MOTION_BOLHAS`, travada por `__tests__/bubbleMenu.test.ts`. Os defaults do
   original ficavam TODOS fora dela — 500ms de entrada contra o teto de 300, 120ms de passo contra a
-  janela de 30-80, 860ms até o último item contra o teto de 450. A régua é do projeto (Task 18/B) e
-  é anterior a este componente; quem se ajustou foi ele.
-- **Modificações:**
-  1. `'use client'` no topo (o original não declara).
-  2. **O cabeçalho próprio (logo + hambúrguer) não veio.** O original desenha um `<nav>` fixo com a
-     logo numa bolha e o botão de abrir noutra. Este site já tem um `<Header>` de verdade, e o
-     hambúrguer dele mora em `layout/MobileMenu.tsx` junto do foco preso, do `Escape`, do retorno
-     de foco e da trava de scroll. Um segundo `<nav>` "Main navigation" ainda criaria duas
-     landmarks de navegação disputando o mesmo papel. Mesma modificação que o `StaggeredMenu`
-     levou, pela mesma razão.
-  3. **O estado de aberto/fechado saiu do componente** e virou a prop `open`. Com ele guardado
-     dentro, quem está por fora não consegue fechar o menu — nem no `Escape`, nem ao navegar.
-  4. **`role="menu"`/`role="menuitem"` removidos.** São papéis de menu de APLICAÇÃO: o leitor de
-     tela anuncia "menu" e a pessoa passa a esperar navegação por setas, que não existe aqui. São
-     links de navegação — uma lista e links dizem exatamente o que são.
-  5. **`role="dialog"` + `aria-modal` adicionados.** O painel É modal (foco preso, `Escape` fecha,
-     todo o resto da página vira `inert`); o original não declara papel nenhum, e sem isso quem usa
-     leitor de tela não recebe o anúncio de que entrou num diálogo.
-  6. **O bloco `<style>` global não veio.** O original injeta CSS com nomes de classe genéricos
-     (`.pill-list`, `.pill-link`) que vazam para a página inteira, mais um `!important` em
-     `background` e regras de `nth-child` para uma grade de três colunas que só existe acima de
-     900px — largura em que este menu nem aparece.
-  7. **`reducedMotion` virou prop** (ver acima).
-  8. **`aria-hidden`/`inert` amarrados a `open`**, painel que nunca desmonta — mesma blindagem do
-     `StaggeredMenu`.
-  9. **Tempos dentro da régua** (ver acima).
-  10. **Nenhum `ease-in`.** O original fecha com `power3.in` nas pílulas e nos rótulos; o guia do
-      projeto crava que interface nunca usa ease-IN. A saída passou a usar a mesma `--ease-gaveta`
-      do resto do site. A ENTRADA continua em `back.out` de propósito — passar do ponto e voltar é o
-      que faz uma bolha parecer bolha, e ease-out não é o que a regra proíbe.
-  11. **`height: 10` inline saiu.** O original põe altura de 10px no link e devolve o tamanho por
-      `min-height` e `padding`: funciona por acidente, e torna qualquer ajuste de espaçamento um
-      chute.
+  janela de 30-80, 860ms ate o ultimo item contra o teto de 450. A regua e do projeto (Task 18/B) e
+  e anterior a este componente; quem se ajustou foi ele. O passo aqui e 50ms e nao os 40ms do
+  drawer anterior, porque neste menu a SEQUENCIA e o efeito: 50ms e o maior valor que ainda cabe no
+  teto com os quatro itens do nav (3 x 50 + 280 = 430ms).
+- **Layout:** segue o CSS do original na faixa de celular (`max-width: 899px`), a unica em que este
+  menu aparece — bolhas de 48px no topo com 2em de folga, lista comecando a 120px, pilulas de
+  largura cheia com 80px de altura minima e `row-gap` de 16px.
+- **Modificacoes:**
+  1. `'use client'` no topo (o original nao declara).
+  2. **O `<nav aria-label="Main navigation">` virou o painel do menu.** O original e um nav proprio,
+     fixo, sempre visivel, que convive com o cabecalho da pagina. Este site ja tem um `<Header>` de
+     verdade, e um segundo landmark de navegacao disputaria o mesmo papel. As bolhas passaram a
+     viver DENTRO do painel que abre.
+  3. **O estado de aberto/fechado saiu do componente** e virou as props `open`/`onClose`. Com ele
+     guardado dentro, quem esta por fora nao consegue fechar o menu — nem no `Escape`, nem ao
+     navegar, nem no toque fora das pilulas.
+  4. **`role="dialog"` + `aria-modal` no painel.** Ele E modal (foco preso, `Escape` fecha, resto da
+     pagina `inert`); o original nao declara papel nenhum, e sem isso quem usa leitor de tela nao e
+     avisado de que entrou num dialogo.
+  5. **`role="menu"`/`role="menuitem"` removidos.** Sao papeis de menu de APLICACAO: o leitor de
+     tela anuncia "menu" e a pessoa passa a esperar navegacao por setas, que nao existe aqui.
+  6. **`aria-pressed` virou `aria-expanded`** no botao. `pressed` e de alternancia; revelar um
+     painel e `expanded`.
+  7. **O `BubbleMenu.css` nao veio.** Nomes de classe genericos (`.bubble`, `.pill-list`,
+     `.pill-link`) que vazam para a pagina inteira, mais um `!important` em `margin-left`. Tudo
+     virou utilitario do Tailwind no proprio elemento.
+  8. **`reducedMotion` virou prop** (ver acima).
+  9. **`aria-hidden`/`inert` amarrados a `open`**, painel que nunca desmonta. O original monta e
+     desmonta o overlay por estado e ainda controla a visibilidade com `gsap.set(overlay,
+     { display })` — que e o tipo de coisa que deixa `inert` preso ao reabrir antes de a saida
+     terminar (o bug que a Task 6 ja tinha cacado uma vez).
+  10. **Tempos dentro da regua** (ver acima).
+  11. **Nenhum `ease-in`.** O original fecha com `power3.in` nas pilulas e nos rotulos; o guia do
+      projeto crava que interface nunca usa ease-IN. A saida passou a usar a mesma `--ease-gaveta`
+      do resto do site. A ENTRADA continua em `back.out` de proposito — passar do ponto e voltar e o
+      que faz uma bolha parecer bolha, e ease-out nao e o que a regra proibe.
+  12. **`height: 10px` inline saiu da pilula.** O original crava 10px de altura no link e devolve o
+      tamanho por `min-height` + `padding`: funciona por acidente, e torna qualquer ajuste de
+      espacamento um chute.
+  13. **A variacao aleatoria no atraso de cada bolha saiu** (`gsap.utils.random(-0.05, 0.05)`). Com
+      o passo de 120ms do original ela some no meio; com os 50ms daqui chega a inverter a ordem de
+      duas bolhas vizinhas, e o efeito deixa de ser uma sequencia.
+  14. **O GSAP escala um INVOLUCRO, nao o elemento clicavel.** No original o `scale` vai direto no
+      `<a>` e no `<button>`; os dois escreveriam `transform` no mesmo elemento, e o inline do GSAP
+      ganha do `:active` do `.pressable` — a peca perderia o feedback de toque, que e a assinatura
+      tatil deste site.
+  15. **A rotacao das pilulas continua desligada nesta faixa**, como no CSS original
+      (`rotate(var(--item-rot))` so existe a partir de 900px). Nao e esquecimento: pilula de largura
+      cheia girada estoura a lateral da tela. A prop segue aceita para um uso futuro em tela larga.
 
 ### `Silk.tsx`
 

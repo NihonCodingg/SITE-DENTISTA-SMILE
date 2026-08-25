@@ -191,8 +191,18 @@ describe('Header', () => {
     const painel = await screen.findByRole('dialog', { name: 'Menu' });
     const fecharNoPainel = within(painel).getByRole('button', { name: 'Fechar menu' });
     expect(fecharNoPainel.className).toMatch(/\bpressable\b/);
-    expect(fecharNoPainel.className).toMatch(/\bh-11\b/);
-    expect(fecharNoPainel.className).toMatch(/\bw-11\b/);
+    // Alvo de toque de pelo menos 44px (WCAG 2.5.8). O que se checa é a
+    // MEDIDA, não a classe exata: até a Task 23 isto exigia literalmente
+    // `h-11`, e quando o painel virou o BubbleMenu — cujas bolhas são de 48px,
+    // ou seja MAIORES que o mínimo — o teste reprovou uma mudança que
+    // melhorava o alvo. jsdom não faz layout, então a medida sai da escala do
+    // Tailwind (1 unidade = 4px).
+    const altura = /\bh-(\d+)\b/.exec(fecharNoPainel.className);
+    const largura = /\bw-(\d+)\b/.exec(fecharNoPainel.className);
+    expect(altura).not.toBeNull();
+    expect(largura).not.toBeNull();
+    expect(Number(altura![1]) * 4).toBeGreaterThanOrEqual(44);
+    expect(Number(largura![1]) * 4).toBeGreaterThanOrEqual(44);
 
     // Foco inicial cai no ✕ do painel (primeiro focável).
     await waitFor(() => expect(document.activeElement).toBe(fecharNoPainel));
