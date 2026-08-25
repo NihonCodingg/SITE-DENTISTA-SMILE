@@ -46,6 +46,14 @@
  * fica contida porque a ilha é `position: fixed` — mudar o tamanho dela não
  * reorganiza nada do documento — e porque ela muda de forma poucas vezes por
  * visita, não a cada quadro.
+ * 9. **`w-full` removido do contêiner.** O original envolve a ilha num
+ *    `flex w-full justify-center`, que ocupa a largura toda e centraliza a
+ *    ilha dentro de si. O efeito colateral é que ele ANULA o alinhamento de
+ *    quem chama: um `justify-end` no envoltório de fora alinha um filho que já
+ *    tem 100% da largura, ou seja, não move nada. Foi assim que a ilha ficou
+ *    centralizada no desktop mesmo com o `md:justify-end` do
+ *    `layout/IlhaContato.tsx` — descoberto na revisão de entrega, medido: num
+ *    monitor de 1350px ela ficava em 478-849 em vez de terminar em 1326.
  */
 
 import {
@@ -292,7 +300,12 @@ const DynamicIsland = ({ children, id, className = '' }: { children: ReactNode; 
   }, []);
 
   return (
-    <div className="z-10 flex w-full items-end justify-center bg-transparent">
+    // Sem `w-full` (ver modificação 9): o contêiner do original ocupa a
+    // largura toda e centraliza a ilha dentro de si, o que ANULA qualquer
+    // alinhamento que quem chama tenha aplicado por fora. Foi assim que a
+    // ilha ficou centralizada no desktop mesmo com `justify-end` no
+    // envoltório — o `justify-end` alinhava um filho que já era 100%.
+    <div className="z-10 flex items-end justify-center bg-transparent">
       <DynamicIslandContent
         id={id}
         willChange={willChange}
