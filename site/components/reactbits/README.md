@@ -15,7 +15,11 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
 
 ## Arquivos e modificações
 
-### `SplitText.tsx`
+### `SplitText.tsx` — REMOVIDO na Task 20
+
+> Substituído pelo `MaskedHeading` na headline do hero, que era seu único uso. O histórico abaixo
+> fica porque a blindagem de acessibilidade dele (aria no heading, conteúdo fatiado escondido) é o
+> padrão que `MaskedHeading` e `ScrollFloat` herdaram.
 
 - **Origem:** `src/ts-tailwind/TextAnimations/SplitText/SplitText.tsx`
 - **Usado em:** Task 8 (reveal da headline do Hero)
@@ -213,6 +217,33 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   5. **`aria-hidden` no contêiner fatiado** — texto em letras é lido letra por letra (a violação
      do axe da Task 18, A1); o nome acessível vai no heading pai, automático quando `flutuar`
      está ligado.
+
+### `MaskedHeading.tsx`
+
+- **Origem:** `src/ts-tailwind/TextAnimations/MaskedHeading/MaskedHeading.tsx` (branch `main`)
+- **Usado em:** Task 20 — a headline do hero: as letras viram o recorte por onde a foto da marca
+  aparece, com reveal de subida por palavra. Substituiu o `SplitText`, que era o reveal anterior
+  da mesma headline e saiu do projeto junto (era o único uso).
+- **Dependências que arrasta:** `gsap` e `next/image` (já no projeto).
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** virou prop `reducedMotion` (`useCapability().podeAnimar`) — sob
+  redução não há reveal, deriva nem parallax; o preenchimento fica, estático.
+- **Detalhe de uso obrigatório (aprendido medindo):** com `tag="span"` a raiz é inline e o
+  `w-full` do componente não vale — o autoajuste (`fontSize = largura × textScale`) mede a própria
+  caixa de texto, entra em retroalimentação e afunda no piso de 20px. Quem usa como span passa
+  `className="block"`. E o texto deve ir **já em maiúsculas**: o recorte é um `<text>` de SVG, que
+  não passa pelo `text-transform` do CSS — minúsculas no fonte desenhariam glifos diferentes da
+  medida.
+- **Modificações:**
+  1. `'use client'` no topo (o original não declara).
+  2. **`reducedMotion` virou prop.**
+  3. **`aria-hidden` no conteúdo visual** — as palavras ficam em spans SEM espaço real (o espaço é
+     `content` de CSS): um leitor de tela leria "SEUNOVOSORRISO…". O nome acessível vai no heading
+     que envolve o componente (`tituloAriaLabel`), como o `SplitText` já fazia (Task 18, A1).
+  4. **O laço de `requestAnimationFrame` pausa** fora da viewport, com a aba oculta e sob
+     `reducedMotion` — o original roda para sempre.
+  5. **Modo `video` removido** (o site não hospeda vídeo) e **`<img>` → `next/image`**.
+  6. **Escrita de ref movida do render para `useLayoutEffect`** (regra `react-hooks/refs`).
 
 ### `Magnet.tsx`
 

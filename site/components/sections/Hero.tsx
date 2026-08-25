@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { HeroBackdrop } from './HeroBackdrop';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
-import SplitText from '@/components/reactbits/SplitText';
+import MaskedHeading from '@/components/reactbits/MaskedHeading';
 import Magnet from '@/components/reactbits/Magnet';
 import { useCapability } from '@/lib/useCapability';
 
@@ -19,17 +19,37 @@ export function Hero() {
 
   // O texto sempre existe puro no HTML do servidor (SEO/LCP): no primeiro
   // render — servidor e cliente antes da hidratação confirmar podeAnimar —
-  // isto é só a string. O SplitText assume depois, via re-render, nunca
-  // trocando o que já foi pintado.
+  // isto é só a string. O MaskedHeading assume depois, via re-render:
+  // as letras viram o recorte por onde a foto da marca (o letreiro neon
+  // sobre o muro verde) aparece, com o reveal de subida por palavra que o
+  // SplitText fazia antes — o SplitText saiu junto com ele (Task 20).
+  //
+  // MAIÚSCULAS no texto de propósito: o recorte é desenhado num <text> de
+  // SVG, que NÃO passa pelo `text-transform: uppercase` do h1 — se o texto
+  // fosse minúsculo, a medida (uppercase via CSS) e o recorte (minúsculo
+  // cru) desenhariam glifos diferentes e o preenchimento sairia do lugar.
   const titulo = podeAnimar ? (
-    <SplitText
-      text={HEADLINE}
+    <MaskedHeading
+      text={HEADLINE.toUpperCase()}
       tag="span"
-      splitType="words"
-      delay={40}
-      duration={0.8}
-      ease="power3.out"
-      from={{ opacity: 0, y: '0.4em' }}
+      src="/img/hero-foto.jpg"
+      reveal="rise"
+      trigger="mount"
+      duration={0.9}
+      stagger={0.08}
+      weight={400}
+      textScale={0.16}
+      fillScale={1.18}
+      drift={10}
+      parallax={pontoFino ? 14 : 0}
+      brightness={0.92}
+      reducedMotion={!podeAnimar}
+      // `block`: a raiz do MaskedHeading é um <span> aqui (para viver dentro
+      // do h1), e span inline ignora o `w-full` do componente — o autoajuste
+      // de tamanho (fontSize = largura × textScale) media a própria caixa de
+      // texto, entrava em retroalimentação e afundava no piso de 20px
+      // (medido). Como bloco, a largura vem do h1 e a conta fecha.
+      className="block"
     />
   ) : (
     HEADLINE
@@ -107,7 +127,7 @@ export function Hero() {
             // valia 0,176 de CLS em dois saltos (medido; um por fonte).
             // Ancorado, o texto só cresce para baixo: a distância de
             // deslocamento é zero, e é a distância que o CLS mede.
-            tituloClassName="mx-auto max-w-[min(88%,340px)] text-[clamp(28px,4.4vw,64px)]"
+            tituloClassName="mx-auto max-w-[min(80vw,380px)] text-[clamp(28px,4.4vw,64px)]"
           />
 
           {/* O sorriso da marca, embaixo da headline. `alt=""` porque é

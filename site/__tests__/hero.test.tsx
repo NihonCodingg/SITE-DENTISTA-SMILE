@@ -10,24 +10,16 @@ vi.stubGlobal('matchMedia', (q: string) => ({
 describe('Hero', () => {
   it('usa a headline da marca como h1 unico', () => {
     const { container } = render(<Hero />);
-    // Com podeAnimar=true (matchMedia mockado acima como "nunca reduzido") a
-    // Hero usa o SplitText vendorizado (components/reactbits/SplitText.tsx),
-    // que reparte a headline em spans por palavra via gsap/SplitText e anima
-    // `y` sobre eles. Só em jsdom — não no Chrome real, confirmado manualmente
-    // na Task 8 — essa combinação específica (SplitText + gsap animando `y`
-    // nos alvos) reordena o texto node de espaço entre duas das palavras, e
-    // `heading.textContent` sai sem esse espaço.
-    //
-    // Task 18 (A1): o GSAP SplitText é instanciado com `aria: 'hidden'` — os
-    // spans fatiados ficam aria-hidden e NENHUM aria-label é escrito no
-    // `.split-parent` (um <span> sem role, onde aria-label é proibido — axe
-    // `aria-prohibited-attr`, WCAG 4.1.2). O nome acessível vai para o
-    // próprio <h1>, onde é válido. Igualdade exata (não regex frouxa): o
-    // texto original fica imune ao artefato de espaçamento do jsdom, e o
-    // teste trava que o atributo está no lugar certo E não no errado.
-    const splitParent = container.querySelector('.split-parent');
-    expect(splitParent).not.toBeNull();
-    expect(splitParent).not.toHaveAttribute('aria-label');
+    // Task 20: a headline é o MaskedHeading (components/reactbits/
+    // MaskedHeading.tsx) — as letras viram o recorte por onde a foto da
+    // marca aparece. O componente espalha as palavras em spans SEM espaço
+    // real entre elas (o espaço é `content` de CSS), então o conteúdo visual
+    // inteiro fica aria-hidden (modificação nº3 da vendorização) e o nome
+    // acessível vai no próprio <h1>, onde aria-label é válido — a MESMA
+    // blindagem do SplitText que ele substituiu (Task 18, A1). Igualdade
+    // exata: trava que o atributo está no lugar certo.
+    const mascarado = container.querySelector('h1 [aria-hidden="true"]');
+    expect(mascarado).not.toBeNull();
     const h1 = screen.getByRole('heading', { level: 1 });
     expect(h1).toHaveAttribute('aria-label', 'Seu novo sorriso começa aqui');
     expect(screen.getByRole('heading', { level: 1, name: 'Seu novo sorriso começa aqui' })).toBe(h1);
@@ -59,7 +51,7 @@ describe('Hero', () => {
     expect(container.textContent).not.toMatch(/★|estrelas/);
   });
 
-  it('sob prefers-reduced-motion, a headline continua um h1 puro (sem SplitText)', () => {
+  it('sob prefers-reduced-motion, a headline continua um h1 puro (sem mascara)', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({
       matches: q.includes('reduce'),
       media: q,
@@ -69,10 +61,11 @@ describe('Hero', () => {
     const { container } = render(<Hero />);
     const heading = screen.getByRole('heading', { level: 1 });
     expect(heading).toHaveTextContent('Seu novo sorriso começa aqui');
-    // Sem podeAnimar, o SplitText não monta — nada de span.split-parent na
-    // árvore, só o texto puro que o servidor já mandou.
-    expect(container.querySelector('.split-parent')).toBeNull();
-    // E sem SplitText o aria-label seria redundante — o texto já é o nome.
+    // Sem podeAnimar, o MaskedHeading não monta — nada de recorte de SVG nem
+    // imagem dentro do h1, só o texto puro que o servidor já mandou.
+    expect(container.querySelector('h1 svg')).toBeNull();
+    expect(container.querySelector('h1 img')).toBeNull();
+    // E sem a máscara o aria-label seria redundante — o texto já é o nome.
     expect(heading).not.toHaveAttribute('aria-label');
 
     vi.stubGlobal('matchMedia', (q: string) => ({
