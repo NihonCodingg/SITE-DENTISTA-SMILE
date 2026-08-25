@@ -10,7 +10,7 @@ import { Profissional } from '@/components/sections/Profissional';
 import { Localizacao } from '@/components/sections/Localizacao';
 import { Faq } from '@/components/sections/Faq';
 import { CtaFinal } from '@/components/sections/CtaFinal';
-import { WhatsAppFab } from '@/components/layout/WhatsAppFab';
+import { IlhaContato } from '@/components/layout/IlhaContato';
 import { dentistJsonLd } from '@/lib/jsonld';
 
 // Título e descrição focados em busca local — "dentista Ipiranga" é o termo
@@ -62,7 +62,7 @@ export default function Home() {
         <CtaFinal />
       </main>
       <Footer />
-      <WhatsAppFab />
+      <IlhaContato />
     </>
   );
 }

@@ -22,8 +22,8 @@ const FOTOS_PAREDE = [
   '/img/fachada.jpg', '/img/clinica-interior.jpg', '/img/dr-vinicius.jpg',
 ].map((image) => ({ image }));
 
-// `id="hero"` é usado pelo WhatsAppFab (lib/layout) para saber exatamente
-// onde a seção termina, em vez de aproximar por 100dvh.
+// `id="hero"` é usado pela IlhaContato (components/layout) para saber
+// exatamente onde a seção termina, em vez de aproximar por 100dvh.
 export function Hero() {
   const { podeAnimar, pontoFino } = useCapability();
 

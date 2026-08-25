@@ -4,22 +4,29 @@ import path from 'node:path';
 import { render, screen, fireEvent, waitFor, act, within } from '@testing-library/react';
 import gsap from 'gsap';
 import { Header, ANCORA_TOPO } from '@/components/layout/Header';
-import { WhatsAppFab } from '@/components/layout/WhatsAppFab';
+import { IlhaContato } from '@/components/layout/IlhaContato';
 
 vi.stubGlobal('matchMedia', (q: string) => ({
   matches: false, media: q, addEventListener: vi.fn(), removeEventListener: vi.fn(),
 }));
 
-// jsdom não implementa IntersectionObserver. O WhatsAppFab depende dele para
+// jsdom não implementa IntersectionObserver. A IlhaContato depende dele para
 // decidir quando aparecer, e o MobileMenu depende da Motion escrever o estado
 // "aberto" de verdade no DOM — este stub guarda a callback de cada instância
 // para que os testes possam disparar entradas de interseção manualmente, do
 // jeito que um browser real faria ao rolar a página.
+//
+// `options` também é guardado: a IlhaContato cria DOIS observadores — o do
+// hero (sem opções de margem) e o que descobre a seção em leitura (com
+// `rootMargin`). Sem distinguir, um teste dispararia a entrada do hero na
+// callback errada.
 class IntersectionObserverStub {
   static instances: IntersectionObserverStub[] = [];
   callback: IntersectionObserverCallback;
-  constructor(callback: IntersectionObserverCallback) {
+  options?: IntersectionObserverInit;
+  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
     this.callback = callback;
+    this.options = options;
     IntersectionObserverStub.instances.push(this);
   }
   observe = vi.fn();
@@ -361,32 +368,42 @@ describe('Header', () => {
   });
 });
 
-describe('WhatsAppFab', () => {
-  it('tem rotulo acessivel', () => {
-    render(<WhatsAppFab />);
-    expect(screen.getByLabelText('Falar no WhatsApp')).toBeInTheDocument();
+describe('IlhaContato', () => {
+  // A ilha (DynamicIsland do cult-ui, Task 21) substituiu o WhatsAppFab e
+  // herdou o contrato dele: fica inalcancavel enquanto o hero esta em tela e
+  // entra quando ele sai por cima. O nome acessivel do link vem do texto
+  // visivel, nao de um aria-label — trocar um pelo outro violaria o criterio
+  // 2.5.3 (Label in Name), porque o texto na tela e o nome anunciado
+  // deixariam de bater.
+  const observadorDoHero = () =>
+    IntersectionObserverStub.instances.filter((i) => !i.options?.rootMargin).at(-1)!;
+
+  it('mostra o convite de contato', () => {
+    render(<IlhaContato />);
+    expect(screen.getByRole('link', { name: /Agendar avaliação/i })).toBeInTheDocument();
   });
 
-  it('fica inalcancavel enquanto o sentinel esta em tela e alcancavel quando ele sai por cima', async () => {
+  it('fica inalcancavel enquanto o hero esta em tela e alcancavel quando ele sai por cima', async () => {
     IntersectionObserverStub.instances.length = 0;
-    render(<WhatsAppFab />);
-    const link = screen.getByLabelText('Falar no WhatsApp');
+    render(<IlhaContato />);
+    const link = screen.getByRole('link', { name: /Agendar avaliação/i });
 
-    // Estado inicial: nada rolou ainda, o FAB não compete com o CTA do hero.
+    // Estado inicial: nada rolou ainda, a ilha não compete com o CTA do hero.
     expect(link).toHaveAttribute('tabindex', '-1');
+    expect(link).toHaveAttribute('href', expect.stringContaining('wa.me/551122740228'));
 
-    const instancia = IntersectionObserverStub.instances.at(-1)!;
+    const instancia = observadorDoHero();
 
-    // Sentinel ainda visível (perto do topo): continua escondido.
+    // Hero ainda visível (perto do topo): continua escondida.
     act(() => {
       instancia.callback(
         [{ isIntersecting: true, boundingClientRect: { top: 50 } } as IntersectionObserverEntry],
         instancia as unknown as IntersectionObserver
       );
     });
-    expect(screen.getByLabelText('Falar no WhatsApp')).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('link', { name: /Agendar avaliação/i })).toHaveAttribute('tabindex', '-1');
 
-    // Sentinel saiu por cima da viewport: rolou além do primeiro viewport, FAB entra.
+    // Hero saiu por cima da viewport: a ilha entra.
     act(() => {
       instancia.callback(
         [{ isIntersecting: false, boundingClientRect: { top: -10 } } as IntersectionObserverEntry],
@@ -394,7 +411,15 @@ describe('WhatsAppFab', () => {
       );
     });
     await waitFor(() => {
-      expect(screen.getByLabelText('Falar no WhatsApp')).toHaveAttribute('tabindex', '0');
+      expect(screen.getByRole('link', { name: /Agendar avaliação/i })).toHaveAttribute('tabindex', '0');
     });
+  });
+
+  it('nao afirma nada que a clinica nao confirmou', () => {
+    const { container } = render(<IlhaContato />);
+    const texto = container.textContent ?? '';
+    expect(texto).not.toMatch(/★|estrelas/i);
+    expect(texto).not.toMatch(/aberto agora|fechado agora/i);
+    expect(texto).not.toMatch(/convênio|convenio/i);
   });
 });

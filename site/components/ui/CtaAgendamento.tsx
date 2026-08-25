@@ -17,7 +17,7 @@ import Magnet from '@/components/reactbits/Magnet';
  *
  * Uma consequência que vale dizer em voz alta: quem antes chegava ao WhatsApp
  * em um toque agora precisa de dois. Os caminhos diretos continuam existindo —
- * o botão do topo, o do menu no celular e o botão flutuante levam ao WhatsApp
+ * o botão do topo, o do menu no celular e a ilha flutuante levam ao WhatsApp
  * sem parada. Este aqui virou o caminho com contexto.
  *
  * Todo dado do cartão já estava no site (a faixa logo abaixo do hero) e sai de
@@ -153,7 +153,7 @@ function Seta({ aberto, animar }: { aberto: boolean; animar: boolean }) {
   );
 }
 
-/** O mesmo símbolo do botão flutuante (components/layout/WhatsAppFab.tsx). */
+/** O mesmo símbolo da ilha flutuante (components/layout/IlhaContato.tsx). */
 function WhatsAppIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 32 32" fill="none" aria-hidden="true">
