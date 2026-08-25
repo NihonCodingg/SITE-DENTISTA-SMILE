@@ -73,10 +73,12 @@ Mais dois pontos do deploy:
 | O quê | Onde |
 |---|---|
 | Fotos do site | `public/img/` |
-| Prévias de vídeo (mudas, curtas) | `public/videos/previews/<slug>.mp4` |
 | Pôsteres dos vídeos | `public/videos/posters/<slug>.webp` |
-| Vídeos completos (só no lightbox) | `public/videos/completos/<slug>.mp4` |
 | Ícones e favicon | `app/favicon.ico`, `app/icon.png`, `app/apple-icon.png` |
+
+> **O site não hospeda vídeo desde 24/08.** As linhas de `previews/` e `completos/` que esta tabela
+> listava saíram junto com o lightbox: cada card mostra o pôster e o clique abre o reel no Instagram
+> da clínica (`components/ui/VideoCard.tsx`). As duas pastas não existem mais no repositório.
 
 As fotos saem de `IMAGENS DO INSTAGRAM/` (na raiz) pelo pipeline `scripts/preparar-assets.mjs`,
 que redimensiona e comprime com `sharp` seguindo um mapa explícito de origem → destino. Rode-o da
@@ -89,11 +91,12 @@ não passam por `next/image`.
 
 ### Como trocar um vídeo
 
-1. Escolha o **slug** (o mesmo nome nos três arquivos, sem acento nem espaço).
-2. Coloque os três: `previews/<slug>.mp4` (mudo, abaixo de 260 KB — o teste de orçamento verifica),
-   `posters/<slug>.webp` e `completos/<slug>.mp4`.
-3. Registre em `lib/content.ts`: o array `DEPOIMENTOS` leva `{ slug, titulo, legenda }`. A legenda
-   descreve **o que foi tratado, nunca quem foi tratado**.
+1. Escolha o **slug** (sem acento nem espaço).
+2. Coloque o pôster em `public/videos/posters/<slug>.webp`. É a primeira imagem do reel; nenhum
+   arquivo de vídeo entra no repositório.
+3. Registre em `lib/content.ts`: o array `DEPOIMENTOS` leva `{ slug, titulo, legenda, reel }`, onde
+   `reel` é a URL do post no Instagram da clínica. A legenda descreve **o que foi tratado, nunca
+   quem foi tratado**.
 4. Rode `npm test`.
 
 ## Regras do projeto que o código assume
@@ -122,6 +125,11 @@ identidade visual descrita no `BRIEFING.md`.
 Nada aqui bloqueia o merge; tudo aqui bloqueia a publicação. O site já mostra cada pendência como
 pendência — o risco é publicar sem resolvê-las, não deixá-las visíveis.
 
+- [ ] **Número de pacientes e origem da nota** — o hero exibe "Mais de mil sorrisos transformados"
+      com cinco estrelas, hoje marcado com o tracejado. Faltam DUAS coisas diferentes: o número, que
+      ninguém no material do cliente disse, e a fonte da avaliação (não há Google Reviews coletado
+      nem pesquisa). Ou as estrelas passam a refletir a nota real com o número de avaliações ao
+      lado, ou saem. Ver `components/ui/ProvaSocial.tsx`
 - [ ] **CRO do responsável técnico** — o site mostra "CRO-SP a confirmar" em dois lugares
 - [ ] **"Ortodontista"** confirmada como especialidade registrada (hoje marcada com tracejado)
 - [ ] **Autorização de uso de imagem** dos pacientes (retratos, antes e depois, vídeos).
@@ -136,5 +144,10 @@ pendência — o risco é publicar sem resolvê-las, não deixá-las visíveis.
 - [ ] **Cache de `/_next/image`** persistente na hospedagem; **`public/`** presente no deploy
 - [ ] **Teste manual** de `prefers-reduced-motion` e `saveData` em aparelho real — o ambiente de
       desenvolvimento não conseguiu compositar frames para verificar isso ao vivo
+- [ ] **Arquivos órfãos em `public/`** (~548 KB que vão ao ar sem serem usados por nada):
+      `img/dr-vinicius.jpg.frame-video`, `img/logo-branco.claude-design-artefatos.png`,
+      `img/logo-branco.png.local-fallback`, `img/sorriso-arco.png.local-fallback` e os quatro
+      `videos/posters/*.jpg` (as versões `.webp` são as usadas). Tudo em `public/` fica acessível
+      por URL depois do deploy, incluindo o nome de artefato interno
 
 As perguntas ainda abertas com o cliente estão em `PERGUNTAS-CLIENTE.md`, na raiz.
