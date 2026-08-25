@@ -92,7 +92,6 @@ export default function ScrollFloat({
     const tween = gsap.fromTo(
       chars,
       {
-        willChange: 'opacity, transform',
         opacity: 0,
         yPercent: 120,
         scaleY: 2.3,
@@ -113,6 +112,22 @@ export default function ScrollFloat({
           start: scrollStart,
           end: scrollEnd,
           scrub: true,
+          // MODIFICAÇÃO ADICIONAL (travamento no hero). O original punha
+          // `willChange: 'opacity, transform'` nas variáveis iniciais do
+          // tween — ou seja, em cada letra, para sempre. Cada letra com
+          // `will-change` é uma camada composta permanente, e este site fatia
+          // vários títulos: MEDIDO, 86 das 177 camadas da página eram
+          // `span.sf-letra`, de seções a três telas de distância. O custo não
+          // é de pintura (juntas elas não chegam a 1 megapixel) — é a árvore
+          // de camadas, que o compositor serializa a cada quadro.
+          //
+          // Com `scrub`, a animação anda nos dois sentidos enquanto o título
+          // está na faixa, então o `will-change` tem razão de existir — mas só
+          // enquanto está. `onToggle` liga na entrada e devolve para `auto` na
+          // saída.
+          onToggle: (self) => {
+            gsap.set(chars, { willChange: self.isActive ? 'opacity, transform' : 'auto' });
+          },
         },
       }
     );

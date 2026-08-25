@@ -163,14 +163,33 @@ const DriftWall = ({
     velocitiesRef.current = columnItems.map(() => 0);
   }, [columnMeta, columnItems]);
 
+  const ultimoPlanoRef = useRef<string>('');
+
   const applyPlaneTransform = useCallback(
     (px: number, py: number) => {
       const plane = planeRef.current;
       if (!plane) return;
-      plane.style.transform =
+      // MODIFICAÇÃO Nº13 (travamento no hero). O original reescrevia este
+      // transform a CADA quadro. O plano é a raiz de um `preserve-3d` com
+      // ~92 azulejos: mudar a rotação dele obriga o compositor a rasterizar a
+      // subárvore inteira de novo, em perspectiva. Só que o valor quase
+      // sempre não muda — `parallax` é 0 em qualquer aparelho de toque
+      // (Hero.tsx passa `pontoFino ? 0.5 : 0`), e no desktop com o ponteiro
+      // parado a suavização converge. O amortecimento é exponencial, então
+      // ele nunca chega ao alvo em ponto flutuante: sem arredondar, a string
+      // muda para sempre em casas decimais invisíveis.
+      //
+      // Duas casas = 0,01deg, abaixo do que qualquer tela mostra. Comparar a
+      // string pronta (e não os números) faz o guard cobrir também `tilt`,
+      // `turn`, `roll` e `depth` mudando por prop, sem precisar invalidar
+      // nada à mão.
+      const t =
         `translate(-50%, -50%) scale(1.18) ` +
-        `rotateX(${tilt + py}deg) rotateY(${turn + px}deg) rotateZ(${roll}deg) ` +
+        `rotateX(${(tilt + py).toFixed(2)}deg) rotateY(${(turn + px).toFixed(2)}deg) rotateZ(${roll}deg) ` +
         `translateZ(${-depth}px)`;
+      if (t === ultimoPlanoRef.current) return;
+      ultimoPlanoRef.current = t;
+      plane.style.transform = t;
     },
     [tilt, turn, roll, depth]
   );
@@ -321,29 +340,52 @@ const DriftWall = ({
     [tileWidth, tileHeight, gap, radius, lift, dim, grayscale, overlayColor, fade, perspective, maskStyle, style]
   );
 
+  // MODIFICAÇÃO Nº14 (travamento no hero). O azulejo do original carrega a
+  // máquina inteira de interação: `translateZ(0)` para ter camada própria,
+  // `preserve-3d` para o levantar em Z, `cursor-pointer`, e transições de
+  // transform/opacity/box-shadow/filter para os estados de hover e foco.
+  //
+  // Em `decorativo` nada disso roda — o azulejo é `aria-hidden`, não recebe
+  // foco, não tem href e não reage a ponteiro. O que sobrava era só a conta:
+  // MEDIDO no hero em 1440×900, com a parede de 92 fotos, o `translateZ(0)`
+  // promovia cada azulejo a camada composta. Dava 350 camadas e 62
+  // megapixels de área de camada na página, e o `Commit` (empurrar a árvore
+  // de camadas para o compositor) custava 5141ms em 382 quadros — 13,5ms por
+  // quadro, sozinho mais que o orçamento inteiro de 60fps.
+  //
+  // O movimento não perde nada: quem anima é a COLUNA (uma camada, com
+  // `will-change-transform`), e os azulejos vão junto como conteúdo pintado
+  // dela. O filtro fica — ele é a aparência da parede, não custo de camada.
   const tileClass = cx(
-    'group/tile relative block flex-none cursor-pointer outline-none',
-    'w-full h-[calc(var(--dw-tile-h)+var(--dw-gap))] [transform-style:preserve-3d]'
+    'group/tile relative block flex-none outline-none w-full h-[calc(var(--dw-tile-h)+var(--dw-gap))]',
+    !decorativo && 'cursor-pointer [transform-style:preserve-3d]'
   );
   const innerClass = cx(
     'pointer-events-none absolute inset-[calc(var(--dw-gap)/2)] block overflow-hidden bg-[#0b0b12]',
-    'rounded-[var(--dw-radius)] opacity-[var(--dw-dim)] [transform:translateZ(0)]',
-    'transition-[transform,opacity,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
-    'group-[.is-active]/tile:opacity-100 group-[.is-active]/tile:[transform:translateZ(var(--dw-lift))]',
-    'group-[.is-active]/tile:shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7)]',
-    'group-focus-visible/tile:opacity-100 group-focus-visible/tile:[transform:translateZ(var(--dw-lift))]',
-    'group-focus-visible/tile:shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7),0_0_0_2px_rgba(255,255,255,0.9)]'
+    'rounded-[var(--dw-radius)] opacity-[var(--dw-dim)]',
+    !decorativo && cx(
+      '[transform:translateZ(0)]',
+      'transition-[transform,opacity,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
+      'group-[.is-active]/tile:opacity-100 group-[.is-active]/tile:[transform:translateZ(var(--dw-lift))]',
+      'group-[.is-active]/tile:shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7)]',
+      'group-focus-visible/tile:opacity-100 group-focus-visible/tile:[transform:translateZ(var(--dw-lift))]',
+      'group-focus-visible/tile:shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7),0_0_0_2px_rgba(255,255,255,0.9)]'
+    )
   );
   const imgClass = cx(
     'block h-full w-full select-none object-cover',
     '[filter:grayscale(var(--dw-gray))_saturate(0.92)]',
-    'transition-[filter] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
-    'group-[.is-active]/tile:[filter:grayscale(0)_saturate(1.05)] group-focus-visible/tile:[filter:grayscale(0)_saturate(1.05)]'
+    !decorativo && cx(
+      'transition-[filter] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
+      'group-[.is-active]/tile:[filter:grayscale(0)_saturate(1.05)] group-focus-visible/tile:[filter:grayscale(0)_saturate(1.05)]'
+    )
   );
   const overlayClass = cx(
     'pointer-events-none absolute inset-0 bg-[var(--dw-overlay)] opacity-[0.42]',
-    'transition-opacity duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
-    'group-[.is-active]/tile:opacity-0 group-focus-visible/tile:opacity-0'
+    !decorativo && cx(
+      'transition-opacity duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
+      'group-[.is-active]/tile:opacity-0 group-focus-visible/tile:opacity-0'
+    )
   );
 
   const renderTile = (item: DriftWallItem, id: string, colIndex: number) => {
@@ -428,11 +470,28 @@ const DriftWall = ({
           const copies = Array.from({ length: meta.copies });
           return (
             <div
-              className="relative w-[calc(var(--dw-tile-w)+var(--dw-gap))] [transform-style:preserve-3d]"
+              // MODIFICAÇÃO Nº15 (travamento no hero). `preserve-3d` na coluna
+              // e na trilha só serve para azulejo que tem Z próprio — que é o
+              // caso do modo interativo, onde o hover levanta o azulejo em
+              // `translateZ(var(--dw-lift))`. Em `decorativo` ninguém levanta
+              // nada, e o efeito colateral é caro: dentro de um contexto 3D o
+              // navegador promove CADA filho a camada composta.
+              //
+              // Achatando, os azulejos da coluna viram conteúdo pintado de UMA
+              // camada, que o plano transforma em 3D como um todo. A projeção
+              // é a mesma — todos os azulejos são coplanares, então achatar
+              // antes ou depois de projetar dá o mesmo pixel.
+              className={cx(
+                'relative w-[calc(var(--dw-tile-w)+var(--dw-gap))]',
+                !decorativo && '[transform-style:preserve-3d]'
+              )}
               key={`col-${c}`}
             >
               <div
-                className="flex flex-col [transform-style:preserve-3d] will-change-transform"
+                className={cx(
+                  'flex flex-col will-change-transform',
+                  !decorativo && '[transform-style:preserve-3d]'
+                )}
                 ref={el => {
                   trackRefs.current[c] = el;
                 }}
