@@ -82,9 +82,9 @@ const MEDIDAS: { celular: Medida; tela: Medida } = {
  * No celular, `larguraÚtil = 100vw − 32` (o padding da seção) e o denominador
  * é 380 + 28 + 24 = 432. Substituindo, com 96px de folga para a sombra, os
  * indicadores e o ar:
- *   altura = 380 · (100vw − 32) / 432 + 96 = 87,96vw + 67,85px
- * que é o `calc()` abaixo — confere com a medição: 398px numa tela de 375.
- * Acima de 768px a escala satura em 1 e a altura é fixa: 460 + 96 = 556.
+ *   altura = 380 · (100vw − 32) / 432 + 152 = 87,96vw + 123,85px
+ * que é o `calc()` abaixo. Acima de 768px a escala satura em 1 e a altura é
+ * fixa: 460 + 152 = 612.
  *
  * Por que não em JS, que era como estava: a versão anterior lia
  * `window.innerWidth` durante o render para calcular a escala. Isso produz um
@@ -94,7 +94,7 @@ const MEDIDAS: { celular: Medida; tela: Medida } = {
  * já sabe a largura da janela sem ninguém perguntar, e sem risco de os dois
  * lados discordarem.
  */
-const ALTURA_CARROSSEL = 'h-[calc(87.96vw+67.85px)] md:h-[556px]';
+const ALTURA_CARROSSEL = 'h-[calc(87.96vw+123.85px)] md:h-[612px]';
 
 function useMedidasCarrossel(telaLarga: boolean) {
   return telaLarga ? MEDIDAS.tela : MEDIDAS.celular;

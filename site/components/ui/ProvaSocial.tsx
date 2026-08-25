@@ -43,14 +43,14 @@ export function ProvaSocial({ tema = 'claro', className = '' }: Props) {
   const corTexto = tema === 'escuro' ? 'text-escuro-texto' : 'text-grafite';
 
   return (
-    <div className={`flex items-center gap-3 ${className}`.trim()}>
-      <AvatarCircles imagens={ROSTOS} corBorda={corBorda} tamanho={38} />
+    <div className={`flex items-center gap-3.5 ${className}`.trim()}>
+      <AvatarCircles imagens={ROSTOS} corBorda={corBorda} tamanho={46} />
 
       {/* Estrelas e frase dentro da MESMA marcação de pendência: as duas são
           afirmação sobre a clínica, e nenhuma das duas tem fonte hoje. */}
       <div className={`flex flex-col items-start gap-0.5 ${PENDENTE}`}>
         <Estrelas />
-        <span className={`font-corpo text-[13px] leading-snug ${corTexto}`}>{AFIRMACAO}</span>
+        <span className={`font-corpo text-[15px] leading-snug ${corTexto}`}>{AFIRMACAO}</span>
       </div>
     </div>
   );
@@ -64,7 +64,7 @@ function Estrelas() {
   return (
     <span className="flex gap-0.5 text-amarelo" aria-hidden="true">
       {[0, 1, 2, 3, 4].map((i) => (
-        <svg key={i} width="13" height="13" viewBox="0 0 20 20" fill="none">
+        <svg key={i} width="16" height="16" viewBox="0 0 20 20" fill="none">
           <path
             d="M10 1.5l2.47 5.27 5.53.72-4.06 3.98.99 5.53L10 14.4l-4.93 2.6.99-5.53L2 7.49l5.53-.72L10 1.5Z"
             fill="currentColor"

@@ -183,6 +183,24 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
       resize; trocar `startWidth`/`startHeight` em tempo de execução — que é como o hero muda o
       tamanho da moldura entre celular e desktop — não repinta nada, e a moldura fica com a
       porcentagem da faixa anterior até o próximo evento de scroll.
+  11. **`fadeTitle` e `overlayClassName`** (Task 22). O original apaga o título conforme a moldura
+      abre e centraliza os `children` no palco — os dois ocupam o mesmo lugar de propósito, um
+      substituindo o outro. Este hero precisa dos dois JUNTOS no fim da abertura: a headline em
+      cima e o CTA embaixo dela. Atenção a uma armadilha que já custou uma rodada: `padding` em
+      porcentagem se resolve contra a LARGURA do contêiner, nunca contra a altura.
+  12. **Teto em pixels para a moldura fechada** (`maxStartWidthPx`/`maxStartHeightPx`, Task 24). O
+      original só aceita porcentagem da janela, e porcentagem cresce junto com a tela: num monitor
+      largo a moldura afastava-se do texto que ela deveria emoldurar (achado do dono do projeto —
+      "tem como deixar o quadrado menor, mais próximo do texto?"). Medido em 1600×900: a moldura
+      passou de 704px de largura para 614, com 40px de folga de cada lado do bloco de título. A
+      conversão de pixels para porcentagem acontece DENTRO do componente, onde o palco já é medido
+      — em quem chama, ler a janela durante o render produziria um número no servidor e outro no
+      cliente.
+  13. **Fallback de largura do palco corrigido** (Task 24). Quando `clientWidth` é zero, o original
+      cai para a ALTURA do palco — um número sem relação nenhuma com largura. Não incomodava
+      ninguém até a moldura ganhar teto em pixels, que converte usando essa medida; aí virou 10% de
+      recuo onde deviam ser 7. Com `useWindowScroll`, o palco ocupa a janela, e a janela é o
+      fallback certo.
 
 **Restrições deste componente, descobertas medindo — quem for mexer no hero precisa saber:**
 

@@ -41,6 +41,20 @@
  *    contra a LARGURA do contêiner, nunca contra a altura — `pt-[57%]` numa
  *    tela de 1280x720 empurra 730px, não 410. Para posicionar na vertical,
  *    `top` em porcentagem.
+ * 12. **Teto em pixels para a moldura fechada** (`maxStartWidthPx` /
+ *    `maxStartHeightPx`). O original só aceita porcentagem da janela, e
+ *    porcentagem cresce junto com a tela: num monitor largo a moldura
+ *    afastava-se do texto que ela deveria emoldurar (achado do dono do
+ *    projeto — "tem como deixar o quadrado menor, mais próximo do texto?").
+ *    Com um teto em pixels ela para de crescer quando já cabe o conteúdo. A
+ *    conversão acontece DENTRO do componente, onde o palco já é medido — em
+ *    quem chama, ler a janela durante o render produziria um número no
+ *    servidor e outro no cliente.
+ * 13. **Fallback de largura do palco corrigido.** Quando `clientWidth` é
+ *    zero, o original cai para a ALTURA do palco — um número sem relação
+ *    nenhuma com largura. Vira mentira em qualquer ambiente sem layout, e
+ *    passou a importar de verdade quando a moldura ganhou teto em pixels
+ *    (modificação 12), que converte pixels em porcentagem usando essa medida.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
@@ -65,7 +79,9 @@ type ConfigKey =
   | 'smoothing'
   | 'overlayScrim'
   | 'useWindowScroll'
-  | 'enabled';
+  | 'enabled'
+  | 'maxStartWidthPx'
+  | 'maxStartHeightPx';
 
 export interface ScrollExpandProps {
   src?: string;
@@ -97,6 +113,14 @@ export interface ScrollExpandProps {
   /** Posicionamento do bloco de `children` dentro do palco. */
   overlayClassName?: string;
   /**
+   * Teto em PIXELS para a moldura fechada (ver modificação 12). `startWidth` e
+   * `startHeight` são porcentagens da janela: numa tela larga elas crescem
+   * junto e a moldura descola do conteúdo. Com um teto em pixels, ela para de
+   * crescer quando já cabe o que tem dentro.
+   */
+  maxStartWidthPx?: number;
+  maxStartHeightPx?: number;
+  /**
    * Conteúdo que se abre no lugar da imagem. O original só sabe expandir uma
    * mídia (`src`); aqui o hero inteiro — card creme, headline, foto, colunas —
    * entra por este slot e é ELE que cresce. Quando presente, `src` é ignorado.
@@ -127,6 +151,8 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   reducedMotion = false,
   fadeTitle = true,
   overlayClassName = '',
+  maxStartWidthPx = 0,
+  maxStartHeightPx = 0,
   midia,
   children,
   className = '',
@@ -149,6 +175,10 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   // Mesmo motivo de `propsRef`: `applyProgress` é um callback estável e não
   // pode fechar sobre o valor da prop.
   const fadeTitleRef = useRef(fadeTitle);
+  // Tamanho do palco medido, para o teto em pixels da moldura virar
+  // porcentagem (modificação 12). Escrito em `measure()`, lido em
+  // `applyProgress` — que é um callback estável e não pode fechar sobre estado.
+  const palcoRef = useRef({ w: 0, h: 0 });
   // Escrita de ref fora do render (regra `react-hooks/refs` do eslint deste
   // Next) — mesma correção que `DepthCarousel` e `OptionWheel` levaram.
   useLayoutEffect(() => {
@@ -164,7 +194,9 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
       smoothing,
       overlayScrim,
       useWindowScroll,
-      enabled
+      enabled,
+      maxStartWidthPx,
+      maxStartHeightPx
     };
   });
 
@@ -176,8 +208,20 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
 
     const e = smoothstep(0, 1, p);
 
-    const w = c.startWidth + (100 - c.startWidth) * e;
-    const h = c.startHeight + (100 - c.startHeight) * e;
+    // O teto em pixels vira porcentagem do palco medido. Sem palco medido
+    // ainda (primeiro quadro), vale a porcentagem crua.
+    const palco = palcoRef.current;
+    const inicioW =
+      c.maxStartWidthPx > 0 && palco.w > 0
+        ? Math.min(c.startWidth, (c.maxStartWidthPx / palco.w) * 100)
+        : c.startWidth;
+    const inicioH =
+      c.maxStartHeightPx > 0 && palco.h > 0
+        ? Math.min(c.startHeight, (c.maxStartHeightPx / palco.h) * 100)
+        : c.startHeight;
+
+    const w = inicioW + (100 - inicioW) * e;
+    const h = inicioH + (100 - inicioH) * e;
     const ix = Math.max(0, (100 - w) / 2);
     const iy = Math.max(0, (100 - h) / 2);
     const r = c.startRadius + (c.endRadius - c.startRadius) * e;
@@ -234,7 +278,13 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
       stage.style.height = `${stageH}px`;
       track.style.height = `${stageH * (1 + Math.max(0, c.scrollDistance) + Math.max(0, c.holdDistance))}px`;
 
-      const w = root.clientWidth || stageH;
+      // Largura do palco. O original cai para a ALTURA (`|| stageH`) quando
+      // `clientWidth` é zero — o que é um número sem relação nenhuma com
+      // largura, e vira mentira em qualquer ambiente sem layout (jsdom, por
+      // exemplo, onde `clientWidth` é sempre 0). Com `useWindowScroll` o palco
+      // ocupa a janela, então a janela é o fallback certo (modificação 13).
+      const w = root.clientWidth || (useWindowScroll ? window.innerWidth : stageH);
+      palcoRef.current = { w, h: stageH };
       stage.style.setProperty('--se-title-size', `${clamp(w * 0.075, 20, 84)}px`);
     };
 
@@ -305,7 +355,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
     // o tamanho da moldura por faixa de tela, o efeito precisa medir e
     // repintar. Sem isso o `clip-path` só é reescrito no próximo scroll ou
     // resize — e a moldura fica com a porcentagem da faixa anterior.
-  }, [applyProgress, useWindowScroll, reducedMotion, startWidth, startHeight, startRadius, endRadius, mediaZoom, scrollDistance, holdDistance]);
+  }, [applyProgress, useWindowScroll, reducedMotion, startWidth, startHeight, startRadius, endRadius, mediaZoom, scrollDistance, holdDistance, maxStartWidthPx, maxStartHeightPx]);
 
   const media = midia ? (
     // `mediaRef` é o que recebe o `scale` do percurso — então o wrapper do

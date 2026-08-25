@@ -166,7 +166,10 @@ function Gatilho({ tema, brilho }: { tema: 'amarelo' | 'preto'; brilho: boolean 
       ? 'bg-amarelo text-preto pointer-fine:hover:bg-dourado'
       : 'bg-preto text-branco pointer-fine:hover:bg-escuro-linha';
 
-  const classes = `pressable inline-flex min-h-11 items-center gap-2 rounded-full px-7 font-rotulo text-[13px] font-medium tracking-[.08em] uppercase ${cores}`;
+  // Task 24: o botão cresceu a pedido do dono do projeto. 56px de altura
+  // contra os 44 de antes — continua acima do mínimo de toque do WCAG por
+  // folga, e passa a ter o peso de CTA principal que ele é.
+  const classes = `pressable inline-flex min-h-14 items-center gap-2.5 rounded-full px-9 font-rotulo text-[15px] font-medium tracking-[.08em] uppercase ${cores}`;
 
   const conteudo = (
     <>
@@ -223,8 +226,8 @@ function Gatilho({ tema, brilho }: { tema: 'amarelo' | 'preto'; brilho: boolean 
 function Seta({ aberto, animar }: { aberto: boolean; animar: boolean }) {
   return (
     <svg
-      width="12"
-      height="12"
+      width="14"
+      height="14"
       viewBox="0 0 12 12"
       fill="none"
       aria-hidden="true"

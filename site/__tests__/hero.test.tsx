@@ -53,6 +53,12 @@ describe('Hero', () => {
   // media 300. O texto aparecia INTEIRO POR FORA da moldura. A correção é uma
   // moldura por faixa de tela; o que se lê aqui é o `clip-path` que o
   // ScrollExpand escreve de verdade, não a prop que o Hero passa.
+  //
+  // Na Task 24 a moldura ganhou um TETO EM PIXELS por cima da porcentagem
+  // (`maxStartWidthPx`), para ela parar de crescer com a tela quando já cabe o
+  // conteúdo. Nas duas larguras abaixo o teto não morde — 608px é mais que
+  // 86% de 375 e mais que 44% de 1280 —, então o que este teste continua
+  // medindo é a escolha de FAIXA, que é o que ele sempre mediu.
   it.each([
     { largura: 375, esperado: 7, faixa: 'celular' },   // (100 - 86) / 2
     { largura: 1280, esperado: 28, faixa: 'desktop' }, // (100 - 44) / 2

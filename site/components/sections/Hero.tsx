@@ -85,6 +85,16 @@ export function Hero() {
         overlayClassName="block"
         startWidth={startWidth}
         startHeight={startHeight}
+        // Teto em pixels da moldura fechada (Task 24, pedido do dono do
+        // projeto: "deixar o quadrado menor, mais próximo do texto"). Sem ele
+        // a moldura é só uma porcentagem da janela e cresce junto com a tela,
+        // enquanto o texto dentro dela está limitado a 520px — num monitor
+        // largo sobravam mais de 150px de vazio de cada lado. Os números saem
+        // do conteúdo: 520 de bloco de título + 44 de folga em cada lado; e
+        // 460 de altura de conteúdo (título, arco, CTA e prova social) + 50 de
+        // folga em cima e embaixo.
+        maxStartWidthPx={608}
+        maxStartHeightPx={560}
         startRadius={24}
         endRadius={0}
         // `mediaZoom={1}`: sem escala na mídia. Não é preferência — o canvas

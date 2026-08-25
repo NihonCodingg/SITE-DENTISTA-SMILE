@@ -48,10 +48,17 @@ const SEPARADOR = ' ✦ ';
  * abaixo são o resultado disso, e o que eles produzem NA TELA é o que
  * importa: texto de ~13px (a mesma régua dos outros rótulos do site) e fita
  * de ~50px de altura no celular; ~23px e ~67px no desktop.
+ *
+ * A ONDULAÇÃO é a exceção: ela NÃO é dividida pela escala (Task 24, achado do
+ * dono do projeto — "não está bom dessa forma"). Compensar a escala aqui
+ * também dava uma onda de 22px de amplitude numa fita de 50px, e o texto
+ * passava a subir e descer em ângulos íngremes, difícil de ler numa linha
+ * curta. A curviness do celular é praticamente a mesma do desktop: a fita
+ * ondula de leve e as letras continuam quase na horizontal.
  */
 const MEDIDAS_FITA = {
   // 351px de contêiner ÷ 1200 da caixa = escala 0,29.
-  celular: { fontSize: 44, ribbonWidth: 171, curviness: 75, letterSpacing: 7, altura: 'h-[112px]' },
+  celular: { fontSize: 42, ribbonWidth: 171, curviness: 34, letterSpacing: 13, altura: 'h-[92px]' },
   // Acima de 768px a caixa praticamente não é reduzida (escala ~1).
   tela: { fontSize: 22, ribbonWidth: 64, curviness: 40, letterSpacing: 3, altura: 'h-[190px]' },
 };
