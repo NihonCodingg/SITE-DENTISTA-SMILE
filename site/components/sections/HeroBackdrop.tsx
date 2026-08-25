@@ -44,21 +44,37 @@ const Silk = dynamic(() => import('@/components/reactbits/Silk'), { ssr: false, 
  * passam no teste de capacidade, e aí o telefone baixava e executava um motor
  * 3D inteiro para pintar uma textura que ninguém vê. A régua de largura é o que
  * separa "o aparelho aguenta" de "vale a pena".
+ *
+ * CORREÇÃO DE 25/08/2026, achada por uma captura do dono do projeto ("tirou o
+ * fundo amarelo"): o portão era `podePesado`, que inclui `podeAnimar` — então
+ * quem liga "reduzir movimento" no sistema perdia o dourado INTEIRO e ficava
+ * com a moldura em creme chapado. Isso quebra a regra da base ("reduzir não é
+ * zerar"): o dourado é a TEXTURA da marca, não uma animação. Agora o portão é
+ * `aguentaPeso` — só aparelho e rede — e a preferência de movimento apenas
+ * CONGELA a textura (ver `reducedMotion` em Silk.tsx). Quem pediu menos
+ * movimento recebe menos movimento, não menos marca.
  */
 export function HeroBackdrop() {
-  const { podePesado, montado } = useCapability();
+  const { aguentaPeso, podeAnimar, montado } = useCapability();
   const telaLarga = useTelaLarga();
 
   return (
     // O container existe sempre, com aria-hidden, para que o layout não mude
     // quando o canvas entra (nada de layout shift no LCP do hero).
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[32px]">
-      {montado && podePesado && telaLarga && (
+      {montado && aguentaPeso && telaLarga && (
         // opacity:.22 mantém o dourado como textura, não protagonista — a
         // headline preta continua com contraste sobre o creme (verificado
         // visualmente, ver task-8-report.md).
         <div className="absolute inset-0 opacity-[.22]" data-diag="silk">
-          <Silk speed={2.4} scale={1.1} color="#F0B40C" noiseIntensity={1.1} rotation={0.12} />
+          <Silk
+            speed={2.4}
+            scale={1.1}
+            color="#F0B40C"
+            noiseIntensity={1.1}
+            rotation={0.12}
+            reducedMotion={!podeAnimar}
+          />
         </div>
       )}
     </div>

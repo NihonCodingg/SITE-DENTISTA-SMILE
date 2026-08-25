@@ -3,6 +3,15 @@ import { useEffect, useState } from 'react';
 
 export type Capacidade = {
   podeAnimar: boolean;
+  /**
+   * O APARELHO e a REDE aguentam trabalho pesado. Não leva a preferência de
+   * movimento em conta de propósito — são dois eixos diferentes, e confundir
+   * os dois foi um bug real: quem liga "reduzir movimento" perdia o fundo
+   * dourado da marca no hero (uma TEXTURA, não uma animação), porque ele
+   * estava atrás de `podePesado`. Use este para conteúdo pesado que pode ser
+   * exibido PARADO; use `podePesado` para o que só existe se animar.
+   */
+  aguentaPeso: boolean;
   podePesado: boolean;
   pontoFino: boolean;
   montado: boolean;
@@ -11,6 +20,7 @@ export type Capacidade = {
 export function useCapability(): Capacidade {
   const [cap, setCap] = useState<Capacidade>({
     podeAnimar: false,
+    aguentaPeso: false,
     podePesado: false,
     pontoFino: false,
     montado: false,
@@ -30,9 +40,11 @@ export function useCapability(): Capacidade {
       const economia = nav.connection?.saveData === true;
       const memoria = nav.deviceMemory ?? 8;
       const nucleos = nav.hardwareConcurrency ?? 8;
+      const aguentaPeso = !economia && memoria >= 4 && nucleos >= 4;
       setCap({
         podeAnimar,
-        podePesado: podeAnimar && !economia && memoria >= 4 && nucleos >= 4,
+        aguentaPeso,
+        podePesado: podeAnimar && aguentaPeso,
         pontoFino: mqPonteiro.matches,
         montado: true,
       });

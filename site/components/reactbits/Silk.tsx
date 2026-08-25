@@ -158,6 +158,14 @@ SilkPlane.displayName = 'SilkPlane';
 
 export interface SilkProps {
   speed?: number;
+  /**
+   * Sob movimento reduzido a textura CONTINUA, parada. O `frameloop` do R3F
+   * vira `"demand"`: ele pinta uma vez, na montagem, e nunca mais — mesma
+   * imagem, zero quadro por segundo. Congelar o laço, e não zerar `speed`,
+   * porque `uSpeed` é uniforme do shader e mexe na AMPLITUDE do desenho: com
+   * ele em zero a textura mudaria de aparência em vez de parar.
+   */
+  reducedMotion?: boolean;
   scale?: number;
   color?: string;
   noiseIntensity?: number;
@@ -196,7 +204,14 @@ function criarUniformsStore(speed: number, scale: number, noiseIntensity: number
   };
 }
 
-export default function Silk({ speed = 5, scale = 1, color = '#7B7481', noiseIntensity = 1.5, rotation = 0 }: SilkProps) {
+export default function Silk({
+  speed = 5,
+  scale = 1,
+  color = '#7B7481',
+  noiseIntensity = 1.5,
+  rotation = 0,
+  reducedMotion = false,
+}: SilkProps) {
   const meshRef = useRef<Mesh>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   // Começa pausado: só liga quando o IntersectionObserver confirmar que o
@@ -245,7 +260,7 @@ export default function Silk({ speed = 5, scale = 1, color = '#7B7481', noiseInt
           uma tela hi-DPI pagava 4× os pixels — para uma textura que é suave
           por natureza e aparece a 22% de opacidade atrás do scrim. Em dpr 1
           o resultado upscalado é visualmente o mesmo e o quadro custa 1/4. */}
-      <Canvas dpr={1} frameloop={ativo ? 'always' : 'never'}>
+      <Canvas dpr={1} frameloop={reducedMotion ? 'demand' : ativo ? 'always' : 'never'}>
         <SilkPlane ref={meshRef} uniforms={uniforms} />
       </Canvas>
     </div>

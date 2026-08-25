@@ -11,7 +11,9 @@ import { HeroBackdrop } from '@/components/sections/HeroBackdrop';
 // final da branch). Com o stub, o que a árvore monta é síncrono de observar,
 // e o teste positivo abaixo é o controle que dá sentido aos negativos.
 vi.mock('@/components/reactbits/Silk', () => ({
-  default: () => <div data-testid="silk-stub" />,
+  default: ({ reducedMotion }: { reducedMotion?: boolean }) => (
+    <div data-testid="silk-stub" data-reduzido={reducedMotion ? 'sim' : 'nao'} />
+  ),
 }));
 
 function cap(reduz: boolean, memoria: number) {
@@ -33,12 +35,29 @@ describe('HeroBackdrop', () => {
     await waitFor(() => expect(queryByTestId('silk-stub')).not.toBeNull());
   });
 
-  it('nao monta o fundo WebGL sob prefers-reduced-motion', async () => {
+  // CONTRATO CORRIGIDO EM 25/08/2026. Este teste exigia que o fundo SUMISSE
+  // sob movimento reduzido — ou seja, protegia o bug: quem liga "reduzir
+  // movimento" no sistema ficava com a moldura em creme chapado, sem o
+  // dourado da marca (achado numa captura do dono do projeto). O dourado é
+  // TEXTURA, não animação, e a regra desta base é "reduzir não é zerar".
+  // O que a preferência de movimento deve fazer é CONGELAR a textura, e é
+  // isso que o teste passa a exigir.
+  it('sob prefers-reduced-motion o fundo CONTINUA, congelado', async () => {
     cap(true, 8);
     const { queryByTestId } = render(<HeroBackdrop />);
-    await waitFor(() => expect(queryByTestId('silk-stub')).toBeNull());
+    await waitFor(() => expect(queryByTestId('silk-stub')).not.toBeNull());
+    expect(queryByTestId('silk-stub')).toHaveAttribute('data-reduzido', 'sim');
   });
 
+  it('sem preferencia de movimento, o fundo anima', async () => {
+    cap(false, 8);
+    const { queryByTestId } = render(<HeroBackdrop />);
+    await waitFor(() => expect(queryByTestId('silk-stub')).not.toBeNull());
+    expect(queryByTestId('silk-stub')).toHaveAttribute('data-reduzido', 'nao');
+  });
+
+  // Este continua barrando de verdade: pouca memória é limite de APARELHO,
+  // não preferência de quem usa — e aí não há textura congelada que salve.
   it('nao monta o fundo WebGL em aparelho de pouca memoria', async () => {
     cap(false, 2);
     const { queryByTestId } = render(<HeroBackdrop />);
