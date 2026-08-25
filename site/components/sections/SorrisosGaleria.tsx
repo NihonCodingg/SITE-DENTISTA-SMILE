@@ -81,7 +81,23 @@ const ITENS_WEBGL = SORRISOS.map((s) => ({ image: urlImagemOtimizada(s.img, 640)
  * em espaço próprio; então é o scroller que se ajusta, centralizando os
  * cartões na caixa mais alta em vez de depender do próprio conteúdo.
  */
-const ALTURA_GALERIA = 'h-[min(70vh,640px)]';
+/**
+ * Task 22 (achado do dono do projeto: "está meio grande demais no celular"):
+ * era `min(70vh, 640px)`. O `CircularGallery` desenha cada retrato com 60% da
+ * altura do canvas (`plane.scale.y = 900 × altura/1500`, medido) — numa tela
+ * de 812px isso dava um canvas de 568 e um retrato de 341px de altura, quase
+ * metade da tela, para uma seção que é ilustrativa e não o assunto principal.
+ *
+ * `52vh` no celular põe o retrato em ~253px; a partir de 768px continua a
+ * medida antiga, onde a galeria tem largura para mostrar vários de uma vez e o
+ * tamanho maior faz sentido.
+ *
+ * A altura é a MESMA nos dois ramos (WebGL e scroller de fallback) e é por
+ * isso que ela mora numa constante só: na Task 13 a troca de um pelo outro na
+ * hidratação mudava a altura da seção (354 contra 568, medido em 375×812) e
+ * empurrava tudo abaixo dela — 0,44 de CLS num único deslocamento.
+ */
+const ALTURA_GALERIA = 'h-[min(52vh,420px)] md:h-[min(70vh,640px)]';
 
 export function SorrisosGaleria() {
   const { podePesado, montado } = useCapability();

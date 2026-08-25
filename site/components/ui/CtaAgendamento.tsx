@@ -30,12 +30,20 @@ type Props = {
   tema?: 'amarelo' | 'preto';
   /** Liga o `Magnet` no botão — só o hero usa. */
   magnetico?: boolean;
+  /**
+   * Cartão sem a foto e sem a linha do Instagram. É o que o hero usa: lá o
+   * cartão abre DENTRO do palco fixo, com a headline em cima, e o cartão
+   * inteiro (385px medidos) não cabe na tela de um celular junto com ela. O
+   * compacto mede ~230px. Em Tratamentos, que é fluxo normal de página e não
+   * tem teto, vai o cartão inteiro.
+   */
+  compacto?: boolean;
   className?: string;
 };
 
 const ROTULO = 'Agendar minha avaliação';
 
-export function CtaAgendamento({ tema = 'amarelo', magnetico = false, className = '' }: Props) {
+export function CtaAgendamento({ tema = 'amarelo', magnetico = false, compacto = false, className = '' }: Props) {
   const { podeAnimar, pontoFino } = useCapability();
   const [aberto, setAberto] = useState(false);
   const idConteudo = useId();
@@ -80,15 +88,17 @@ export function CtaAgendamento({ tema = 'amarelo', magnetico = false, className 
               passar da largura desse contêiner e ser cortada em silêncio. */}
           <div className="w-full max-w-[440px] rounded-[24px] border border-borda-forte bg-branco p-5 text-left shadow-[0_24px_60px_rgba(17,17,17,0.16)]">
             <div className="flex items-start gap-4">
-              <div className="relative h-[92px] w-[74px] shrink-0 overflow-hidden rounded-[16px] bg-borda">
-                <Image
-                  src="/img/hero-foto.jpg"
-                  alt="Dr. Vinicius Aracena sorrindo sob o letreiro da Smile Ipiranga"
-                  fill
-                  sizes="74px"
-                  className="object-cover"
-                />
-              </div>
+              {!compacto && (
+                <div className="relative h-[92px] w-[74px] shrink-0 overflow-hidden rounded-[16px] bg-borda">
+                  <Image
+                    src="/img/hero-foto.jpg"
+                    alt="Dr. Vinicius Aracena sorrindo sob o letreiro da Smile Ipiranga"
+                    fill
+                    sizes="74px"
+                    className="object-cover"
+                  />
+                </div>
+              )}
 
               <div className="flex flex-col gap-2">
                 <p className="font-rotulo text-[12px] tracking-[.12em] text-preto uppercase">
@@ -104,14 +114,16 @@ export function CtaAgendamento({ tema = 'amarelo', magnetico = false, className 
               <p>
                 {ENDERECO.rua}, {ENDERECO.numero} — {ENDERECO.bairro}, {ENDERECO.cidade}/{ENDERECO.uf}
               </p>
-              <a
-                href={INSTAGRAM}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pressable inline-flex min-h-11 items-center underline underline-offset-4 pointer-fine:hover:text-preto"
-              >
-                @smileipiranga
-              </a>
+              {!compacto && (
+                <a
+                  href={INSTAGRAM}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pressable inline-flex min-h-11 items-center underline underline-offset-4 pointer-fine:hover:text-preto"
+                >
+                  @smileipiranga
+                </a>
+              )}
             </div>
 
             {/* O destino final: daqui a pessoa vai para o WhatsApp. Amarelo com
@@ -127,9 +139,11 @@ export function CtaAgendamento({ tema = 'amarelo', magnetico = false, className 
               Falar no WhatsApp
             </a>
 
-            <p className="mt-3 text-center font-rotulo text-[11px] tracking-[.12em] text-grafite uppercase">
-              Abre a conversa no WhatsApp
-            </p>
+            {!compacto && (
+              <p className="mt-3 text-center font-rotulo text-[11px] tracking-[.12em] text-grafite uppercase">
+                Abre a conversa no WhatsApp
+              </p>
+            )}
           </div>
         </div>
       </ExpandableContent>

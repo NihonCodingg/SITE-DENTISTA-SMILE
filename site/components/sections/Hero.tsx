@@ -8,6 +8,7 @@ import { HeroBackdrop } from './HeroBackdrop';
 import DriftWall from '@/components/reactbits/DriftWall';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
 import { CtaAgendamento } from '@/components/ui/CtaAgendamento';
+import { ProvaSocial } from '@/components/ui/ProvaSocial';
 import { useEffect, useState } from 'react';
 import { useCapability } from '@/lib/useCapability';
 
@@ -83,6 +84,14 @@ export function Hero() {
       <ScrollExpand
         useWindowScroll
         reducedMotion={!podeAnimar}
+        // A headline NÃO some quando a moldura abre (pedido do dono do
+        // projeto): ela tem que continuar em cena, em cima do CTA, no estado
+        // aberto. Por padrão o componente troca uma pela outra.
+        fadeTitle={false}
+        // E o overlay deixa de centralizar: quem posiciona é o próprio bloco
+        // do CTA, com `top` em porcentagem (ver a nota do componente sobre
+        // padding em porcentagem, que se resolve pela largura).
+        overlayClassName="block"
         startWidth={startWidth}
         startHeight={startHeight}
         startRadius={24}
@@ -152,7 +161,7 @@ export function Hero() {
           // (86% no celular, 44% em tela larga), menos uma folga interna.
           // Preso em 380px, como estava, num monitor de 1280 o texto vinha em
           // quatro linhas espremidas dentro de uma moldura de 563px de largura.
-          <div className="absolute inset-x-0 top-[30%] mx-auto flex w-[min(86vw_-_28px,380px)] flex-col items-center gap-3 md:top-[28%] md:w-[min(44vw_-_40px,520px)] md:gap-4">
+          <div className="absolute inset-x-0 top-[28%] mx-auto flex w-[min(86vw_-_28px,380px)] flex-col items-center gap-3 md:top-[22%] md:w-[min(44vw_-_40px,520px)] md:gap-4">
           <SectionHeading
             as="h1"
             align="center"
@@ -186,7 +195,12 @@ export function Hero() {
             quem atende, o que a clínica faz e onde fica, e é de lá que sai o
             link (pedido do dono do projeto). O `Magnet` continua, agora por
             dentro do CtaAgendamento — envolvendo só o botão, não o cartão. */}
-        <CtaAgendamento tema="amarelo" magnetico />
+        {/* As porcentagens saem da medição do bloco de cima: no celular o
+            título termina em ~43% da tela, no desktop em ~56%. */}
+        <div className="absolute inset-x-0 top-[47%] mx-auto flex w-[min(86vw_-_28px,420px)] flex-col items-center gap-4 md:top-[58%] md:w-[min(44vw_-_40px,520px)]">
+          <CtaAgendamento tema="amarelo" magnetico compacto />
+          <ProvaSocial />
+        </div>
       </ScrollExpand>
 
       {/* As três colunas do design aprovado, logo abaixo da moldura:

@@ -30,6 +30,17 @@
  *    execução (que é como o hero muda a moldura entre celular e desktop) não
  *    repinta nada — a moldura fica com a porcentagem antiga até o próximo
  *    evento de scroll.
+ * 11. **`fadeTitle` e `overlayClassName`.** O original apaga o título
+ *    conforme a moldura abre e centraliza os `children` no palco — os dois
+ *    ocupam o mesmo lugar de propósito, um substituindo o outro. Este hero
+ *    precisa dos dois JUNTOS no fim da abertura: a headline em cima e o CTA
+ *    embaixo dela. `fadeTitle={false}` mantém o título; `overlayClassName`
+ *    SUBSTITUI as classes de layout do overlay (não soma a elas), então quem
+ *    chama pode trocar o centramento por outra coisa. Atenção a uma
+ *    armadilha que já custou uma rodada: `padding` em porcentagem se resolve
+ *    contra a LARGURA do contêiner, nunca contra a altura — `pt-[57%]` numa
+ *    tela de 1280x720 empurra 730px, não 410. Para posicionar na vertical,
+ *    `top` em porcentagem.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
@@ -78,6 +89,14 @@ export interface ScrollExpandProps {
   /** Vem de `useCapability().podeAnimar` — o componente não consulta matchMedia. */
   reducedMotion?: boolean;
   /**
+   * O original apaga o título conforme a moldura abre. Com `false` ele fica —
+   * é o que o hero deste site precisa, porque a headline tem que continuar
+   * em cena por cima do CTA depois que a abertura termina (ver modificação 11).
+   */
+  fadeTitle?: boolean;
+  /** Posicionamento do bloco de `children` dentro do palco. */
+  overlayClassName?: string;
+  /**
    * Conteúdo que se abre no lugar da imagem. O original só sabe expandir uma
    * mídia (`src`); aqui o hero inteiro — card creme, headline, foto, colunas —
    * entra por este slot e é ELE que cresce. Quando presente, `src` é ignorado.
@@ -106,6 +125,8 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   useWindowScroll = false,
   enabled = true,
   reducedMotion = false,
+  fadeTitle = true,
+  overlayClassName = '',
   midia,
   children,
   className = '',
@@ -125,9 +146,13 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   const propsRef = useRef<Required<Pick<ScrollExpandProps, ConfigKey>>>(
     {} as Required<Pick<ScrollExpandProps, ConfigKey>>
   );
+  // Mesmo motivo de `propsRef`: `applyProgress` é um callback estável e não
+  // pode fechar sobre o valor da prop.
+  const fadeTitleRef = useRef(fadeTitle);
   // Escrita de ref fora do render (regra `react-hooks/refs` do eslint deste
   // Next) — mesma correção que `DepthCarousel` e `OptionWheel` levaram.
   useLayoutEffect(() => {
+    fadeTitleRef.current = fadeTitle;
     propsRef.current = {
       startWidth,
       startHeight,
@@ -162,7 +187,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
 
     if (scrimRef.current) scrimRef.current.style.opacity = `${c.overlayScrim * e}`;
 
-    if (titleRef.current) {
+    if (titleRef.current && fadeTitleRef.current) {
       const out = smoothstep(0.4, 0.88, p);
       titleRef.current.style.opacity = `${1 - out}`;
       titleRef.current.style.transform = `translate3d(0, ${-28 * out}px, 0) scale(${1 + 0.06 * out})`;
@@ -339,7 +364,9 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
             {children ? (
               <div
                 ref={overlayRef}
-                className="absolute inset-0 flex flex-col items-center justify-center text-center p-[6%] opacity-0 [will-change:opacity,transform]"
+                className={`absolute inset-0 text-center p-[6%] opacity-0 [will-change:opacity,transform] ${
+                  overlayClassName || 'flex flex-col items-center justify-center'
+                }`}
               >
                 {children}
               </div>

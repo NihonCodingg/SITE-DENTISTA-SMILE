@@ -43,7 +43,7 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
   return (
     <div className="grid items-center gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-12">
       <div className="flex flex-col gap-3">
-        <p className="font-rotulo text-[13px] tracking-[.14em] text-grafite uppercase">
+        <p className="font-rotulo text-[13px] tracking-[.14em] text-escuro-texto uppercase">
           Escolha um tratamento
         </p>
         {/* A instrução muda com o aparelho porque o que funciona muda com o
@@ -51,7 +51,7 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
             prop `draggable` abaixo) e a escolha é por toque na opção. Dizer
             "arraste" para quem não pode arrastar é pior do que não dizer
             nada. */}
-        <p className="font-rotulo text-[12px] tracking-[.12em] text-grafite/80 uppercase">
+        <p className="font-rotulo text-[12px] tracking-[.12em] text-escuro-fraco uppercase">
           {pontoFino ? 'Arraste para ver mais opções' : 'Toque no tratamento para ver'}
         </p>
 
@@ -76,8 +76,10 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
             // a página rola, e a escolha continua inteira: toque na opção,
             // seta do teclado, ou o `aria-activedescendant` do listbox.
             draggable={pontoFino}
-            textColor="var(--color-grafite)"
-            activeColor="var(--color-preto)"
+            // Fundo preto (Task 22): as opções não escolhidas em cinza claro
+            // e a escolhida em branco. Em preto sobre preto não se lê nada.
+            textColor="var(--color-escuro-fraco)"
+            activeColor="var(--color-branco)"
             // Brilho amarelo no item selecionado (pedido do dono do
             // projeto; reforçado a pedido — "precisa ser mais amarelo"):
             // quatro camadas de text-shadow, as internas densas no amarelo
@@ -138,8 +140,8 @@ export function TratamentosSeletor({ itens }: { itens: readonly ItemTratamento[]
             tratamento novo, em vez de a região trocar em silêncio. */}
         <div aria-live="polite" className="flex flex-col gap-3">
           <p className="font-rotulo text-[13px] tracking-[.14em] text-dourado uppercase">{atual.n}</p>
-          <h3 className="font-titulo text-[clamp(22px,3vw,30px)] leading-[1.05] text-preto">{atual.nome}</h3>
-          <p className="max-w-[52ch] font-corpo text-[16px] leading-relaxed text-grafite">{atual.desc}</p>
+          <h3 className="font-titulo text-[clamp(22px,3vw,30px)] leading-[1.05] text-branco">{atual.nome}</h3>
+          <p className="max-w-[52ch] font-corpo text-[16px] leading-relaxed text-escuro-texto">{atual.desc}</p>
         </div>
 
         <a

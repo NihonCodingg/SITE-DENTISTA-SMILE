@@ -206,7 +206,11 @@ function ConteudoIlha({ ativa }: { ativa: boolean }) {
   return (
     <DynamicIsland
       id="ilha-contato"
-      className="border border-escuro-linha bg-preto text-branco shadow-[0_18px_40px_rgba(17,17,17,0.32)]"
+      // Borda em branco translúcido, não em `escuro-linha`: com duas seções
+      // pretas na página (Task 22), a ilha preta sobre fundo preto perdia o
+      // contorno — `#2A2A28` sobre `#111111` quase não se vê. Um fio branco a
+      // 18% se lê nos dois fundos.
+      className="border border-branco/[0.18] bg-preto text-branco shadow-[0_18px_40px_rgba(17,17,17,0.32)]"
     >
       <DynamicContainer className="flex h-full w-full items-center justify-center">
         {/* Sem `aria-label`: o nome acessível vem do texto visível. Trocar um

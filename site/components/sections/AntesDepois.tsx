@@ -110,7 +110,8 @@ export function AntesDepois() {
   if (!ANTES_DEPOIS.length) return null;
 
   return (
-    <section id="antes-depois" className="bg-creme px-4 py-16 md:px-8 md:py-24">
+    // Fundo preto (Task 22) — ver a nota em Tratamentos.tsx.
+    <section id="antes-depois" className="bg-preto px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1360px]">
         {/* Mesmo efeito de letras flutuando dos outros títulos (Task 20) e a
             mesma blindagem: as letras fatiadas ficam aria-hidden dentro do
@@ -118,7 +119,7 @@ export function AntesDepois() {
         <Reveal
           as="h2"
           aria-label="Resultados reais"
-          className={`font-titulo uppercase leading-[0.96] ${TITULO_TRACKING} text-balance text-preto ${TITULO_TAMANHO_PADRAO}`}
+          className={`font-titulo uppercase leading-[0.96] ${TITULO_TRACKING} text-balance text-branco ${TITULO_TAMANHO_PADRAO}`}
         >
           <TituloFlutuante texto="Resultados reais" />
         </Reveal>
@@ -146,7 +147,7 @@ export function AntesDepois() {
         {/* Dica de uso: o carrossel arrasta, mas nada na tela diz isso — as
             setas sugerem clique, não gesto. Uma linha curta resolve, e é
             rótulo de interface, não copy de marketing. */}
-        <p className="mt-4 text-center font-rotulo text-[13px] tracking-[.12em] text-grafite uppercase">
+        <p className="mt-4 text-center font-rotulo text-[13px] tracking-[.12em] text-escuro-texto uppercase">
           Arraste para o lado para ver mais
         </p>
 
@@ -154,7 +155,7 @@ export function AntesDepois() {
             exigido pela CFO-196/2019, lido uma vez, não corpo de leitura —
             registrada na review final da branch (M2). Abaixo de 14px não
             desce. */}
-        <p className="mt-6 max-w-[72ch] font-corpo text-[14px] leading-relaxed text-grafite">{AVISO_LEGAL}</p>
+        <p className="mt-6 max-w-[72ch] font-corpo text-[14px] leading-relaxed text-escuro-texto">{AVISO_LEGAL}</p>
       </div>
     </section>
   );

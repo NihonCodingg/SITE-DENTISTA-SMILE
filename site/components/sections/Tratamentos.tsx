@@ -32,7 +32,12 @@ function existeFoto(img: string): boolean {
 
 export function Tratamentos() {
   return (
-    <section id="tratamentos" className="bg-creme px-4 py-16 md:px-8 md:py-24">
+    // Fundo preto (Task 22, pedido do dono do projeto): esta seção e a de
+    // resultados passaram a usar o mesmo tratamento escuro que "Sorrisos
+    // feitos aqui" já usava. O efeito colateral desejado é o ritmo — claro,
+    // ESCURO, claro, ESCURO ao longo da página, em vez de um bloco de creme
+    // do hero até o rodapé.
+    <section id="tratamentos" className="bg-preto px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1040px]">
         {/* Bloco de título (COPY.md §4) — esquecido na Task 10, não pego por
             nenhuma review (achado pós-fix-titulos-report.md: a seção pulava
@@ -43,11 +48,12 @@ export function Tratamentos() {
         <Reveal className="mb-10 flex flex-col gap-4 md:mb-14">
           <SectionHeading
             flutuar
+            tema="escuro"
             sobretitulo="O que fazemos"
             titulo="Soluções que transformam sorrisos"
             tituloClassName="max-w-[16ch] text-[clamp(28px,4.5vw,52px)]"
           />
-          <p className="max-w-[62ch] font-corpo text-[17px] leading-relaxed text-grafite">
+          <p className="max-w-[62ch] font-corpo text-[17px] leading-relaxed text-escuro-texto">
             Cada caso começa com uma avaliação. A partir dela, montamos o plano de tratamento que
             faz sentido para a sua boca, sua rotina e o seu orçamento.
           </p>
@@ -68,7 +74,7 @@ export function Tratamentos() {
         {/* Mesmo CTA do hero (Task 21): abre o cartao com quem atende, o que a
             clinica faz e onde fica, e e de la que sai o link do WhatsApp. */}
         <div className="mt-10 flex justify-center">
-          <CtaAgendamento tema="preto" />
+          <CtaAgendamento tema="amarelo" />
         </div>
       </div>
     </section>
