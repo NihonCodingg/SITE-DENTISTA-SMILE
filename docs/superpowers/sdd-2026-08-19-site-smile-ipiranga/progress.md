@@ -1104,3 +1104,76 @@ TROCA DA FOTO DO HERO (pedido do parceiro, 24/08): o Claude Design usa a foto do
   Verificado ao vivo (4705): proporção do contêiner idêntica à da foto (0.8119), imagem 200, sem
   overflow, galeria com 9 pacientes e sem o hero. Captura de tela não foi possível (painel sem
   compositing) — evidência é de DOM.
+TASK 21 — ONDA VISUAL DO DONO DO PROJETO (25/08). Quatro blocos, um commit cada, na ordem em que
+  foram pedidos. Suíte ao fim: 226 testes, 225 verdes (o vermelho é o de sempre — orcamento/LCP
+  lendo relatório antigo do Lighthouse). eslint, tsc e `next build` limpos.
+
+  BLOCO 1 — AccordionGallery (React Bits) nos depoimentos. Commit 2dfa726.
+    Onze modificações sobre o original, TRÊS delas correção de defeito e não adaptação:
+    (a) cada painel vinha com role="listitem" sobre um <a> — o role apaga a semântica de link e
+    quem usa leitor de tela deixaria de saber que o painel abre o Instagram; (b) `--ag-dim` era
+    escrita no <span> da mídia e lida no <span> do overlay, que é IRMÃO dela — a herança nunca
+    chegava, o fallback 0.35 valia sempre e o painel aberto ficava escurecido igual aos fechados;
+    (c) o salto de 520px vira coluna por classe mas mantém altura e largura da mídia em estilo
+    inline, que media query nenhuma alcança.
+    GradualBlur ficou sem uso (era só as bordas do carrossel que saiu) e foi apagado.
+    Junto: correção no ScrollFloat achada no título desta mesma seção — ele soltava cada caractere
+    num inline-block próprio, então o navegador podia quebrar a linha ENTRE DUAS LETRAS. Estava na
+    tela: "valem mais d / o que qualquer anúncio". Vale para os oito títulos com o efeito.
+    Medido: painel aberto 420x560 no desktop, 343x382 no celular.
+
+  BLOCO 2 — Expandable (cult-ui) no CTA "Agendar minha avaliação". Commit f33ff7e.
+    O botão abre um cartão com quem atende, o que a clínica faz, endereço e Instagram; o link do
+    WhatsApp sai de lá. Vale no hero e em Tratamentos.
+    CUSTO DITO EM VOZ ALTA: quem chegava ao WhatsApp em um toque agora precisa de dois. Os
+    caminhos diretos continuam (topo, menu do celular, ilha flutuante).
+    Nova pasta components/cultui/ com LICENSE.md (MIT) e README.md. O instalador oficial não
+    funciona aqui por DOIS motivos independentes: cult-ui.com responde por trás do Vercel Security
+    Checkpoint (o registry devolve HTML) e os componentes assumem a base do shadcn (`cn()` de
+    @/lib/utils, tokens `--border`/`bg-muted`), que este projeto não tem.
+    Correções: o gatilho do cult-ui é um <div role="button"> com Enter/Espaço reimplementados à
+    mão, sem aria-expanded/aria-controls, e com um aria-label="Toggle expand" que APAGAVA o rótulo
+    do botão; react-use-measure trocado por hook local de ResizeObserver.
+    ACHADO NO SCROLLEXPAND: o bloco do CTA é desenhado com opacity vinda do scroll mas continuava
+    clicável e focável em opacity 0 — havia um botão transparente por cima da headline desde o
+    topo da página, alcançável pelo Tab. pointer-events:none + inert agora acompanham a opacidade.
+
+  BLOCO 3 — DynamicIsland (cult-ui) no lugar do WhatsAppFab. Commit 54cc7b6.
+    Substituição, não soma: dois flutuantes disputando a mesma tela é o acúmulo que o guia de
+    craft manda evitar. Herdou o contrato do FAB (aparece depois do hero, entrada de mão única).
+    Quatro estados, todos o MESMO link para o WhatsApp — o que muda é a linha de contexto.
+    DOIS DEFEITOS REAIS no original: (a) ele aplica `clip-path: url(#squircle-<tamanho>)` ao fim de
+    cada transição, apontando para SVGs que vivem no arquivo de demonstração e não vêm junto —
+    referência de clip-path que não resolve não é ignorada pelo Chrome, ela recorta tudo e a ilha
+    some da tela; (b) o guard de setSize impede voltar ao tamanho anterior, então
+    compact -> long -> compact trava no terceiro passo.
+    Decisões de forma, medidas: nenhum estado usa os presets altos (o `medium` mede 210px, quase um
+    terço de uma tela de 667) e nenhum tem link dentro de link.
+
+  BLOCO 4 — Proporções do celular. Commit f28f46e.
+    O achado do dono do projeto (ANEXO 3): a moldura do hero nascia com 44% — 165px numa tela de
+    375 — e a headline media 300. O texto aparecia INTEIRO POR FORA da moldura. Moldura por faixa
+    de tela (86% x 54% no celular) e bloco do título acompanhando a largura dela. Teste de
+    regressão lê o clip-path REAL, não a prop.
+    O DEFEITO MAIS SÉRIO, que ninguém tinha visto: a roda de tratamentos declara
+    `touch-action: none` sempre, mesmo com o arraste desligado. Ela ocupa boa parte da tela do
+    celular, então o dedo que sobe para rolar a página não movia nada — o site parecia travado.
+    Arraste agora só com ponteiro fino; no toque a roda declara `pan-y` e a escolha é por toque.
+    Carrossel de resultados: a folga lateral de 120px do React Bits é cravada e num contêiner de
+    343px comia 35% da largura (cartão de 240px). Virou prop; celular pede 24 e o cartão vai a 304.
+    A altura reservada passou a sair da MESMA conta — eram 648px de caixa para um cartão de 240.
+    Mais: setas do carrossel 42->44px (WCAG 2.5.8); a ilha cortava o próprio rótulo em `compact`;
+    a ilha recolhe no convite final e vai ao canto direito em tela larga; a dica da galeria
+    circular encostava nas duas bordas; em Clinica o invólucro era 9/16 e o card 9/14 (76px de
+    diferença, gradiente e rótulo caindo abaixo da foto) e o `sizes` do VideoCard ainda descrevia
+    o carrossel de depoimentos que não existe mais.
+    Zero overflow horizontal nas onze seções.
+
+  NÃO FEITO NESTA ONDA, e por quê:
+  - shape-blur (pedido de 24/08): seria um terceiro canvas WebGL na mesma página. Continua sem
+    resposta do dono do projeto.
+  - Medição de Lighthouse depois desta onda. A página ganhou peso de motion (a fita de SVG, a
+    parede de 84 azulejos, os títulos flutuando, agora a sanfona e a ilha). A última medida foi
+    0,58 de performance com 1,2s de TBT. Precisa de uma rodada limpa e de uma decisão sobre o
+    pacote de performance — é a única coisa do site fora da faixa boa.
+  - Re-review formal desta onda inteira (blocos 1 a 4) e o fechamento da branch.
