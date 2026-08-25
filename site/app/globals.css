@@ -67,26 +67,6 @@ body {
    base é que sob movimento reduzido o conteúdo NUNCA é escondido antes da
    hora — se o observador falhar, a página não pode sumir. A animação parte do
    zero só no instante em que começa, e o estado de repouso continua visível. */
-/* A deriva das colunas do DriftWall no modo decorativo.
-   Cada coluna anda a velocidade constante e volta ao começo — que é
-   exatamente o que uma animação de CSS faz, no compositor, sem passar pela
-   thread principal. Antes isto era um `requestAnimationFrame` escrevendo
-   `transform` em dez colunas a cada quadro, o tempo todo em que o hero
-   estivesse na tela.
-
-   `--dw-loop` é a altura de UMA cópia da coluna. Como a trilha tem duas
-   cópias ou mais (ver `columnMeta` em DriftWall.tsx), andar exatamente uma
-   cópia e reiniciar não deixa emenda visível. Metade das colunas sobe e
-   metade desce, daí os dois sentidos. */
-@keyframes dw-deriva-cima {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(0, calc(var(--dw-loop) * -1), 0); }
-}
-@keyframes dw-deriva-baixo {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(0, var(--dw-loop), 0); }
-}
-
 @keyframes reveal-suave {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -122,10 +102,9 @@ body {
    do compositor, para descobrir qual delas trava NAQUELA máquina — régua
    que nenhuma medição em headless substitui. Desligado por padrão; não é
    API do site. Os `!important` são o ponto: precisam vencer estilo inline
-   escrito por componente (a parede alterna `animation-play-state` inline,
-   por exemplo). */
-html.diag-semparede [data-diag='parede'] { display: none !important; }
-html.diag-paredeparada [data-diag='parede'] * { animation-play-state: paused !important; }
+   escrito por componente. As chaves da parede de fotos (semparede,
+   paredeparada) saíram junto com ela — foi o teste delas, em 25/08/2026,
+   que a condenou. */
 html.diag-semsilk [data-diag='silk'] { display: none !important; }
 html.diag-semgaleria [data-diag='galeria'] { display: none !important; }
 html.diag-comblur header {

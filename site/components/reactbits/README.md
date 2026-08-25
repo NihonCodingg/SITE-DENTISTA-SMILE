@@ -361,7 +361,16 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   5. **Modo `video` removido** (o site não hospeda vídeo) e **`<img>` → `next/image`**.
   6. **Escrita de ref movida do render para `useLayoutEffect`** (regra `react-hooks/refs`).
 
-### `DriftWall.tsx`
+### `DriftWall.tsx` — REMOVIDO em 25/08/2026
+
+Era a parede de fotos do hero. O teste `?teste=semparede` no aparelho do dono
+("liso e perfeito") identificou a parede como a causa do travamento do hero
+nos dois aparelhos — dezenas de texturas compostas em rotação 3D contínua. O
+componente saiu do repositório junto com o uso; está no histórico do git se
+algum dia voltar. O registro abaixo fica como documentação das modificações
+que ele carregava.
+
+### `DriftWall.tsx` (histórico)
 
 - **Origem:** `src/ts-tailwind/Components/DriftWall/DriftWall.tsx` (branch `main`)
 - **Usado em:** Task 20 — a parede de fotos derivando no fundo amarelo do hero (dentro do palco do

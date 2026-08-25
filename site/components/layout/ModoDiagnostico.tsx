@@ -9,8 +9,6 @@ import { useEffect } from 'react';
  * `diag-<chave>`, e as regras de app/globals.css (bloco "Modo diagnóstico")
  * desligam UMA fonte de custo por chave:
  *
- *   semparede    — remove a parede de fotos do hero
- *   paredeparada — mantém a parede, congela a deriva
  *   semsilk      — remove a textura WebGL dourada do hero (só desktop a tem)
  *   semgaleria   — remove a galeria WebGL de "Sorrisos feitos aqui"
  *   comblur      — devolve o backdrop-blur ao header (removido por custo)
@@ -21,7 +19,10 @@ import { useEffect } from 'react';
  * a mão da pessoa no aparelho dela, e estas chaves transformam isso num
  * teste de um minuto por URL.
  */
-const CHAVES = ['semparede', 'paredeparada', 'semsilk', 'semgaleria', 'comblur'] as const;
+// As chaves da parede de fotos (semparede, paredeparada) existiram e saíram
+// junto com ela: foi o teste `?teste=semparede` no aparelho do dono
+// ("liso e perfeito", 25/08/2026) que decidiu a remoção.
+const CHAVES = ['semsilk', 'semgaleria', 'comblur'] as const;
 
 export function ModoDiagnostico() {
   useEffect(() => {

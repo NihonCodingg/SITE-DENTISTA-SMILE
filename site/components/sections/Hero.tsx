@@ -5,7 +5,6 @@ import { REEL_TOUR } from '@/lib/content';
 import Image from 'next/image';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { HeroBackdrop } from './HeroBackdrop';
-import DriftWall from '@/components/reactbits/DriftWall';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
 import { CtaAgendamento } from '@/components/ui/CtaAgendamento';
 import { ProvaSocial } from '@/components/ui/ProvaSocial';
@@ -13,16 +12,6 @@ import { useCapability } from '@/lib/useCapability';
 import { useTelaLarga } from '@/lib/useTelaLarga';
 
 const HEADLINE = 'Seu novo sorriso começa aqui';
-
-// A parede de fotos do fundo (DriftWall) usa SÓ imagens que o site já
-// exibe em outras seções — nada novo entra por aqui, e as pendências de
-// autorização de imagem continuam as mesmas da galeria e do antes/depois.
-const FOTOS_PAREDE = [
-  '/img/retrato-1.jpg', '/img/retrato-2.jpg', '/img/retrato-3.jpg',
-  '/img/retrato-4.jpg', '/img/retrato-5.jpg', '/img/retrato-6.jpg',
-  '/img/retrato-7.jpg', '/img/retrato-8.jpg', '/img/retrato-9.jpg',
-  '/img/fachada.jpg', '/img/clinica-interior.jpg', '/img/dr-vinicius.jpg',
-].map((image) => ({ image }));
 
 /**
  * O tamanho da moldura fechada, por faixa de tela.
@@ -45,7 +34,7 @@ function useMoldura(telaLarga: boolean) {
 // `id="hero"` é usado pela IlhaContato (components/layout) para saber
 // exatamente onde a seção termina, em vez de aproximar por 100dvh.
 export function Hero() {
-  const { podeAnimar, pontoFino } = useCapability();
+  const { podeAnimar } = useCapability();
   const telaLarga = useTelaLarga();
   const { startWidth, startHeight } = useMoldura(telaLarga);
 
@@ -69,8 +58,9 @@ export function Hero() {
         design; não cabia — o palco tem a altura da janela e aquele hero media
         1296px. Aqui o conteúdo do palco é só headline e CTA, então cabe em
         qualquer tela, inclusive no celular, sem variante compacta nem
-        exceção. O que estava nas colunas laterais desceu para a faixa logo
-        abaixo: nada de conteúdo se perdeu.
+        exceção. Em tela larga as colunas laterais voltaram para DENTRO do
+        palco (entram com o overlay, no fim da abertura); no celular elas
+        seguem na faixa logo abaixo — nada de conteúdo se perdeu.
       */}
       <ScrollExpand
         useWindowScroll
@@ -112,44 +102,18 @@ export function Hero() {
         // O fundo que a moldura revela é o da marca — creme com a textura
         // dourada animada (`Silk`), o mesmo do design aprovado —, não uma
         // foto. A foto do doutor voltou para o card, logo abaixo.
+        //
+        // A PAREDE DE FOTOS (DriftWall) MOROU AQUI E SAIU EM 25/08/2026, por
+        // decisão do dono do projeto depois do teste no aparelho dele: com
+        // `?teste=semparede` o site ficou "liso e perfeito"; com a parede,
+        // travava o hero inteiro nos dois aparelhos. Era o maior custo de
+        // compositor da página (dezenas de texturas em rotação 3D contínua).
+        // O vazio que ela deixava no estado aberto foi preenchido pelas
+        // colunas de conteúdo, abaixo. O componente está no histórico do git
+        // (components/reactbits/DriftWall.tsx) se algum dia voltar.
         midia={
           <div className="relative h-full w-full bg-creme">
             <HeroBackdrop />
-            {/* A parede de fotos (DriftWall, pedido do dono do projeto)
-                deriva por cima do Silk e por trás do scrim/headline. Só
-                monta quando o aparelho aguenta o resto do peso do hero —
-                mesma régua do canvas. */}
-            {podeAnimar && (
-              <div className="absolute inset-0 opacity-[0.5]" data-diag="parede">
-                <DriftWall
-                  decorativo
-                  items={FOTOS_PAREDE}
-                  // Colunas suficientes para a parede SANGRAR a tela (pedido
-                  // do dono do projeto: "pode repetir as fotos, precisa estar
-                  // a tela cheia") e nem uma a mais. Cada coluna mede
-                  // (150+14) × escala 1,18 ≈ 194px de plano: 10 cobrem até
-                  // ultrawide, 4 cobrem 774px — mais que o dobro de uma tela
-                  // de celular. Não é detalhe de estilo: cada coluna traz sete
-                  // azulejos, e cada azulejo é um nó transformado a cada
-                  // quadro. Dez colunas num celular são 84 azulejos desenhados
-                  // para uma tela de 375px. As 12 fotos se repetem em ciclo
-                  // por coluna — repetição autorizada.
-                  columns={telaLarga ? 10 : 4}
-                  tileWidth={150}
-                  tileHeight={190}
-                  gap={14}
-                  radius={16}
-                  tilt={14}
-                  turn={-12}
-                  speed={26}
-                  variance={0.35}
-                  parallax={pontoFino ? 0.5 : 0}
-                  dim={0.3}
-                  overlayColor="var(--color-preto)"
-                  reducedMotion={!podeAnimar}
-                />
-              </div>
-            )}
           </div>
         }
         scrollHint={
@@ -207,30 +171,31 @@ export function Hero() {
           <CtaAgendamento tema="amarelo" brilho compacto />
           <ProvaSocial />
         </div>
+
+        {/* As colunas do design aprovado, DENTRO do palco — só em tela larga.
+            Elas entram no mesmo fade do overlay, quando a moldura termina de
+            abrir: o estado aberto deixou de ser um dourado vazio em volta do
+            título (pedido do dono do projeto, 25/08/2026, na mesma decisão
+            que removeu a parede de fotos). No celular elas NÃO existem aqui —
+            o hero de celular fica exatamente como está — e continuam na
+            faixa abaixo do palco, que em tela larga passa a mostrar só a
+            foto. `text-left` porque o wrapper do overlay é text-center. */}
+        <div className="absolute inset-y-0 left-[4%] hidden w-[min(23vw,330px)] flex-col justify-center text-left md:flex xl:left-[6%]">
+          <ColunaProposta />
+        </div>
+        <div className="absolute inset-y-0 right-[4%] hidden w-[min(23vw,330px)] flex-col justify-center text-left md:flex xl:right-[6%]">
+          <ColunaContato />
+        </div>
       </ScrollExpand>
 
-      {/* As três colunas do design aprovado, logo abaixo da moldura:
-          proposta e CTA à esquerda, a foto do doutor no centro,
-          especialidades e contato à direita. Elas ficam FORA do palco porque
-          ele tem a altura da janela e este bloco, sozinho, mede mais que
-          isso — dentro dele nasceria cortado. */}
+      {/* A faixa abaixo da moldura. Em tela larga as colunas de texto agora
+          moram DENTRO do palco (acima), então aqui fica só a foto do doutor —
+          repetir o mesmo texto a uma rolagem de distância pareceria bug. No
+          celular a faixa continua inteira, como sempre foi: lá as colunas
+          não entram no palco. */}
       <div className="mx-auto grid max-w-[1360px] grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] items-center gap-8 px-4 py-12 md:px-8 md:py-16">
-        <div className="flex flex-col gap-5">
-          <p className="max-w-[42ch] font-corpo text-[16px] leading-relaxed text-grafite">
-            Facetas, implantes, próteses e ortodontia com atendimento personalizado para cada
-            paciente. No coração do Ipiranga, cuidando de toda a região.
-          </p>
-
-          <a
-            href="#clinica"
-            className="pressable inline-flex min-h-11 w-fit items-center font-rotulo text-[13px] tracking-[.1em] text-preto uppercase underline underline-offset-4"
-          >
-            Conhecer a clínica ↓
-          </a>
-
-          <p className="font-rotulo text-[12px] tracking-[.1em] text-grafite uppercase">
-            Resposta pelo WhatsApp
-          </p>
+        <div className="md:hidden">
+          <ColunaProposta />
         </div>
 
         {/* A foto do doutor, no centro — como no design aprovado. */}
@@ -246,46 +211,83 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 md:items-end md:text-right">
-          <p className="font-rotulo text-[13px] tracking-[.12em] text-preto uppercase">
-            Facetas • Implantes • Próteses
-          </p>
-          <p className="max-w-[32ch] font-corpo text-[16px] text-grafite">
-            Consultório de cadeira única — aqui você não é encaixado entre um paciente e outro.
-          </p>
-          <div className="font-corpo text-[14px] text-grafite">
-            <p>
-              {ENDERECO.rua}, {ENDERECO.numero} — {ENDERECO.bairro}, {ENDERECO.cidade}/
-              {ENDERECO.uf}
-            </p>
-            <a
-              href={INSTAGRAM}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="pressable inline-flex min-h-11 items-center underline underline-offset-4 pointer-fine:hover:text-preto"
-            >
-              @smileipiranga
-            </a>
-          </div>
-
-          {/* Abre o reel do tour no Instagram da clínica, em aba nova — o site
-              não hospeda vídeo (ver components/ui/VideoCard.tsx). */}
-          <a
-            href={REEL_TOUR}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pressable inline-flex min-h-11 w-fit items-center gap-3 rounded-full bg-branco/94 py-2 pr-5 pl-2 shadow-[0_12px_30px_rgba(17,17,17,0.14)] pointer-fine:hover:bg-branco"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amarelo text-preto">
-              <PlayIcon />
-            </span>
-            <span className="font-rotulo text-[13px] font-medium tracking-[.06em] text-preto uppercase">
-              Tour pela clínica
-            </span>
-          </a>
+        <div className="md:hidden">
+          <ColunaContato />
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * As duas colunas do design aprovado — proposta à esquerda, contato à
+ * direita. São componentes porque renderizam em DOIS lugares com papéis
+ * excludentes: dentro do palco em tela larga (md+, no fade do overlay) e na
+ * faixa abaixo dele no celular. JSX repetido aqui já divergiria na primeira
+ * edição.
+ */
+function ColunaProposta() {
+  return (
+    <div className="flex flex-col gap-5">
+      <p className="max-w-[42ch] font-corpo text-[16px] leading-relaxed text-grafite">
+        Facetas, implantes, próteses e ortodontia com atendimento personalizado para cada
+        paciente. No coração do Ipiranga, cuidando de toda a região.
+      </p>
+
+      <a
+        href="#clinica"
+        className="pressable inline-flex min-h-11 w-fit items-center font-rotulo text-[13px] tracking-[.1em] text-preto uppercase underline underline-offset-4"
+      >
+        Conhecer a clínica ↓
+      </a>
+
+      <p className="font-rotulo text-[12px] tracking-[.1em] text-grafite uppercase">
+        Resposta pelo WhatsApp
+      </p>
+    </div>
+  );
+}
+
+function ColunaContato() {
+  return (
+    <div className="flex flex-col gap-4 md:items-end md:text-right">
+      <p className="font-rotulo text-[13px] tracking-[.12em] text-preto uppercase">
+        Facetas • Implantes • Próteses
+      </p>
+      <p className="max-w-[32ch] font-corpo text-[16px] text-grafite">
+        Consultório de cadeira única — aqui você não é encaixado entre um paciente e outro.
+      </p>
+      <div className="font-corpo text-[14px] text-grafite">
+        <p>
+          {ENDERECO.rua}, {ENDERECO.numero} — {ENDERECO.bairro}, {ENDERECO.cidade}/
+          {ENDERECO.uf}
+        </p>
+        <a
+          href={INSTAGRAM}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="pressable inline-flex min-h-11 items-center underline underline-offset-4 pointer-fine:hover:text-preto"
+        >
+          @smileipiranga
+        </a>
+      </div>
+
+      {/* Abre o reel do tour no Instagram da clínica, em aba nova — o site
+          não hospeda vídeo (ver components/ui/VideoCard.tsx). */}
+      <a
+        href={REEL_TOUR}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="pressable inline-flex min-h-11 w-fit items-center gap-3 rounded-full bg-branco/94 py-2 pr-5 pl-2 shadow-[0_12px_30px_rgba(17,17,17,0.14)] pointer-fine:hover:bg-branco"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amarelo text-preto">
+          <PlayIcon />
+        </span>
+        <span className="font-rotulo text-[13px] font-medium tracking-[.06em] text-preto uppercase">
+          Tour pela clínica
+        </span>
+      </a>
+    </div>
   );
 }
 

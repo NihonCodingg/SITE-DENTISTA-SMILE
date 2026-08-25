@@ -29,12 +29,20 @@ describe('Hero', () => {
     expect(cta).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('leva o tour para o reel no Instagram, em aba nova', () => {
+  it('leva o tour para o reel no Instagram, em aba nova — nas duas cópias', () => {
     render(<Hero />);
-    const link = screen.getByRole('link', { name: /Tour pela clínica/i });
-    expect(link).toHaveAttribute('href', REEL_TOUR);
-    expect(link).toHaveAttribute('target', '_blank');
-    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    // Desde 25/08/2026 a coluna de contato renderiza em DOIS lugares com
+    // papéis excludentes: dentro do palco em tela larga e na faixa abaixo no
+    // celular (quem esconde uma delas é o CSS, que o jsdom não aplica). As
+    // duas precisam apontar para o mesmo reel — se uma divergir, metade dos
+    // visitantes recebe o link errado.
+    const links = screen.getAllByRole('link', { name: /Tour pela clínica/i });
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link).toHaveAttribute('href', REEL_TOUR);
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
+    }
   });
 
   it('descreve a foto do hero para leitor de tela', () => {
