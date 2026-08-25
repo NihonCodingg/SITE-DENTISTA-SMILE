@@ -149,8 +149,9 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      colocou. Com `midia`, o que cresce é conteúdo, não um arquivo.
   6. **`startOffsetY`** (pontos percentuais) desloca o quadro inicial para baixo, decaindo até zero
      na abertura. O original só sabe centralizar.
-  7. **`title` aceita nó, não só string** — o hero passa o próprio `<h1>`; o original renderizava
-     um `<div>`, o que custaria o heading da página.
+  7. **`title` e `scrollHint` aceitam nó, não só string** — o hero passa o próprio `<h1>` (o
+     original renderizava um `<div>`, o que custaria o heading da página) e decide a cor da dica de
+     scroll (o original cravava branco, ilegível sobre o creme da marca).
   8. **Altura da pista e do palco vem do CSS, antes de o JS medir.** No original os dois nascem
      com zero e só ganham altura no efeito: a página saltava ~2 telas depois da hidratação, o que
      rendeu **0,96 de CLS** no Lighthouse mobile (medido). O `measure()` continua mandando — só

@@ -51,7 +51,8 @@ export interface ScrollExpandProps {
   /** Aceita nó, não só string: o hero passa o próprio `<h1>` (o original
    *  renderizava um `<div>`, o que custaria o heading da página). */
   title?: ReactNode;
-  scrollHint?: string;
+  /** Aceita nó: o original cravava branco, ilegível sobre fundo claro. */
+  scrollHint?: ReactNode;
   startWidth?: number;
   startHeight?: number;
   startRadius?: number;
@@ -81,7 +82,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   src = '',
   alt = '',
   title,
-  scrollHint = '',
+  scrollHint,
   startWidth = 42,
   startHeight = 58,
   startRadius = 24,
@@ -333,7 +334,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
           {scrollHint ? (
             <div
               ref={hintRef}
-              className="absolute inset-x-0 bottom-5 text-center text-[0.8125rem] tracking-[0.02em] text-white/55 pointer-events-none [will-change:opacity,transform]"
+              className="absolute inset-x-0 bottom-5 text-center pointer-events-none [will-change:opacity,transform]"
             >
               {scrollHint}
             </div>

@@ -2,7 +2,9 @@
 
 import { waLink, ENDERECO, INSTAGRAM } from '@/lib/contact';
 import { REEL_TOUR } from '@/lib/content';
+import Image from 'next/image';
 import { SectionHeading } from '@/components/ui/SectionHeading';
+import { HeroBackdrop } from './HeroBackdrop';
 import ScrollExpand from '@/components/reactbits/ScrollExpand';
 import SplitText from '@/components/reactbits/SplitText';
 import Magnet from '@/components/reactbits/Magnet';
@@ -53,29 +55,47 @@ export function Hero() {
         abaixo: nada de conteúdo se perdeu.
       */}
       <ScrollExpand
-        src="/img/hero-foto.jpg"
-        alt="Dr. Vinicius Aracena sorrindo sob o letreiro da Smile Ipiranga"
         useWindowScroll
         reducedMotion={!podeAnimar}
         startWidth={44}
         startHeight={62}
         startRadius={24}
         endRadius={0}
-        mediaZoom={1.18}
+        // `mediaZoom={1}`: sem escala na mídia. Não é preferência — o canvas
+        // do R3F se dimensiona pelo retângulo JÁ ESCALADO do container, e
+        // qualquer zoom aqui faria o fundo animado cobrir só uma fração da
+        // moldura (medido: 859px num card de 1022). Sem escala, o efeito vem
+        // inteiro da moldura abrindo, que é o que interessa.
+        mediaZoom={1}
         scrollDistance={1}
         holdDistance={0.15}
-        overlayScrim={0.42}
-        scrollHint="Role para abrir"
+        // Sem escurecer: o scrim do original existe para dar contraste a
+        // texto branco sobre foto. Aqui o fundo é o creme da marca e a
+        // headline é preta.
+        overlayScrim={0}
+        // O fundo que a moldura revela é o da marca — creme com a textura
+        // dourada animada (`Silk`), o mesmo do design aprovado —, não uma
+        // foto. A foto do doutor voltou para o card, logo abaixo.
+        midia={
+          <div className="relative h-full w-full bg-creme">
+            <HeroBackdrop />
+          </div>
+        }
+        scrollHint={
+          <span className="font-rotulo text-[12px] tracking-[.14em] text-grafite uppercase">
+            Role para abrir
+          </span>
+        }
         title={
-          // `tema="escuro"` porque o título fica sobre a foto: sobretítulo
-          // amarelo, headline branca. `tituloAriaLabel` só no ramo em que o
+          // `tema="claro"`: a headline fica sobre o creme da marca, então
+          // volta a ser preta, como no design aprovado. `tituloAriaLabel` só no ramo em que o
           // SplitText monta — o GSAP esconde as palavras fatiadas do leitor
           // de tela e o nome volta pelo heading, onde `aria-label` é válido
           // (Task 18, A1).
           <SectionHeading
             as="h1"
             align="center"
-            tema="escuro"
+            tema="claro"
             sobretitulo="Odontologia integrada no Ipiranga"
             titulo={titulo}
             tituloAriaLabel={podeAnimar ? HEADLINE : undefined}
@@ -86,7 +106,7 @@ export function Hero() {
             // valia 0,176 de CLS em dois saltos (medido; um por fonte).
             // Ancorado, o texto só cresce para baixo: a distância de
             // deslocamento é zero, e é a distância que o CLS mede.
-            tituloClassName="mx-auto max-w-[min(92%,560px)] text-[clamp(28px,4.4vw,64px)] [text-shadow:0_2px_24px_rgba(17,17,17,0.45)]"
+            tituloClassName="mx-auto max-w-[min(88%,340px)] text-[clamp(28px,4.4vw,64px)]"
           />
         }
       >
@@ -100,11 +120,12 @@ export function Hero() {
         </Magnet>
       </ScrollExpand>
 
-      {/* A faixa que recebe o que estava nas colunas laterais do hero antigo:
-          proposta, especialidades, cadeira única, endereço, Instagram e o
-          tour. Saiu de dentro do palco, que precisa caber numa tela — não do
-          site. */}
-      <div className="mx-auto grid max-w-[1360px] grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-8 px-4 py-12 md:px-8 md:py-16">
+      {/* As três colunas do design aprovado, logo abaixo da moldura:
+          proposta e CTA à esquerda, a foto do doutor no centro,
+          especialidades e contato à direita. Elas ficam FORA do palco porque
+          ele tem a altura da janela e este bloco, sozinho, mede mais que
+          isso — dentro dele nasceria cortado. */}
+      <div className="mx-auto grid max-w-[1360px] grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] items-center gap-8 px-4 py-12 md:px-8 md:py-16">
         <div className="flex flex-col gap-5">
           <p className="max-w-[42ch] font-corpo text-[16px] leading-relaxed text-grafite">
             Facetas, implantes, próteses e ortodontia com atendimento personalizado para cada
@@ -121,6 +142,19 @@ export function Hero() {
           <p className="font-rotulo text-[12px] tracking-[.1em] text-grafite uppercase">
             Resposta pelo WhatsApp
           </p>
+        </div>
+
+        {/* A foto do doutor, no centro — como no design aprovado. */}
+        <div className="mx-auto w-full max-w-[340px]">
+          <div className="relative aspect-[928/1143] overflow-hidden rounded-[24px] bg-borda">
+            <Image
+              src="/img/hero-foto.jpg"
+              alt="Dr. Vinicius Aracena sorrindo sob o letreiro da Smile Ipiranga"
+              fill
+              sizes="(max-width: 768px) 80vw, 340px"
+              className="object-cover"
+            />
+          </div>
         </div>
 
         <div className="flex flex-col gap-4 md:items-end md:text-right">
