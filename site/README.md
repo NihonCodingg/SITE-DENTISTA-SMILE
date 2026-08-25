@@ -140,7 +140,11 @@ pendência — o risco é publicar sem resolvê-las, não deixá-las visíveis.
       nos vídeos completos — Resolução CFO-196/2019, detalhes em `VIDEOS/README.md`
 - [ ] **Marca d'água do CapCut** removida do vídeo da recepção
 - [ ] **Logo em vetor**
-- [ ] **`NEXT_PUBLIC_SITE_URL`** definida e build refeito
+- [ ] **`NEXT_PUBLIC_SITE_URL`** definida e build refeito — com uma rede a menos desde 25/08/2026:
+      na Vercel, sem a variável, o `SITE_URL` cai no domínio de produção real que a própria Vercel
+      injeta no build (`VERCEL_PROJECT_PRODUCTION_URL`), que vira o domínio customizado sozinho
+      quando o cliente comprar um. Fora da Vercel o fallback continua sendo localhost de propósito,
+      para o erro gritar. Ver `lib/site.ts`
 - [ ] **Cache de `/_next/image`** persistente na hospedagem; **`public/`** presente no deploy
 - [ ] **Teste manual** de `prefers-reduced-motion` e `saveData` em aparelho real — o ambiente de
       desenvolvimento não conseguiu compositar frames para verificar isso ao vivo
@@ -152,3 +156,22 @@ pendência — o risco é publicar sem resolvê-las, não deixá-las visíveis.
       33 arquivos e todos são usados
 
 As perguntas ainda abertas com o cliente estão em `PERGUNTAS-CLIENTE.md`, na raiz.
+
+## Deploy na Vercel
+
+O repositório NÃO é o app: o Next.js mora em `site/`, subpasta da raiz. Na criação do projeto na
+Vercel, configurar:
+
+1. **Root Directory = `site`** (Settings → General). Sem isso o build falha na raiz, onde não há
+   `package.json` de app. O framework (Next.js) e os comandos são detectados sozinhos a partir daí.
+2. **Branch de produção**: hoje o trabalho vive em `feat/site`; produção na Vercel segue `main` por
+   padrão. Ou faz-se o merge para `main`, ou muda-se a branch de produção em Settings → Git.
+3. **Variáveis de ambiente**: nenhuma é obrigatória para o primeiro deploy (ver item da checklist
+   acima). Quando o domínio do cliente existir, `NEXT_PUBLIC_SITE_URL=https://dominio.com.br` em
+   Production e um redeploy.
+4. **Cache de imagens**: o item da checklist sobre `/_next/image` é atendido de fábrica — o
+   otimizador da Vercel guarda as variantes em cache persistente por conteúdo, e `public/` faz
+   parte do deploy padrão do Next (o alerta do checklist era para hospedagens `standalone`).
+5. O modo diagnóstico (`?teste=semsilk,semgaleria,comblur,semlenis` — ver
+   `components/layout/ModoDiagnostico.tsx`) continua existindo em produção, desligado por padrão e
+   inofensivo: só marca classes no `<html>` de quem abrir a URL com a query.
