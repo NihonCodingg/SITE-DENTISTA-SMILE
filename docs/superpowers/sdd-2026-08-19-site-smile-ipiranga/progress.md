@@ -1177,3 +1177,74 @@ TASK 21 — ONDA VISUAL DO DONO DO PROJETO (25/08). Quatro blocos, um commit cad
     0,58 de performance com 1,2s de TBT. Precisa de uma rodada limpa e de uma decisão sobre o
     pacote de performance — é a única coisa do site fora da faixa boa.
   - Re-review formal desta onda inteira (blocos 1 a 4) e o fechamento da branch.
+
+TASK 22 — HERO COMPLETO, SEÇÕES PRETAS E DESEMPENHO NO CELULAR (25/08). Quatro commits.
+  Suíte ao fim: 230 testes, 229 verdes (o vermelho é o de sempre — orcamento/LCP). eslint, tsc e
+  `next build` limpos.
+
+  1. HERO: A HEADLINE FICA POR CIMA DO CTA (commit 33aa423). O componente trocava um pelo outro —
+     o título apagava enquanto o CTA entrava. `fadeTitle={false}` mantém a headline e
+     `overlayClassName` tira o CTA do centro do palco.
+     ARMADILHA QUE CUSTOU UMA RODADA, registrada no componente: `padding` em porcentagem se resolve
+     contra a LARGURA do contêiner, nunca contra a altura. `pt-[57%]` numa tela de 1280×720 empurra
+     730px, não 410 — o botão foi parar fora da tela. Posicionamento vertical é `top`.
+
+  2. PROVA SOCIAL (mesmo commit). AvatarCircles do magicui (MIT, nova pasta components/magicui/),
+     quatro rostos + cinco estrelas + "Mais de mil sorrisos transformados".
+     ⚠️ ESSA FRASE E ESSAS ESTRELAS SÃO DADO NÃO CONFIRMADO. O bloco nasce com a marcação de
+     pendência do projeto (o mesmo tracejado do CRO, da especialidade e do horário) e há teste de
+     regressão travando isso (provaSocial.test.tsx). FALTAM DUAS COISAS DIFERENTES, e vale não
+     confundi-las: (a) o NÚMERO, que ninguém no material do cliente disse; (b) a ORIGEM DA NOTA —
+     cinco estrelas cheias afirmam uma avaliação, e não existe Google Reviews coletado nem
+     pesquisa. Ou elas passam a refletir a nota real com o número de avaliações ao lado, ou saem.
+     Os quatro rostos são retratos que a galeria já exibe: nenhuma pendência de imagem nova.
+     Duas correções sobre o original: cada avatar vinha embrulhado num link para um perfil que aqui
+     não existe, e o círculo "+N" era um `<a href="">` — href vazio recarrega a página ao clicar.
+
+  3. TRATAMENTOS E RESULTADOS EM PRETO (mesmo commit), no estilo de "Sorrisos feitos aqui". O
+     efeito desejado é o ritmo: claro, ESCURO, claro, ESCURO. A roda trocou de paleta junto (preto
+     sobre preto não se lê), o CTA de Tratamentos virou amarelo, e a ilha ganhou um fio branco a
+     18% no lugar do `escuro-linha`, que sobre preto sumia.
+
+  4. DUAS CORREÇÕES DE PROPORÇÃO NO CELULAR, apontadas ao vivo (mesmo commit).
+     A primeira eu ENTENDI ERRADO na primeira tentativa: o dono do projeto disse "isso não pode
+     ficar assim no celular" sobre a fita, e eu troquei a fita curva por uma faixa reta. O que ele
+     quis dizer era "a linha está muito pequena e fora de proporção". Desfeito e refeito: a fita
+     continua, com as MEDIDAS DE DESENHO divididas pela escala da faixa. O SVG do TextLoop tem
+     caixa fixa 1200×520 e escala pela largura — numa tela de 375px a escala é 0,29, e as medidas
+     do desktop viram 6px de texto e 19px de fita. Agora: ~13px e ~50px na tela (medido).
+     A segunda: a galeria circular desenha cada retrato com 60% da altura do canvas, e
+     `min(70vh,640px)` dava 341px numa tela de 812 — quase metade da tela. No celular vai a
+     `min(52vh,420px)`.
+
+  5. DESEMPENHO NO CELULAR (commit 6b50ea7). Prioridade declarada: "o site não pode travar de forma
+     alguma". Lighthouse mobile, build de produção, CPU 4× lenta, três amostras de cada lado:
+       antes:  performance 69 · TBT 920ms · CLS 0,061 · TTI 7,0s · 914KB
+       depois: performance 92 · TBT 20-30ms · CLS 0 · TTI 3,4s · 380KB
+     E as três amostras do depois deram o MESMO número — as da Task 17 eram bimodais (0,55 a 0,88)
+     e não davam para confiar numa amostra.
+     Duas mudanças explicam quase tudo:
+     (a) `three` + @react-three/fiber fora do celular. Eram 230KB transferidos (868KB
+         descompactados), o maior recurso da página, e ~665ms de execução com uma tarefa longa de
+         211ms — para pintar uma textura a 22% de opacidade, atrás da parede de fotos e do recorte
+         da moldura. O gate `podePesado` já barrava aparelho fraco; faltava barrar o celular BOM,
+         que passa no teste de capacidade e baixava um motor 3D inteiro à toa.
+     (b) A parede de fotos cai de 10 colunas para 4 no celular: 84 azulejos transformados por
+         quadro viravam ~34, e 4 colunas já cobrem 774px numa tela de 375.
+     Junto, uma limpeza que o desempenho pediu: quatro seções tinham cada uma sua cópia do mesmo
+     `useEffect` com `window.innerWidth` + listener de `resize`. Viraram `lib/useTelaLarga.ts`, com
+     UM listener no módulo inteiro via `useSyncExternalStore`.
+
+  6. HIDRATAÇÃO (commit da3b490). O React apontou `height:400` no servidor contra `height:"398px"`
+     no cliente, na caixa do carrossel de resultados — ela era calculada no render a partir de
+     `window.innerWidth`, que no servidor não existe. Virou `calc()`: a mesma conta, em CSS, sem os
+     dois lados poderem discordar. Nenhum outro lugar do código de aplicação lê `window` durante o
+     render (conferido por grep).
+
+  AINDA EM ABERTO:
+  - LCP simulado em 3,3s contra a meta de 2,5s. É o vermelho conhecido e documentado; o mesmo LCP
+    com throttling real mediu 2211ms na Task 17. Decisão do dono do projeto: aceitar, virar
+    `it.fails`, ou abrir uma rodada só de LCP (o candidato é a fonte de display — FCP é 0,9s e o
+    LCP só fecha quando a Archivo Black, de 50KB, pinta).
+  - shape-blur (pedido de 24/08), sem resposta.
+  - Re-review formal das Tasks 21 e 22 e o fechamento da branch.
