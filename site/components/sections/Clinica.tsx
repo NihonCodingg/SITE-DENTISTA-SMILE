@@ -18,7 +18,7 @@ export function Clinica() {
     <section id="clinica" className="mx-auto max-w-[1360px] px-4 py-16 md:px-8 md:py-24">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] items-center gap-[clamp(32px,6vw,80px)]">
         <Reveal className="flex flex-col gap-5">
-          <SectionHeading sobretitulo="O ambiente" titulo="Um lugar onde dá vontade de sentar e conversar" />
+          <SectionHeading flutuar sobretitulo="O ambiente" titulo="Um lugar onde dá vontade de sentar e conversar" />
           <p className="max-w-[46ch] font-corpo text-[16px] leading-relaxed text-grafite">
             Clínica pequena por escolha: aqui você não é encaixado entre um paciente e outro. O
             espaço foi pensado para tirar o peso da consulta odontológica — luz, plantas, silêncio

@@ -27,6 +27,7 @@ export function Sorrisos() {
       <div className="mx-auto max-w-[1360px] px-4 md:px-8">
         <Reveal>
           <SectionHeading
+            flutuar
             tema="escuro"
             sobretitulo="Pacientes reais"
             titulo="Sorrisos feitos aqui"

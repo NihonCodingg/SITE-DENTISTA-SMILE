@@ -139,7 +139,7 @@ export function Localizacao() {
               tamanho default do `SectionHeading` (TITULO_TAMANHO_PADRAO,
               clamp(28px,4.5vw,48px) — ver fix-titulos-report.md) que
               Clinica/Depoimentos/AntesDepois/ComoFunciona também usam. */}
-          <SectionHeading sobretitulo="Como chegar" titulo="No coração do Ipiranga" />
+          <SectionHeading flutuar sobretitulo="Como chegar" titulo="No coração do Ipiranga" />
 
           <div className="flex flex-col gap-2 font-corpo text-[16px] leading-relaxed text-grafite">
             <p>

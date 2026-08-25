@@ -193,6 +193,27 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      verificável em jsdom: o tween (e com ele o observer) só nasce depois de o componente MEDIR o
      caminho do SVG, e o jsdom devolve zero. Ver a nota em `__tests__/ticker.test.tsx`.
 
+### `ScrollFloat.tsx`
+
+- **Origem:** `src/ts-tailwind/TextAnimations/ScrollFloat/ScrollFloat.tsx` (branch `main`)
+- **Usado em:** Task 20 — os títulos de seção ("os textos importantes"), via
+  `components/ui/TituloFlutuante.tsx` e a prop `flutuar` do `SectionHeading`. Oito seções.
+- **Dependências que arrasta:** `gsap` + `gsap/ScrollTrigger` (já no projeto).
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** o componente não consulta nada; `TituloFlutuante` decide por
+  `useCapability().podeAnimar` — sob reduced-motion o texto nem é fatiado.
+- **Só `transform`/`opacity`:** as letras animam `yPercent`/`scale`/`opacity`.
+- **Modificações:**
+  1. `'use client'` no topo (o original não declara).
+  2. **Cleanup adicionado** — o original cria tween + ScrollTrigger e nunca os mata; cada
+     desmontagem vazava um trigger vivo apontando para um nó morto.
+  3. **`registerPlugin` movido para dentro do efeito** (mesmo motivo do `SplitText`, Task 8).
+  4. **Render neutro** — o original renderizava um `<h2>` próprio com tamanho cravado; virou
+     `<span>` que herda a tipografia do heading que o `SectionHeading` já constrói.
+  5. **`aria-hidden` no contêiner fatiado** — texto em letras é lido letra por letra (a violação
+     do axe da Task 18, A1); o nome acessível vai no heading pai, automático quando `flutuar`
+     está ligado.
+
 ### `Magnet.tsx`
 
 - **Origem:** `src/ts-tailwind/Animations/Magnet/Magnet.tsx`

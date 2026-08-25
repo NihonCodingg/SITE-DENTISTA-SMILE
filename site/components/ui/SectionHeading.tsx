@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { TituloFlutuante } from '@/components/ui/TituloFlutuante';
+
 type Props = {
   /** Elemento semântico do título. Só a Hero usa 'h1' — é o único h1 da página. */
   as?: 'h1' | 'h2';
@@ -20,6 +22,14 @@ type Props = {
    *  (Task 18, A1: a Hero fatia a headline em spans via SplitText — o
    *  `aria-label` vai no heading, único lugar onde é válido). */
   tituloAriaLabel?: string;
+  /**
+   * Liga o efeito de letras flutuando no título (`ScrollFloat`, Task 20 —
+   * "os textos importantes"). Exige `titulo` string: o efeito fatia em
+   * letras. O nome acessível vai automaticamente para o heading
+   * (`aria-label`), porque as letras fatiadas ficam `aria-hidden` — a mesma
+   * blindagem do SplitText do hero (Task 18, A1).
+   */
+  flutuar?: boolean;
 };
 
 const CORES_TEMA = {
@@ -72,22 +82,27 @@ export function SectionHeading({
   tituloClassName,
   tema = 'claro',
   tituloAriaLabel,
+  flutuar = false,
 }: Props) {
   const alinhamento = align === 'center' ? 'items-center text-center' : 'items-start text-left';
   const cores = CORES_TEMA[tema];
   const tracking = Tag === 'h2' ? ` ${TITULO_TRACKING}` : '';
+
+  const flutua = flutuar && typeof titulo === 'string';
+  const conteudoTitulo = flutua ? <TituloFlutuante texto={titulo as string} /> : titulo;
+  const rotuloAcessivel = flutua ? (titulo as string) : tituloAriaLabel;
 
   return (
     <div className={`flex flex-col gap-3 ${alinhamento}${className ? ` ${className}` : ''}`}>
       <p className={`font-rotulo text-[13px] uppercase tracking-[.34em] ${cores.sobretitulo}`}>{sobretitulo}</p>
       {children}
       <Tag
-        aria-label={tituloAriaLabel}
+        aria-label={rotuloAcessivel}
         className={`font-titulo uppercase leading-[0.96]${tracking} text-balance ${cores.titulo} ${
           tituloClassName ?? TITULO_TAMANHO_PADRAO
         }`}
       >
-        {titulo}
+        {conteudoTitulo}
       </Tag>
     </div>
   );

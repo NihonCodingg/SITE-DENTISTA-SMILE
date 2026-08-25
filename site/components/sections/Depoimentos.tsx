@@ -43,6 +43,7 @@ export function Depoimentos() {
       <div className="mx-auto max-w-[1360px]">
         <Reveal>
           <SectionHeading
+            flutuar
             sobretitulo="Quem já passou por aqui"
             titulo="As histórias valem mais do que qualquer anúncio"
           />

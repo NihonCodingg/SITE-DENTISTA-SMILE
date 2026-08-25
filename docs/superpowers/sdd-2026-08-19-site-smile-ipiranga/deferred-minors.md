@@ -99,3 +99,10 @@ Gerado em 2026-08-21 a partir de progress.md. A review final tria: o que bloquei
   rodar o pipeline de ponta a ponta hoje falha nesse item e não processa os seguintes. Pré-existente,
   não foi introduzido pela troca do hero. Corrigir apontando para a fonte certa ou removendo a
   linha (a imagem já está gerada).
+
+## Task 20 — custo medido da fita (TextLoop)
+- A fita curva dos tratamentos anima `startOffset` de um `<textPath>` de SVG a cada quadro —
+  atributo, não transform: o navegador repinta o SVG no main thread. Medido com a máquina limpa:
+  TBT mobile ~1.000ms contra ~350ms da faixa anterior (ScrollVelocity, transform/GPU). LCP e CLS
+  não mudaram. Decisão do dono do projeto: React Bits ao máximo, custo registrado. Alavanca, se
+  precisar recuperar TBT: voltar a faixa reta ou pausar a fita até a primeira interação.

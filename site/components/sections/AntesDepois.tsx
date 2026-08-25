@@ -6,6 +6,7 @@ import { Reveal } from '@/components/ui/Reveal';
 import { ANTES_DEPOIS } from '@/lib/content';
 import { TITULO_TAMANHO_PADRAO, TITULO_TRACKING } from '@/components/ui/SectionHeading';
 import DepthCarousel from '@/components/reactbits/DepthCarousel';
+import { TituloFlutuante } from '@/components/ui/TituloFlutuante';
 
 // Texto EXATO de COPY.md §8 — Resolução CFO-196/2019 + LGPD (pessoas
 // identificáveis): não encurtar, não parafrasear. "Cada caso é único e os
@@ -89,11 +90,15 @@ export function AntesDepois() {
   return (
     <section id="antes-depois" className="bg-creme px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1360px]">
+        {/* Mesmo efeito de letras flutuando dos outros títulos (Task 20) e a
+            mesma blindagem: as letras fatiadas ficam aria-hidden dentro do
+            TituloFlutuante, e o nome acessível vai no próprio h2. */}
         <Reveal
           as="h2"
+          aria-label="Resultados reais"
           className={`font-titulo uppercase leading-[0.96] ${TITULO_TRACKING} text-balance text-preto ${TITULO_TAMANHO_PADRAO}`}
         >
-          Resultados reais
+          <TituloFlutuante texto="Resultados reais" />
         </Reveal>
 
         <div className="mt-10 md:mt-14">

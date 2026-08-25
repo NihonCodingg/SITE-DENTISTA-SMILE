@@ -62,6 +62,7 @@ export function Profissional() {
 
         <Reveal delay={0.08} className="flex flex-col gap-5">
           <SectionHeading
+            flutuar
             sobretitulo="Quem vai te atender"
             titulo="Dr. Vinicius Aracena"
             tituloClassName="text-[clamp(28px,4vw,44px)]"

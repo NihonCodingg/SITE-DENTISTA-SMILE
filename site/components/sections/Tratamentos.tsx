@@ -42,6 +42,7 @@ export function Tratamentos() {
             parágrafo em 17px/62ch vêm do design aprovado. */}
         <Reveal className="mb-10 flex flex-col gap-4 md:mb-14">
           <SectionHeading
+            flutuar
             sobretitulo="O que fazemos"
             titulo="Soluções que transformam sorrisos"
             tituloClassName="max-w-[16ch] text-[clamp(28px,4.5vw,52px)]"

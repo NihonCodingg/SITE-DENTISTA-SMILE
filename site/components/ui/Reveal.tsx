@@ -10,9 +10,16 @@ type Props = {
   delay?: number;
   y?: number;
   className?: string;
+  /**
+   * Nome acessível repassado ao elemento. Existe porque AntesDepois.tsx usa
+   * `<Reveal as="h2">` com o título fatiado em letras `aria-hidden` (Task 20,
+   * ScrollFloat) — sem o repasse, o heading ficava sem nome e o atributo
+   * morria em silêncio aqui.
+   */
+  'aria-label'?: string;
 };
 
-export function Reveal({ children, as: Tag = 'div', delay = 0, y = 24, className }: Props) {
+export function Reveal({ children, as: Tag = 'div', delay = 0, y = 24, className, 'aria-label': ariaLabel }: Props) {
   const ref = useRef<HTMLElement>(null);
   const { podeAnimar, montado } = useCapability();
 
@@ -63,5 +70,5 @@ export function Reveal({ children, as: Tag = 'div', delay = 0, y = 24, className
   }, [montado, podeAnimar, delay, y]);
 
   // @ts-expect-error tag dinâmica
-  return <Tag ref={ref} className={className}>{children}</Tag>;
+  return <Tag ref={ref} aria-label={ariaLabel} className={className}>{children}</Tag>;
 }
