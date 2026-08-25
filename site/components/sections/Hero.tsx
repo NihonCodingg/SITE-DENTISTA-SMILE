@@ -189,12 +189,12 @@ export function Hero() {
       >
         {/* O botão não sai mais direto para o WhatsApp: ele abre um cartão com
             quem atende, o que a clínica faz e onde fica, e é de lá que sai o
-            link (pedido do dono do projeto). O `Magnet` continua, agora por
-            dentro do CtaAgendamento — envolvendo só o botão, não o cartão. */}
+            link (pedido do dono do projeto). `brilho` liga o reflexo
+            especular; ele só monta de verdade onde há ponteiro para seguir. */}
         {/* As porcentagens saem da medição do bloco de cima: no celular o
             título termina em ~43% da tela, no desktop em ~56%. */}
         <div className="absolute inset-x-0 top-[47%] mx-auto flex w-[min(86vw_-_28px,420px)] flex-col items-center gap-4 md:top-[58%] md:w-[min(44vw_-_40px,520px)]">
-          <CtaAgendamento tema="amarelo" magnetico compacto />
+          <CtaAgendamento tema="amarelo" brilho compacto />
           <ProvaSocial />
         </div>
       </ScrollExpand>

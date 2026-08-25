@@ -4,8 +4,8 @@ import { useId, useState } from 'react';
 import Image from 'next/image';
 import { waLink, ENDERECO, INSTAGRAM } from '@/lib/contact';
 import { useCapability } from '@/lib/useCapability';
-import { Expandable, ExpandableContent, ExpandableTrigger } from '@/components/cultui/Expandable';
-import Magnet from '@/components/reactbits/Magnet';
+import { Expandable, ExpandableContent, useExpandable } from '@/components/cultui/Expandable';
+import SpecularButton from '@/components/reactbits/SpecularButton';
 
 /**
  * O CTA "Agendar minha avaliação" (Task 21, pedido do dono do projeto): em vez
@@ -14,6 +14,11 @@ import Magnet from '@/components/reactbits/Magnet';
  *
  * O componente que abre é o `Expandable` do cult-ui, vendorizado em
  * components/cultui/Expandable.tsx.
+ *
+ * Task 23: o botão em si virou o `SpecularButton` do React Bits onde faz
+ * sentido (ver `Gatilho`, abaixo), e o `Magnet` — que fazia o botão seguir o
+ * cursor — saiu a pedido do dono do projeto. Os dois efeitos juntos seriam
+ * dois motivos diferentes para a mesma peça se mexer com o ponteiro.
  *
  * Uma consequência que vale dizer em voz alta: quem antes chegava ao WhatsApp
  * em um toque agora precisa de dois. Os caminhos diretos continuam existindo —
@@ -28,8 +33,11 @@ import Magnet from '@/components/reactbits/Magnet';
 type Props = {
   /** `amarelo` no hero (sobre o creme), `preto` em Tratamentos. */
   tema?: 'amarelo' | 'preto';
-  /** Liga o `Magnet` no botão — só o hero usa. */
-  magnetico?: boolean;
+  /**
+   * Liga o reflexo especular (WebGL) no botão — só o hero usa. Ele monta
+   * mesmo assim só quando há ponteiro fino: ver `Gatilho` abaixo.
+   */
+  brilho?: boolean;
   /**
    * Cartão sem a foto e sem a linha do Instagram. É o que o hero usa: lá o
    * cartão abre DENTRO do palco fixo, com a headline em cima, e o cartão
@@ -43,24 +51,10 @@ type Props = {
 
 const ROTULO = 'Agendar minha avaliação';
 
-export function CtaAgendamento({ tema = 'amarelo', magnetico = false, compacto = false, className = '' }: Props) {
-  const { podeAnimar, pontoFino } = useCapability();
+export function CtaAgendamento({ tema = 'amarelo', brilho = false, compacto = false, className = '' }: Props) {
+  const { podeAnimar } = useCapability();
   const [aberto, setAberto] = useState(false);
   const idConteudo = useId();
-
-  const botao =
-    tema === 'amarelo'
-      ? 'bg-amarelo text-preto pointer-fine:hover:bg-dourado'
-      : 'bg-preto text-branco pointer-fine:hover:bg-escuro-linha';
-
-  const gatilho = (
-    <ExpandableTrigger
-      className={`pressable inline-flex min-h-11 items-center gap-2 rounded-full px-7 font-rotulo text-[13px] font-medium tracking-[.08em] uppercase ${botao}`}
-    >
-      {ROTULO}
-      <Seta aberto={aberto} animar={podeAnimar} />
-    </ExpandableTrigger>
-  );
 
   return (
     <Expandable
@@ -70,15 +64,7 @@ export function CtaAgendamento({ tema = 'amarelo', magnetico = false, compacto =
       contentId={idConteudo}
       className={`flex w-full flex-col items-center ${className}`.trim()}
     >
-      {/* O Magnet fica só em volta do botão: se envolvesse o cartão inteiro,
-          o bloco aberto sairia do lugar junto com o ponteiro. */}
-      {magnetico ? (
-        <Magnet disabled={!(podeAnimar && pontoFino)} padding={90} magnetStrength={3}>
-          {gatilho}
-        </Magnet>
-      ) : (
-        gatilho
-      )}
+      <Gatilho tema={tema} brilho={brilho} />
 
       <ExpandableContent preset="slide-up" className="w-full">
         <div className="flex justify-center pt-4">
@@ -148,6 +134,88 @@ export function CtaAgendamento({ tema = 'amarelo', magnetico = false, compacto =
         </div>
       </ExpandableContent>
     </Expandable>
+  );
+}
+
+/**
+ * O botão que abre o cartão. Duas variantes do MESMO botão — mesmas classes,
+ * mesmo rótulo, mesmo estado anunciado:
+ *
+ * - Com ponteiro fino e aparelho folgado, é o `SpecularButton` do React Bits
+ *   (Task 23, pedido do dono do projeto): um reflexo corre pela borda do
+ *   botão seguindo o cursor.
+ * - Em qualquer outro caso, um `<button>` comum.
+ *
+ * O corte não é economia arbitrária: o efeito é literalmente guiado pelo
+ * ponteiro. Num aparelho de toque não existe ponteiro para seguir, o brilho
+ * nunca acenderia (`bright` fica em zero), e o que sobraria seria um contexto
+ * WebGL desenhando um contorno parado a 60 quadros por segundo. `podePesado`
+ * cobre o resto: aparelho fraco, economia de dados e movimento reduzido.
+ *
+ * As duas variantes precisam carregar `aria-expanded` e `aria-controls` — por
+ * isso o gatilho lê o contexto do `Expandable` direto, em vez de usar o
+ * `ExpandableTrigger` (que renderiza o próprio `<button>`, e dois botões não
+ * se aninham).
+ */
+function Gatilho({ tema, brilho }: { tema: 'amarelo' | 'preto'; brilho: boolean }) {
+  const { isExpanded, toggleExpand, contentId } = useExpandable();
+  const { podeAnimar, podePesado, pontoFino } = useCapability();
+
+  const cores =
+    tema === 'amarelo'
+      ? 'bg-amarelo text-preto pointer-fine:hover:bg-dourado'
+      : 'bg-preto text-branco pointer-fine:hover:bg-escuro-linha';
+
+  const classes = `pressable inline-flex min-h-11 items-center gap-2 rounded-full px-7 font-rotulo text-[13px] font-medium tracking-[.08em] uppercase ${cores}`;
+
+  const conteudo = (
+    <>
+      {ROTULO}
+      <Seta aberto={isExpanded} animar={podeAnimar} />
+    </>
+  );
+
+  const comuns = {
+    type: 'button' as const,
+    onClick: toggleExpand,
+    'aria-expanded': isExpanded,
+    'aria-controls': contentId,
+  };
+
+  if (brilho && pontoFino && podePesado) {
+    return (
+      <SpecularButton
+        {...comuns}
+        size="livre"
+        // `radius` alto vira pílula: o shader já limita o raio a metade do
+        // menor lado, então qualquer número grande dá o mesmo arredondamento
+        // que o `rounded-full` das classes.
+        radius={999}
+        // O botão pinta o PRÓPRIO fundo (o original nasce transparente). Sem
+        // isto, a classe `bg-amarelo` e o `background` que o componente emite
+        // disputariam a mesma cascata.
+        tint="var(--color-amarelo)"
+        tintOpacity={1}
+        textColor="var(--color-preto)"
+        // Reflexo branco sobre um traço dourado escuro: é o amarelo da marca
+        // ganhando luz, não um botão cinza de demonstração.
+        lineColor="#FFFFFF"
+        baseColor="var(--color-dourado)"
+        intensity={1.15}
+        thickness={1.4}
+        proximity={280}
+        reducedMotion={!podeAnimar}
+        className={classes}
+      >
+        {conteudo}
+      </SpecularButton>
+    );
+  }
+
+  return (
+    <button {...comuns} className={classes}>
+      {conteudo}
+    </button>
   );
 }
 

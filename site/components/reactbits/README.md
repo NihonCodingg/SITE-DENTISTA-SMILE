@@ -348,10 +348,16 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   tabulação; decorativo os torna `<div>` puros e esconde o contêiner do leitor de tela),
   `next/image`, `overlayColor` sem default fora da paleta, rótulo sem inglês cravado.
 
-### `Magnet.tsx`
+### `Magnet.tsx` — REMOVIDO na Task 23
+
+> Era o efeito de o botão do hero SEGUIR o cursor. Saiu a pedido do dono do projeto, no mesmo
+> pedido em que o `SpecularButton` entrou: os dois juntos dariam dois motivos diferentes para a
+> mesma peça reagir ao ponteiro — um movendo o botão de lugar, outro correndo luz pela borda dele.
+> O arquivo foi apagado em vez de ficar como código morto; a nota abaixo fica porque o padrão de
+> gate por prop `disabled` que ele estabeleceu continua valendo (o `GlareHover` o segue).
 
 - **Origem:** `src/ts-tailwind/Animations/Magnet/Magnet.tsx`
-- **Usado em:** Task 8 (efeito magnético nos CTAs do Hero)
+- **Usado em:** Task 8 (efeito magnético nos CTAs do Hero) — até a Task 23
 - **Dependências que arrasta:** nenhuma além de React.
 - **Rede:** nenhuma chamada.
 - **`matchMedia`/reduced-motion:** idem — não consulta nada sozinho. O gate (`podeAnimar` **e**
@@ -429,6 +435,43 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      este projeto nunca liga `animated`, essa transição nunca dispararia de verdade, mas remover a
      injeção evita uma folha de estilo global "invisível" (fora do Tailwind, fora de qualquer
      arquivo `.css` rastreado) que um mantenedor futuro precisaria descobrir sozinho.
+
+### `SpecularButton.tsx`
+
+- **Origem:** `src/ts-tailwind/Components/SpecularButton/SpecularButton.tsx` (branch `main`)
+- **Usado em:** Task 23 — o CTA "Agendar minha avaliação" do hero, via `ui/CtaAgendamento.tsx`
+  (pedido do dono do projeto, no mesmo pedido que tirou o `Magnet`).
+- **Dependências que arrasta:** `ogl` (já no projeto — a `CircularGallery` usa). Nenhuma nova.
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** virou a prop `reducedMotion`, alimentada por
+  `useCapability().podeAnimar` (o original não tem noção nenhuma de movimento reduzido).
+- **Só `transform`/`opacity`:** o desenho é WebGL num canvas próprio — não toca layout da página.
+  O que ele custa é GPU e um laço de `requestAnimationFrame`, não reflow.
+- **Quando monta, e por quê:** só com ponteiro fino **e** `podePesado`. Não é economia arbitrária —
+  o reflexo é literalmente guiado pelo ponteiro. Em aparelho de toque não existe ponteiro para
+  seguir, o brilho nunca acenderia (`bright` fica em zero) e o que sobraria seria um contexto WebGL
+  desenhando um contorno parado a 60 quadros por segundo. Quem decide é `ui/CtaAgendamento.tsx`,
+  que renderiza um `<button>` comum com as MESMAS classes e o MESMO `aria` no outro caminho.
+- **Modificações:**
+  1. `'use client'` no topo (o original não declara).
+  2. **Escrita de ref movida do render para `useLayoutEffect`** — `propsRef.current = {...}` no
+     corpo do componente, a mesma correção que `DepthCarousel`, `OptionWheel` e `ScrollExpand`
+     levaram (regra `react-hooks/refs`).
+  3. **`reducedMotion` virou prop.** Sem ela o laço de rAF roda para sempre. Com ela o laço não é
+     criado: desenha-se UM quadro, com o reflexo parado numa diagonal. Reduzir, não zerar — a borda
+     continua com luz, ela só não persegue mais nada.
+  4. **Pausa fora da viewport e com a aba oculta.** O original mantém o laço vivo o tempo todo, e um
+     CTA no hero passa a maior parte da visita fora de tela. Mesma correção que `TextLoop`,
+     `DriftWall` e `CircularGallery` já precisaram.
+  5. **`size="livre"`** — o original só tem `sm`/`md`/`lg`, cada um com padding e tamanho de fonte
+     próprios, que brigariam com as classes de botão deste site.
+  6. **`...rest` e `forwardRef`.** O original não repassa props extras nem a ref, e aqui o botão
+     PRECISA carregar `aria-expanded`/`aria-controls`: ele é o gatilho do cartão de agendamento, e
+     sem isso quem usa leitor de tela não sabe que ele abre algo.
+  7. **`window.pointermove` só quando há para quem seguir** — o original registra o listener global
+     mesmo com `followMouse` desligado.
+  8. **Estreitamento explícito de `pointerAngle`** — o original conta com o TypeScript inferir
+     não-nulo a partir de outra variável booleana, o que o modo estrito deste projeto não aceita.
 
 ### `CircularGallery.tsx`
 
