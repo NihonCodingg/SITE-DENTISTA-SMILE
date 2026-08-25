@@ -22,9 +22,18 @@
  *    letra por letra — a mesma violação que o axe apontou no hero (Task 18,
  *    A1). O nome acessível vai no heading pai, via `tituloAriaLabel` do
  *    `SectionHeading`.
+ * 6. **As letras são agrupadas por palavra** (Task 21). O original põe cada
+ *    caractere — inclusive o espaço — num `inline-block` solto, e aí o
+ *    navegador pode quebrar a linha ENTRE DUAS LETRAS da mesma palavra. Era
+ *    visível: "As histórias valem mais d / o que qualquer anúncio". Cada
+ *    palavra agora vive num `inline-block whitespace-nowrap`, com espaço de
+ *    verdade entre elas, então a quebra só acontece onde existe espaço. A
+ *    animação continua letra a letra: o GSAP passou a mirar `.sf-letra` em
+ *    vez de `.inline-block`, que agora casaria também com os invólucros de
+ *    palavra.
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import { Fragment, useEffect, useMemo, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -50,12 +59,26 @@ export default function ScrollFloat({
 }: ScrollFloatProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
 
+  // Palavra por palavra por fora, letra por letra por dentro (ver modificação
+  // 6): `whitespace-nowrap` no invólucro é o que segura a palavra inteira na
+  // mesma linha, e o espaço entre invólucros é um espaço normal, onde a
+  // quebra pode acontecer.
   const letras = useMemo(
     () =>
-      texto.split('').map((char, index) => (
-        <span className="inline-block" key={index}>
-          {char === ' ' ? ' ' : char}
-        </span>
+      texto.split(' ').map((palavra, iPalavra, palavras) => (
+        <Fragment key={iPalavra}>
+          <span className="inline-block whitespace-nowrap">
+            {palavra.split('').map((char, i) => (
+              <span className="sf-letra inline-block" key={i}>
+                {char}
+              </span>
+            ))}
+          </span>
+          {/* O espaço fica FORA do invólucro: dentro dele, o
+              `whitespace-nowrap` o impediria de ser um ponto de quebra, que é
+              justamente o que precisamos que ele seja. */}
+          {iPalavra < palavras.length - 1 ? ' ' : null}
+        </Fragment>
       )),
     [texto]
   );
@@ -65,7 +88,7 @@ export default function ScrollFloat({
     if (!el) return;
     gsap.registerPlugin(ScrollTrigger);
 
-    const chars = el.querySelectorAll('.inline-block');
+    const chars = el.querySelectorAll('.sf-letra');
     const tween = gsap.fromTo(
       chars,
       {

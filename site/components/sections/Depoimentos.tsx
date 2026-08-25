@@ -1,24 +1,11 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { DEPOIMENTOS } from '@/lib/content';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { Reveal } from '@/components/ui/Reveal';
-import { VideoCard } from '@/components/ui/VideoCard';
-import GradualBlur from '@/components/reactbits/GradualBlur';
-
-// O GradualBlur vendorizado tem z-index:1000 por padrão (components/
-// reactbits/GradualBlur.tsx) — pensado para um componente sozinho na tela,
-// não para uma faixa decorativa dentro de uma seção que fica atrás de
-// overlays reais do site. Sem override, essas faixas vazavam visualmente por
-// cima do fundo escurecido do Lightbox (achado de review, Task 12: o fundo
-// pintado de vermelho revelou as duas faixas por cima dele). `1` é seguro
-// porque este blur é decoração só dentro do próprio scroller — nunca precisa
-// competir com nada fora da seção. Exportada (não só um literal inline nas
-// duas instâncias abaixo) para o teste de regressão em
-// __tests__/depoimentos.test.tsx comparar contra `Z_INDEX_BACKDROP`
-// (importado de components/ui/Lightbox.tsx) sem repetir nenhum dos dois
-// números — os dois lados da comparação vêm da fonte real.
-export const Z_INDEX_BLUR_BORDA = 1;
+import { useCapability } from '@/lib/useCapability';
+import AccordionGallery from '@/components/reactbits/AccordionGallery';
 
 /**
  * Seção "Depoimentos" (Task 12). São vídeos reais, gravados na clínica — sem
@@ -27,17 +14,78 @@ export const Z_INDEX_BLUR_BORDA = 1;
  * nome escrito"). A legenda de cada card já vem de `DEPOIMENTOS`
  * (lib/content.ts) e descreve o que foi tratado, nunca quem foi tratado.
  *
- * Carrossel horizontal com scroll-snap; `GradualBlur` (React Bits,
- * vendorizado em components/reactbits/GradualBlur.tsx) marca as duas bordas
- * do scroller para sinalizar que o conteúdo continua. `overflow-x-auto` vive
- * no próprio scroller (`.depoimentos-scroller`), nunca na página — não há
- * reset global de overflow-x no projeto (conferido em app/globals.css), então
- * é este componente sozinho quem garante que os cards com
- * `flex-[0_0_min(260px,78vw)]` ficam contidos: `min(...,78vw)` nunca deixa um
- * card sozinho ser mais largo que a viewport, e é o scroller — não a seção —
- * quem ganha a barra de rolagem.
+ * Task 21, pedido do dono do projeto: os três cards viraram a
+ * `AccordionGallery` do React Bits (vendorizada em
+ * components/reactbits/AccordionGallery.tsx). Ela substituiu o scroller
+ * horizontal com scroll-snap e as duas faixas de `GradualBlur` nas bordas —
+ * uma sanfona mostra os três de uma vez, sem barra de rolagem, então não
+ * sobrou borda para sinalizar.
+ *
+ * O vídeo continua NÃO hospedado aqui: cada painel é um link que abre o reel
+ * no Instagram da clínica, em aba nova (mesma regra de `ui/VideoCard.tsx`).
  */
+
+/**
+ * Sanfona horizontal em tela larga, vertical no celular. O componente recebe
+ * pixels e uma orientação — a conta é aqui, como em `AntesDepois.tsx`.
+ *
+ * Por que não deixar o próprio componente decidir: a variante Tailwind do
+ * React Bits tem um salto embutido em 520px que troca a direção por classe,
+ * mas mantém altura e largura da mídia em estilo inline — que media query
+ * nenhuma alcança (ver modificação 8 no componente). Medir aqui é o que faz a
+ * versão de celular ter proporção de verdade.
+ *
+ * As medidas, e por que o celular não usa as mesmas: o conteúdo de um pôster
+ * de reel é retrato (9:16), e o painel aberto só fica em pé se for mais alto
+ * que largo.
+ *   - Desktop: linha de 560px de altura; com `expandRatio` 0,48 o aberto sai
+ *     420×560 (medido) — retrato.
+ *   - Celular: coluna. A largura é a da tela (343px numa de 375), então o
+ *     aberto precisa passar de 343px de altura para ficar em pé. Com
+ *     `expandRatio` 0,48 daria 250px — deitado. Subindo a fatia do aberto
+ *     para 0,7 numa coluna de 620px, ele sai 434px de altura (medido) e os
+ *     dois fechados viram faixas de ~93px, que é exatamente o que se quer num
+ *     celular: um painel grande de verdade e a prova visível de que há mais.
+ */
+function useMedidasSanfona() {
+  const [medidas, setMedidas] = useState<{
+    orientation: 'horizontal' | 'vertical';
+    height: number;
+    expandRatio: number;
+  }>({ orientation: 'horizontal', height: 560, expandRatio: 0.48 });
+
+  useEffect(() => {
+    const medir = () =>
+      setMedidas(
+        window.innerWidth < 768
+          ? { orientation: 'vertical', height: 620, expandRatio: 0.7 }
+          : { orientation: 'horizontal', height: 560, expandRatio: 0.48 }
+      );
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, []);
+
+  return medidas;
+}
+
+/**
+ * `alt` descreve a cena (vem da legenda de `DEPOIMENTOS`); `ariaLabel` é o
+ * nome do LINK, e diz para onde ele vai — a mesma frase que o `VideoCard` já
+ * usava, para que a troca de componente não mude o que o leitor de tela ouve.
+ */
+const PAINEIS = DEPOIMENTOS.map((d) => ({
+  image: `/videos/posters/${d.slug}.webp`,
+  label: d.titulo,
+  alt: d.legenda,
+  link: d.reel,
+  ariaLabel: `Assistir no Instagram: ${d.titulo}`,
+}));
+
 export function Depoimentos() {
+  const { podeAnimar, pontoFino } = useCapability();
+  const { orientation, height, expandRatio } = useMedidasSanfona();
+
   return (
     <section id="depoimentos" className="bg-creme px-4 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-[1360px]">
@@ -52,25 +100,67 @@ export function Depoimentos() {
           <p className="font-corpo text-[16px] text-grafite">Pacientes reais, gravados na própria clínica.</p>
         </Reveal>
 
-        <div className="relative mt-10 md:mt-14">
-          <div className="depoimentos-scroller flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-4 pb-2 md:gap-6 md:scroll-pl-8">
-            {DEPOIMENTOS.map((d, i) => (
-              <Reveal key={d.slug} delay={Math.min(i, 2) * 0.06} className="shrink-0 snap-start flex-[0_0_min(260px,78vw)]">
-                <VideoCard slug={d.slug} titulo={d.titulo} legenda={d.legenda} reel={d.reel} />
-              </Reveal>
-            ))}
+        <Reveal delay={0.1} className="mt-10 md:mt-14">
+          {/* A sanfona não ocupa os 1360px da seção: com três painéis, uma
+              linha larga demais achata o painel aberto e transforma um pôster
+              de reel (9:16) numa faixa. Em 900px o painel aberto mede
+              420×560 (medido) — proporção de retrato, que é o formato do que
+              está dentro dele. */}
+          <div className="mx-auto max-w-[900px]">
+            <AccordionGallery
+              items={PAINEIS}
+              orientation={orientation}
+              height={height}
+              /* Abre no primeiro: é o depoimento de facetas, o tratamento que
+                 o BRIEFING.md §3 põe como carro-chefe da clínica. */
+              defaultIndex={0}
+              /* Hover só faz sentido com ponteiro fino; no toque o primeiro
+                 toque abre o painel e o segundo abre o Instagram, que é o
+                 comportamento do componente com `trigger="click"`. */
+              trigger={pontoFino ? 'hover' : 'click'}
+              reducedMotion={!podeAnimar}
+              expandRatio={expandRatio}
+              gap={12}
+              radius={24}
+              tilt={podeAnimar ? 8 : 0}
+              parallax={podeAnimar ? 0.5 : 0}
+              /* Sem preto e branco: o assunto da seção é o resultado de um
+                 tratamento estético — dente e gengiva em cinza não contam a
+                 mesma história. O que separa o painel aberto dos fechados é o
+                 escurecimento (`--ag-dim`) e o tamanho. */
+              grayscale={false}
+              accentColor="var(--color-amarelo)"
+              overlayColor="var(--color-preto)"
+              textColor="var(--color-branco)"
+              panelColor="var(--color-borda)"
+              labelClassName="font-rotulo text-[13px] font-medium tracking-[.1em] uppercase md:text-[15px]"
+              abrirEmNovaAba
+              sizes="(max-width: 768px) 92vw, 500px"
+              selo={<PlayBadge />}
+            />
           </div>
+        </Reveal>
 
-          {/* Decorativo: só indica "tem mais pra rolar". pointer-events:none
-              já vem do próprio GradualBlur (nenhum hoverIntensity passado),
-              então nunca atrapalha o arraste por toque no scroller.
-              zIndex explícito e baixo (ver Z_INDEX_BLUR_BORDA acima) — sem
-              ele, o default de 1000 do componente vaza por cima do fundo
-              escurecido do Lightbox. */}
-          <GradualBlur position="left" width="56px" divCount={4} zIndex={Z_INDEX_BLUR_BORDA} className="rounded-l-[24px]" />
-          <GradualBlur position="right" width="56px" divCount={4} zIndex={Z_INDEX_BLUR_BORDA} className="rounded-r-[24px]" />
-        </div>
+        {/* Dica de uso: os painéis abrem e levam para fora do site, e nada na
+            tela diz isso sozinho. Rótulo de interface, não copy. */}
+        <p className="mt-4 text-center font-rotulo text-[13px] tracking-[.12em] text-grafite uppercase">
+          {pontoFino ? 'Passe o mouse para abrir · clique para ver no Instagram' : 'Toque para abrir · toque de novo para ver no Instagram'}
+        </p>
       </div>
     </section>
+  );
+}
+
+/** O mesmo botão de play amarelo do `VideoCard`, para dizer que é vídeo. */
+function PlayBadge() {
+  return (
+    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-amarelo text-preto shadow-[0_10px_24px_rgba(17,17,17,0.28)]">
+      <svg width="16" height="16" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path
+          d="M3.5 2.2v9.6a.6.6 0 0 0 .93.5l7.4-4.8a.6.6 0 0 0 0-1L4.43 1.7a.6.6 0 0 0-.93.5Z"
+          fill="currentColor"
+        />
+      </svg>
+    </span>
   );
 }

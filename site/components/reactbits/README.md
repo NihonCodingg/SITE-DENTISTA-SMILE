@@ -217,6 +217,56 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   5. **`aria-hidden` no contêiner fatiado** — texto em letras é lido letra por letra (a violação
      do axe da Task 18, A1); o nome acessível vai no heading pai, automático quando `flutuar`
      está ligado.
+  6. **Letras agrupadas por palavra** (Task 21). O original solta cada caractere — inclusive o
+     espaço — num `inline-block` próprio, e o navegador passa a poder quebrar a linha ENTRE DUAS
+     LETRAS da mesma palavra. Estava visível na seção de depoimentos: "As histórias valem mais d
+     / o que qualquer anúncio". Cada palavra virou um `inline-block whitespace-nowrap`, com o
+     espaço como nó de texto FORA do invólucro (dentro dele o `nowrap` o impediria de ser ponto
+     de quebra). O GSAP passou a mirar `.sf-letra`, porque `.inline-block` agora casaria também
+     com os invólucros de palavra.
+
+### `AccordionGallery.tsx`
+
+- **Origem:** `src/ts-tailwind/Components/AccordionGallery/AccordionGallery.tsx` (branch `main`)
+- **Usado em:** Task 21 — a seção de Depoimentos, no lugar do carrossel horizontal + `GradualBlur`
+  (pedido do dono do projeto). Três painéis: um aberto, dois comprimidos; cada um é um link para o
+  reel no Instagram.
+- **Dependências que arrasta:** `gsap` (já no projeto). Nenhum plugin.
+- **Rede:** o original embutia cinco fotos do `picsum.photos` como `items` padrão — removido, ver
+  modificação 3.
+- **`matchMedia`/reduced-motion:** virou a prop `reducedMotion`, alimentada por
+  `useCapability().podeAnimar` em `Depoimentos.tsx`.
+- **Só `transform`/`opacity`: NÃO — exceção consciente.** O mecanismo do componente é animar
+  `flex-grow`, que é layout. É por isso que ele existe, então a exceção é o próprio pedido. O que
+  foi feito para segurar o custo: `contain: layout` na raiz (o recálculo não sobe para a página),
+  três painéis apenas, e nada disso é disparado por scroll — só por hover, toque, foco ou seta.
+- **Modificações:**
+  1. `'use client'` no topo (o original não declara).
+  2. **`reducedMotion` virou prop** — o original chama `window.matchMedia` no corpo do componente.
+  3. **`DEFAULT_ITEMS` removido** — eram cinco URLs de `picsum.photos`, rede a terceiro embutida
+     no default. `items` passou a ser obrigatório.
+  4. **`<img>` → `next/image`** (`fill` + `sizes`), como em todo componente vendorizado aqui.
+  5. **`role="list"`/`role="listitem"` removidos.** No original cada painel é um `<a>` marcado
+     como `listitem` — o role sobrescreve a semântica de link e o leitor de tela deixa de anunciar
+     que aquilo abre alguma coisa. Como aqui cada painel É um link para fora do site, ser
+     anunciado como link é justamente o que importa. O nome acessível vem de `ariaLabel` no item,
+     em português.
+  6. **`target`/`rel` opcionais** (`abrirEmNovaAba`) — o original só navega na mesma aba.
+  7. **`--ag-dim` passou a ser escrito no PAINEL, não na mídia.** Bug do original: a variável era
+     escrita no `<span>` da mídia e lida no `<span>` do overlay, que é IRMÃO dela. A herança nunca
+     chegava, então o overlay ficava para sempre no fallback `0.35` e o painel aberto era
+     escurecido igual aos fechados. Escrita no painel — ancestral dos dois — a variável cascateia
+     e o escurecimento passa a funcionar.
+  8. **Saltos `max-[520px]:` removidos.** O original vira coluna abaixo de 520px por classe, mas
+     mantém a altura da linha e o `width: var(--ag-media-size)` da mídia em estilo inline, que
+     media query nenhuma alcança — no celular a mídia continuava dimensionada como se a sanfona
+     fosse horizontal. Aqui `orientation`, `height` e `expandRatio` vêm de quem chama, que mede a
+     tela (mesmo idioma de `AntesDepois.tsx`).
+  9. **`selo`** — nó opcional desenhado por cima de todo painel. Estes painéis são pôsteres de
+     vídeo: sem um indicador de play, nada diz que o clique abre um reel.
+  10. **`contain: layout`** na raiz — ver a nota de exceção acima.
+  11. **`willChange` só quando há movimento.** O CSS do original removia a dica sob
+      `prefers-reduced-motion`; a variante Tailwind perdeu isso ao transformá-la em estilo inline.
 
 ### `MaskedHeading.tsx` — REMOVIDO na mesma Task 20 em que entrou
 
@@ -304,10 +354,18 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      dentro do efeito.
   3. Adicionado `'use client'` no topo, mesma razão do `SplitText.tsx`.
 
-### `GradualBlur.tsx`
+### `GradualBlur.tsx` — REMOVIDO na Task 21
+
+> Seu único uso eram as duas faixas nas bordas do carrossel de Depoimentos, dizendo "o scroller
+> continua". Na Task 21 aquele carrossel virou a `AccordionGallery` (pedido do dono do projeto):
+> os três painéis cabem na largura da seção, não existe mais scroller, e uma borda esfumada
+> passou a apontar para conteúdo que não existe. O arquivo foi apagado em vez de ficar como
+> código morto — a nota abaixo fica porque a régua de z-index que ela documenta continua valendo
+> para qualquer decoração futura.
 
 - **Origem:** `src/ts-tailwind/Animations/GradualBlur/GradualBlur.tsx`
-- **Usado em:** Task 12 (bordas do carrossel de Depoimentos, indicando que o scroller continua)
+- **Usado em:** Task 12 (bordas do carrossel de Depoimentos, indicando que o scroller continua) —
+  até a Task 21
 - **Dependências que arrasta:** nenhuma além de React.
 - **Rede:** nenhuma chamada.
 - **`matchMedia`/reduced-motion:** o componente não consulta nada por conta própria. Não precisou
