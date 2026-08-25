@@ -49,12 +49,14 @@ const SEPARADOR = ' ✦ ';
  * importa: texto de ~13px (a mesma régua dos outros rótulos do site) e fita
  * de ~50px de altura no celular; ~23px e ~67px no desktop.
  *
- * A ONDULAÇÃO é a exceção: ela NÃO é dividida pela escala (Task 24, achado do
- * dono do projeto — "não está bom dessa forma"). Compensar a escala aqui
- * também dava uma onda de 22px de amplitude numa fita de 50px, e o texto
- * passava a subir e descer em ângulos íngremes, difícil de ler numa linha
- * curta. A curviness do celular é praticamente a mesma do desktop: a fita
- * ondula de leve e as letras continuam quase na horizontal.
+ * A FITA É RETA desde 25/08/2026 ("deixa essa linha normal", o dono do
+ * projeto). Era `shape="wave"`, e a ondulação foi a fonte de três rodadas de
+ * ajuste: ela inclina as letras, some com a legibilidade quando a fita
+ * encurta e obriga o invólucro a ser muito mais alto que a faixa só para
+ * caber a amplitude. Com `shape="line"` o `curviness` deixa de existir na
+ * conta — o caminho é uma reta que atravessa a caixa inteira — e o invólucro
+ * pôde encostar na altura real da faixa: 190px → 86px no desktop, 58 → 52 no
+ * celular. Menos vazio em volta, texto na horizontal, mesma marca.
  *
  * REVISÃO DE 25/08/2026 (captura de aparelho real, "a fita amarela"): três
  * coisas juntas faziam ela parecer errada no celular.
@@ -67,6 +69,32 @@ const SEPARADOR = ' ✦ ';
  *    somavam ao respiro das seções vizinhas e afastavam a fita de tudo.
  *    Agora 58px, colado na altura real da faixa.
  */
+/**
+ * O caminho da fita no CELULAR — uma reta MUITO mais longa que a caixa.
+ *
+ * Por que ela precisa ser longa: o `TextLoop` fixa `textLength` no
+ * comprimento do caminho e deixa o navegador ajustar o ESPAÇAMENTO para caber
+ * (`lengthAdjust="spacing"`). Se o texto natural é mais largo que o caminho, o
+ * espaçamento é espremido — e passa a NEGATIVO, colando as letras. MEDIDO no
+ * celular com o caminho padrão: texto natural 4631 contra caminho de 1840, ou
+ * seja 2791 unidades espremidas. Era isso que embolava "PROTOCOLO DE
+ * IMPLANTE", e não a ondulação nem o espaço entre palavras (as duas hipóteses
+ * que tentei antes).
+ *
+ * (Foi essa medição que derrubou duas explicações minhas anteriores: eu
+ * culpei a ondulação, depois o espaço entre palavras, e cheguei a alargar o
+ * espaço interno dos nomes com inquebráveis. O espremido era do caminho curto
+ * o tempo todo; com ele resolvido, o remendo saiu.)
+ *
+ * A saída não é diminuir a fonte: as medidas de desenho já são divididas pela
+ * escala (0,33 no celular) para o texto sair legível na tela, e encolher aqui
+ * devolveria a letra de 6px. A saída é dar caminho: 4700 unidades, centradas
+ * na janela visível (0 a 1200 da caixa), então o texto corre sem aperto e o
+ * que aparece é o pedaço do meio. O desktop não precisa — lá sobra folga
+ * (+137 medidos) — e por isso `caminho` é `undefined` naquela faixa.
+ */
+const CAMINHO_LONGO = 'M -1750 260 L 2950 260';
+
 const MEDIDAS_FITA = {
   // Sangrando de borda a borda, o contêiner é a largura da tela: 393 ÷ 1200
   // = escala 0,33. Texto 46 → ~15px na tela; fita 150 → ~49px; ondulação
@@ -76,36 +104,14 @@ const MEDIDAS_FITA = {
   // o que decide se as letras respiram. Numa tentativa com corpo 52 e
   // espacejamento 11 (razão 0,21 contra os 0,31 de antes) as palavras
   // colavam sobre a curva — "PROTOCOLO DE IMPLANTE" virava um bloco só.
-  celular: { fontSize: 46, ribbonWidth: 150, curviness: 20, letterSpacing: 16, altura: 'h-[58px]' },
+  celular: { fontSize: 46, ribbonWidth: 150, letterSpacing: 16, altura: 'h-[52px]', caminho: CAMINHO_LONGO },
   // Acima de 768px a caixa praticamente não é reduzida (escala ~1).
-  tela: { fontSize: 22, ribbonWidth: 64, curviness: 40, letterSpacing: 3, altura: 'h-[190px]' },
+  tela: { fontSize: 22, ribbonWidth: 64, letterSpacing: 3, altura: 'h-[86px]', caminho: undefined },
 };
 
 
-/**
- * O texto da fita, com o espaço INTERNO de cada nome alargado.
- *
- * Por que: o `letterSpacing` da fita separa TODOS os caracteres, inclusive o
- * espaço — então a distância entre letras cresce e a distância entre palavras
- * fica igual, e as duas se confundem. Na tela, "PROTOCOLO DE IMPLANTE" virava
- * um bloco só. Dois ` ` (espaço inquebrável) devolvem a hierarquia:
- * inquebrável, e não espaço comum, porque o SVG colapsa espaços repetidos ao
- * traçar texto sobre curva — o inquebrável sobrevive.
- *
- * Vale só na FITA CURVA, e por isso mora em `textoFita` e não em
- * `textoTratamentos`: a faixa reta do movimento reduzido desenha texto em
- * linha, onde o espaço normal já separa as palavras — alargar ali só criaria
- * buracos. E vale só na cópia decorativa: a fita é `aria-hidden`, e a lista
- * de verdade, que leitor de tela e busca leem, está na seção de Tratamentos
- * com os nomes intactos.
- */
 function textoTratamentos(): string {
   return TRATAMENTOS.map((t) => t.nome).join(SEPARADOR);
-}
-
-/** Só a fita curva alarga o espaço; a faixa reta usa o texto como ele é. */
-function textoFita(): string {
-  return TRATAMENTOS.map((t) => t.nome.replace(/ /g, '  ')).join(SEPARADOR);
 }
 
 function TrilhaEstatica({ texto }: { texto: string }) {
@@ -120,7 +126,6 @@ export function Ticker() {
   const { podeAnimar, montado } = useCapability();
   const telaLarga = useTelaLarga();
   const texto = textoTratamentos();
-  const paraFita = textoFita();
   const medidas = telaLarga ? MEDIDAS_FITA.tela : MEDIDAS_FITA.celular;
   const mostrarFita = montado && podeAnimar;
 
@@ -150,11 +155,11 @@ export function Ticker() {
         <div className={`relative overflow-hidden ${medidas.altura}`}>
           <div className="absolute top-1/2 left-0 w-full -translate-y-1/2">
             <TextLoop
-              text={paraFita}
-              shape="wave"
+              text={texto}
+              shape="line"
+              path={medidas.caminho}
               separator={SEPARADOR.trim()}
               speed={90}
-              curviness={medidas.curviness}
               fontSize={medidas.fontSize}
               fontWeight={600}
               letterSpacing={medidas.letterSpacing}
