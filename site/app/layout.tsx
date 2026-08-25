@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Archivo_Black, Jost, Source_Sans_3, Caveat } from 'next/font/google';
 import { MotionProvider } from '@/lib/motion';
+import { ModoDiagnostico } from '@/components/layout/ModoDiagnostico';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" className={`${archivo.variable} ${jost.variable} ${source.variable} ${caveat.variable}`}>
       <body>
         <MotionProvider>{children}</MotionProvider>
+        <ModoDiagnostico />
       </body>
     </html>
   );

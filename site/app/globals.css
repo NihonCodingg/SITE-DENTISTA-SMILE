@@ -113,3 +113,22 @@ body {
    integração (Client Component: GlareHover precisa de useCapability() pra
    saber se o aparelho tem ponteiro fino, e Tratamentos.tsx continua Server
    Component). */
+
+
+/* ===== Modo diagnóstico (?teste=chave1,chave2) ==========================
+   Investigação de travamento em aparelho de verdade. O ModoDiagnostico
+   (components/layout/ModoDiagnostico.tsx) lê `?teste=` da URL e marca o
+   <html> com classes `diag-*`; cada regra abaixo desliga UMA fonte de custo
+   do compositor, para descobrir qual delas trava NAQUELA máquina — régua
+   que nenhuma medição em headless substitui. Desligado por padrão; não é
+   API do site. Os `!important` são o ponto: precisam vencer estilo inline
+   escrito por componente (a parede alterna `animation-play-state` inline,
+   por exemplo). */
+html.diag-semparede [data-diag='parede'] { display: none !important; }
+html.diag-paredeparada [data-diag='parede'] * { animation-play-state: paused !important; }
+html.diag-semsilk [data-diag='silk'] { display: none !important; }
+html.diag-semgaleria [data-diag='galeria'] { display: none !important; }
+html.diag-comblur header {
+  background: rgb(255 255 255 / 0.94) !important;
+  backdrop-filter: blur(8px) !important;
+}

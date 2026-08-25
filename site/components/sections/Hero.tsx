@@ -120,7 +120,7 @@ export function Hero() {
                 monta quando o aparelho aguenta o resto do peso do hero —
                 mesma régua do canvas. */}
             {podeAnimar && (
-              <div className="absolute inset-0 opacity-[0.5]">
+              <div className="absolute inset-0 opacity-[0.5]" data-diag="parede">
                 <DriftWall
                   decorativo
                   items={FOTOS_PAREDE}

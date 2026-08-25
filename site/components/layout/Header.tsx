@@ -26,7 +26,16 @@ export const ANCORA_TOPO = '#topo';
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-borda-header bg-branco/94 backdrop-blur-[8px]">
+    // Sem backdrop-blur desde a investigação de travamento: um header sticky
+    // com backdrop-filter re-desfoca a faixa inteira em todo quadro em que o
+    // conteúdo embaixo muda — e "muda" inclui toda rolagem e toda animação
+    // (a parede do hero deriva contínuo; os canvas WebGL redesenham). É um
+    // imposto por quadro na página inteira, pago justamente nos trechos mais
+    // pesados. A 94% de branco o desfoque era quase invisível; o custo, não.
+    // O menu móvel não depende dele (o portal para o body existia justamente
+    // por causa do containing-block do filter). `?teste=comblur` devolve o
+    // blur para comparar lado a lado no aparelho (ver ModoDiagnostico).
+    <header className="sticky top-0 z-50 border-b border-borda-header bg-branco">
       <div className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 px-4 py-[10px] md:px-8">
         <a href={ANCORA_TOPO} className="shrink-0">
           <Image src="/img/logo.png" alt="Smile Ipiranga" width={82} height={46} preload className="h-[46px] w-auto" />

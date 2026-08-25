@@ -108,7 +108,7 @@ export function SorrisosGaleria() {
   if (mostrarWebgl) {
     return (
       <>
-        <div className={`relative ${ALTURA_GALERIA} w-full`}>
+        <div className={`relative ${ALTURA_GALERIA} w-full`} data-diag="galeria">
           <CircularGallery items={ITENS_WEBGL} onError={setWebglFalhou} />
         </div>
         <p className="sr-only">

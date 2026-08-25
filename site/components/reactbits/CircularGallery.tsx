@@ -286,6 +286,10 @@ class App {
 
   isDown = false;
   start = 0;
+  /** Força um render mesmo com o scroll parado — resize e volta à viewport
+   *  mudam a cena sem mexer no scroll (ver `update`). Nasce ligado para o
+   *  primeiro quadro. */
+  precisaRender = true;
 
   constructor(
     container: HTMLElement,
@@ -380,6 +384,9 @@ class App {
   }
 
   onResize() {
+    // Resize muda câmera e tamanhos sem mexer no scroll — o quadro parado
+    // precisa ser redesenhado uma vez (ver `update`).
+    this.precisaRender = true;
     this.screen = {
       width: this.container.clientWidth,
       height: this.container.clientHeight,
@@ -402,6 +409,21 @@ class App {
     // com a aba em primeiro plano — as duas frentes do Silk.tsx (Task 8).
     if (!this.visivel || document.hidden) return;
     void t;
+    // MODIFICAÇÃO (investigação de travamento): render só quando algo muda.
+    // O original redesenhava o canvas INTEIRO a cada quadro enquanto
+    // visível — 60 renders WebGL por segundo com a pessoa parada lendo a
+    // seção. Nada nesta cena anima com o tempo (o `uTime` do shader nasce
+    // num valor fixo e nunca avança); o único motor é `scroll`. Então:
+    // convergiu e ninguém está arrastando, não há o que desenhar. O lerp
+    // nunca chega ao alvo sozinho (é exponencial), daí o snap com epsilon —
+    // 0,001 em unidades de viewport, ordens de grandeza abaixo de 1 pixel.
+    if (Math.abs(this.scroll.target - this.scroll.current) < 0.001) {
+      this.scroll.current = this.scroll.target;
+    }
+    const parado =
+      !this.isDown && this.scroll.current === this.scroll.target && this.scroll.current === this.scroll.last;
+    if (parado && !this.precisaRender) return;
+    this.precisaRender = false;
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
     const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
     this.medias.forEach((media) => media.update(this.scroll, direction));
@@ -413,6 +435,9 @@ class App {
     this.intersectionObserver = new IntersectionObserver(
       ([entry]) => {
         this.visivel = entry.isIntersecting;
+        // Ao voltar à viewport, um render garante o quadro atual mesmo que o
+        // scroll não tenha mudado desde a saída.
+        if (entry.isIntersecting) this.precisaRender = true;
       },
       { threshold: 0 }
     );

@@ -179,6 +179,8 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
   // porcentagem (modificação 12). Escrito em `measure()`, lido em
   // `applyProgress` — que é um callback estável e não pode fechar sobre estado.
   const palcoRef = useRef({ w: 0, h: 0 });
+  // Último progresso APLICADO — cache do applyProgress (ver nota lá).
+  const ultimoPRef = useRef(Number.NaN);
   // Escrita de ref fora do render (regra `react-hooks/refs` do eslint deste
   // Next) — mesma correção que `DepthCarousel` e `OptionWheel` levaram.
   useLayoutEffect(() => {
@@ -204,6 +206,16 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
     const frame = frameRef.current;
     const media = mediaRef.current;
     if (!frame || !media) return;
+    // MODIFICAÇÃO (investigação de travamento): progresso repetido não
+    // reescreve nada. O listener de scroll vive na `window` a página
+    // inteira, então este código rodava — e reescrevia clip-path, transform
+    // e opacidades de seis elementos com os MESMOS valores — a cada evento
+    // de rolagem até o rodapé, muito depois de o hero ter travado em p=1.
+    // Reescrever estilo idêntico não é de graça: invalida o estilo do
+    // elemento e entra no recálculo do quadro. `measure()` zera o cache,
+    // porque a geometria pode mudar por baixo do mesmo `p`.
+    if (p === ultimoPRef.current) return;
+    ultimoPRef.current = p;
     const c = propsRef.current;
 
     const e = smoothstep(0, 1, p);
@@ -285,6 +297,7 @@ const ScrollExpand: React.FC<ScrollExpandProps> = ({
       // ocupa a janela, então a janela é o fallback certo (modificação 13).
       const w = root.clientWidth || (useWindowScroll ? window.innerWidth : stageH);
       palcoRef.current = { w, h: stageH };
+      ultimoPRef.current = Number.NaN; // geometria nova invalida o cache do applyProgress
       stage.style.setProperty('--se-title-size', `${clamp(w * 0.075, 20, 84)}px`);
     };
 

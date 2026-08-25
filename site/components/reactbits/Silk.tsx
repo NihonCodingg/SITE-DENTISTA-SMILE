@@ -240,7 +240,12 @@ export default function Silk({ speed = 5, scale = 1, color = '#7B7481', noiseInt
 
   return (
     <div ref={containerRef} className="h-full w-full">
-      <Canvas dpr={[1, 2]} frameloop={ativo ? 'always' : 'never'}>
+      {/* `dpr={1}` (investigação de travamento): o custo de um fragment
+          shader de tela cheia é proporcional aos pixels, e em `dpr=[1,2]`
+          uma tela hi-DPI pagava 4× os pixels — para uma textura que é suave
+          por natureza e aparece a 22% de opacidade atrás do scrim. Em dpr 1
+          o resultado upscalado é visualmente o mesmo e o quadro custa 1/4. */}
+      <Canvas dpr={1} frameloop={ativo ? 'always' : 'never'}>
         <SilkPlane ref={meshRef} uniforms={uniforms} />
       </Canvas>
     </div>

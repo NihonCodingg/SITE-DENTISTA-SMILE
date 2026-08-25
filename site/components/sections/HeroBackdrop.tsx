@@ -57,7 +57,7 @@ export function HeroBackdrop() {
         // opacity:.22 mantém o dourado como textura, não protagonista — a
         // headline preta continua com contraste sobre o creme (verificado
         // visualmente, ver task-8-report.md).
-        <div className="absolute inset-0 opacity-[.22]">
+        <div className="absolute inset-0 opacity-[.22]" data-diag="silk">
           <Silk speed={2.4} scale={1.1} color="#F0B40C" noiseIntensity={1.1} rotation={0.12} />
         </div>
       )}
