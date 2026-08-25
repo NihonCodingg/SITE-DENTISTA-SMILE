@@ -128,7 +128,11 @@ export function ComoFunciona() {
               delay={i * STAGGER_STEP}
               className="flex flex-col gap-2 border-t-[3px] border-borda-forte pt-5"
             >
-              <span className="font-titulo text-[40px] leading-none text-amarelo">{p.n}</span>
+              {/* `dourado-escuro`, não `amarelo`: o número é texto de 40px sobre
+                  branco, e o amarelo da marca mede 1,52:1 ali — abaixo dos
+                  3:1 que a norma pede para texto grande, e apagado mesmo para
+                  quem enxerga bem. Ver o token em app/globals.css. */}
+              <span className="font-titulo text-[40px] leading-none text-dourado-escuro">{p.n}</span>
               <h3 className="font-titulo text-[17px] text-preto">{p.titulo}</h3>
               <p className="font-corpo text-[16px] text-grafite">{p.desc}</p>
             </Reveal>

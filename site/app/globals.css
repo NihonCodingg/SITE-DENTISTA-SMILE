@@ -5,6 +5,14 @@
   --color-creme: #FCF0E4;
   --color-amarelo: #FCCC24;
   --color-dourado: #F0B40C;
+  /* Dourado que se LÊ sobre fundo claro. O amarelo e o dourado da marca são
+     acentos: medidos contra branco dão 1,52:1 e 1,87:1, e a norma pede 3:1
+     para texto grande. Enquanto isso ficou só em detalhe decorativo não
+     incomodou; virou problema quando os números 01-04 do "Como funciona" —
+     que são texto de 40px sobre branco — nasceram em amarelo e ficaram
+     ilegíveis até para visão normal. Este tom mede 3,96:1 sobre branco e
+     3,53:1 sobre creme, e continua sendo da mesma família. */
+  --color-dourado-escuro: #A87700;
   --color-preto: #111111;
   --color-grafite: #5A5A55;
   --color-borda: #EBDFCE;

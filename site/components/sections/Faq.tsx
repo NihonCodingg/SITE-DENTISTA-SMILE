@@ -54,7 +54,7 @@ function ItemFaq({ pergunta, resposta }: { pergunta: string; resposta: string })
         <span
           aria-hidden="true"
           className={
-            'shrink-0 font-titulo text-[22px] leading-none text-dourado transition-transform duration-200 ease-[var(--ease-saida)] ' +
+            'shrink-0 font-titulo text-[22px] leading-none text-dourado-escuro transition-transform duration-200 ease-[var(--ease-saida)] ' +
             (aberto ? 'rotate-45' : '')
           }
         >

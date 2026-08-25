@@ -144,10 +144,11 @@ pendência — o risco é publicar sem resolvê-las, não deixá-las visíveis.
 - [ ] **Cache de `/_next/image`** persistente na hospedagem; **`public/`** presente no deploy
 - [ ] **Teste manual** de `prefers-reduced-motion` e `saveData` em aparelho real — o ambiente de
       desenvolvimento não conseguiu compositar frames para verificar isso ao vivo
-- [ ] **Arquivos órfãos em `public/`** (~548 KB que vão ao ar sem serem usados por nada):
-      `img/dr-vinicius.jpg.frame-video`, `img/logo-branco.claude-design-artefatos.png`,
-      `img/logo-branco.png.local-fallback`, `img/sorriso-arco.png.local-fallback` e os quatro
-      `videos/posters/*.jpg` (as versões `.webp` são as usadas). Tudo em `public/` fica acessível
-      por URL depois do deploy, incluindo o nome de artefato interno
+- [x] ~~**Arquivos órfãos em `public/`**~~ — RESOLVIDO. Os quatro `videos/posters/*.jpg` estavam
+      versionados e iam ao ar sem serem usados por nada (271 KB; as versões `.webp` são as que o
+      código pede) e foram removidos. Os outros quatro (`*.frame-video`,
+      `*.claude-design-artefatos.*`, `*.local-fallback`) já eram ignorados pelo git, então nunca
+      chegavam ao deploy — só sujavam a cópia local, e foram apagados de lá também. `public/` tem
+      33 arquivos e todos são usados
 
 As perguntas ainda abertas com o cliente estão em `PERGUNTAS-CLIENTE.md`, na raiz.
