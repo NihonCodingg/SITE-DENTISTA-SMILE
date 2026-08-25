@@ -3,17 +3,23 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { gsap } from 'gsap';
 import {
-  MOTION_GAVETA,
+  MOTION_BOLHAS,
   TETO_ACIONADO,
   TETO_CONJUNTO,
   tempoUltimoItem,
-} from '@/components/reactbits/StaggeredMenu';
+} from '@/components/reactbits/BubbleMenu';
 import { EASE_GAVETA_ID, EASE_GAVETA_PONTOS, registrarEaseGaveta } from '@/lib/easeGaveta';
 
-// Task 18 (B): a régua de motion do drawer (design-guidance.md, "Menu mobile —
-// checklist de craft") travada pelos NÚMEROS configurados, não mockando o GSAP
-// para "ver animar". Se alguém voltar os tempos do React Bits original
-// (~1,3s até o último item, power3.in no fechamento), isto falha.
+// Task 18 (B): a régua de motion do menu do celular (design-guidance.md,
+// "Menu mobile — checklist de craft") travada pelos NÚMEROS configurados, não
+// mockando o GSAP para "ver animar".
+//
+// O painel mudou de componente duas vezes (StaggeredMenu na Task 19,
+// BubbleMenu na Task 23) e a régua sobreviveu às duas — é esse o ponto dela.
+// Os defaults do BubbleMenu original ficavam TODOS fora: 500ms de entrada
+// contra o teto de 300, 120ms de passo contra a janela de 30-80, 860ms até o
+// último item contra o teto de 450, e `power3.in` fechando. Se alguém colar os
+// números do React Bits de volta, isto falha.
 
 // Quantidade de itens do drawer em produção: NAV de components/layout/Header.tsx.
 const ITENS_DO_NAV = 4;
@@ -32,22 +38,22 @@ function bezierCss(x: number, [x1, y1, x2, y2]: readonly number[]): number {
   return 3 * (1 - t) ** 2 * t * y1 + 3 * (1 - t) * t ** 2 * y2 + t ** 3;
 }
 
-describe('StaggeredMenu — régua de motion do drawer', () => {
-  it('painel abre em no máximo 300ms (teto do guia para o que a pessoa aciona)', () => {
-    expect(MOTION_GAVETA.abertura).toBeLessThanOrEqual(TETO_ACIONADO);
-    // As camadas de cor nunca chegam depois do painel.
-    MOTION_GAVETA.camadas.forEach((d) => expect(d).toBeLessThanOrEqual(MOTION_GAVETA.abertura));
+describe('BubbleMenu — régua de motion do menu do celular', () => {
+  it('as pílulas entram em no máximo 300ms (teto do guia para o que a pessoa aciona)', () => {
+    expect(MOTION_BOLHAS.entrada).toBeLessThanOrEqual(TETO_ACIONADO);
+    // O rótulo dentro da pílula nunca chega depois dela.
+    expect(MOTION_BOLHAS.rotulo).toBeLessThanOrEqual(MOTION_BOLHAS.entrada);
   });
 
   it('fecha em no máximo 220ms, mais rápido do que abre', () => {
-    expect(MOTION_GAVETA.fechamento).toBeLessThanOrEqual(0.22);
-    expect(MOTION_GAVETA.fechamento).toBeLessThan(MOTION_GAVETA.abertura);
+    expect(MOTION_BOLHAS.saida).toBeLessThanOrEqual(0.22);
+    expect(MOTION_BOLHAS.saida).toBeLessThan(MOTION_BOLHAS.entrada);
   });
 
   it('stagger dos itens fica na janela de 30-80ms do guia, perto dos 40ms pedidos', () => {
-    expect(MOTION_GAVETA.stagger).toBeGreaterThanOrEqual(0.03);
-    expect(MOTION_GAVETA.stagger).toBeLessThanOrEqual(0.08);
-    expect(Math.abs(MOTION_GAVETA.stagger - 0.04)).toBeLessThan(0.011);
+    expect(MOTION_BOLHAS.stagger).toBeGreaterThanOrEqual(0.03);
+    expect(MOTION_BOLHAS.stagger).toBeLessThanOrEqual(0.08);
+    expect(Math.abs(MOTION_BOLHAS.stagger - 0.04)).toBeLessThan(0.011);
   });
 
   it('o último item do nav assenta em no máximo 450ms, contado da abertura', () => {
@@ -62,7 +68,7 @@ describe('StaggeredMenu — régua de motion do drawer', () => {
     const pontosCss = m![1].split(',').map((n) => Number(n.trim()));
     expect(pontosCss).toEqual([...EASE_GAVETA_PONTOS]);
 
-    // Idempotente (MotionProvider e StaggeredMenu chamam os dois).
+    // Idempotente (MotionProvider e BubbleMenu chamam os dois).
     registrarEaseGaveta();
     registrarEaseGaveta();
     const ease = gsap.parseEase(EASE_GAVETA_ID) as (p: number) => number;
@@ -75,7 +81,16 @@ describe('StaggeredMenu — régua de motion do drawer', () => {
   });
 
   it('nenhum ease-in no componente (design-guidance.md: nunca em UI)', () => {
-    const src = readFileSync(path.resolve(__dirname, '../components/reactbits/StaggeredMenu.tsx'), 'utf8');
+    const src = readFileSync(path.resolve(__dirname, '../components/reactbits/BubbleMenu.tsx'), 'utf8');
+    // O original fecha com `power3.in` nas pílulas E nos rótulos.
     expect(src).not.toMatch(/ease:\s*['"][a-z0-9]+\.in(Out)?['"]/i);
+  });
+
+  // A entrada é a única curva do site que passa do ponto e volta. É
+  // deliberado: é o que faz uma bolha parecer bolha, e `back.out` continua
+  // sendo ease-OUT — o que o guia proíbe é ease-IN.
+  it('a entrada das pílulas usa um overshoot, e ele é ease-out', () => {
+    const src = readFileSync(path.resolve(__dirname, '../components/reactbits/BubbleMenu.tsx'), 'utf8');
+    expect(src).toMatch(/back\.out\(/);
   });
 });

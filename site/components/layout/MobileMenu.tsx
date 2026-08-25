@@ -7,7 +7,7 @@ import { waLink } from '@/lib/contact';
 import { useCapability } from '@/lib/useCapability';
 import { useLenis } from '@/lib/motion';
 import { isolarFundo } from '@/lib/fundoInerte';
-import { StaggeredMenu, MOTION_GAVETA } from '@/components/reactbits/StaggeredMenu';
+import { BubbleMenu, MOTION_BOLHAS } from '@/components/reactbits/BubbleMenu';
 import type Lenis from 'lenis';
 
 type Item = { rotulo: string; href: string };
@@ -93,7 +93,7 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
     if (timerOcultarRef.current) clearTimeout(timerOcultarRef.current);
     timerOcultarRef.current = setTimeout(
       () => setVisivel(false),
-      MOTION_GAVETA.fechamento * 1000 + 60
+      MOTION_BOLHAS.saida * 1000 + 60
     );
     destravarScroll(lenis);
     // Restaura o fundo ANTES de devolver o foco: com o header ainda inerte,
@@ -128,7 +128,7 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
     restaurarFundoRef.current = isolarFundo([portalRef.current]);
 
     const focaveis = () => Array.from(painel.querySelectorAll<HTMLElement>(FOCAVEIS_SELETOR));
-    // Um quadro de folga: o StaggeredMenu acabou de tirar `inert` no mesmo
+    // Um quadro de folga: o painel acabou de tirar `inert` no mesmo
     // commit que abriu — em navegador real isso já é síncrono o bastante,
     // mas dar um `requestAnimationFrame` de folga custa nada e blinda contra
     // qualquer navegador que adie a remoção de `inert` do layout.
@@ -195,7 +195,7 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
         confirmar (SSR não tem document.body do jeito que o cliente vai
         hidratar).
 
-        O painel do StaggeredMenu NUNCA desmonta (GSAP anima o mesmo nó pra
+        O painel NUNCA desmonta (GSAP anima o mesmo nó pra
         sempre, ao contrário do motion.div + AnimatePresence de antes) — por
         isso só o backdrop usa AnimatePresence aqui. `aria-hidden`/`inert`
         do painel são props diretas amarradas a `aberto`, sem timing de
@@ -218,31 +218,33 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
               )}
             </AnimatePresence>
 
-            {/* `inset-y-0 right-0` com a largura do painel, não `inset-0`: um
-                caixote fixo de viewport inteira mede 100% do bloco recipiente
-                inicial, que INCLUI a barra de rolagem — 380px contra os 375 de
-                `clientWidth`, e esses 5px viravam rolagem horizontal no
-                documento. O painel e as camadas já são `right-0` com esta
-                mesma largura, então nada muda de posição. */}
+            {/* O BubbleMenu (Task 23, pedido do dono do projeto) ocupa a
+                tela inteira, não uma gaveta lateral — as bolhas precisam de
+                largura para virarem pílulas de verdade.
+
+                `inset-y-0 right-0 left-0` e não `inset-0`: são a mesma coisa
+                para o navegador, mas a nota da gaveta anterior vale de novo —
+                um caixote `fixed` de viewport inteira mede 100% do bloco
+                recipiente INICIAL, que inclui a barra de rolagem. O
+                `overflow-hidden` é o que impede esses pixels de virarem
+                rolagem horizontal no documento. */}
             <div
-              className={`pointer-events-none fixed inset-y-0 right-0 z-[70] w-[min(320px,86vw)] overflow-hidden${visivel ? '' : ' invisible'}`}
+              className={`pointer-events-none fixed inset-y-0 right-0 left-0 z-[70] overflow-hidden${visivel ? '' : ' invisible'}`}
             >
-              <StaggeredMenu
+              <BubbleMenu
                 ref={painelRef}
                 open={aberto}
                 panelId={painelId}
                 items={items.map((item) => ({ label: item.rotulo, ariaLabel: item.rotulo, link: item.href }))}
                 onItemClick={fechar}
                 reducedMotion={!podeAnimar}
-                colors={['#F0B40C', '#FCCC24']}
-                accentColor="#F0B40C"
                 cabecalho={
-                  <div className="mb-4 flex justify-end">
+                  <div className="flex justify-end">
                     <button
                       type="button"
                       onClick={fechar}
                       aria-label="Fechar menu"
-                      className="pressable flex h-11 w-11 items-center justify-center rounded-full border border-borda-forte text-preto"
+                      className="pressable flex h-11 w-11 items-center justify-center rounded-full border border-borda-forte bg-branco text-preto"
                     >
                       <HamburgerIcon aberto />
                     </button>
@@ -252,7 +254,7 @@ export function MobileMenu({ items }: { items: readonly Item[] }) {
                   <a
                     href={waLink()}
                     onClick={fechar}
-                    className="pressable flex min-h-11 items-center justify-center rounded-full bg-amarelo px-6 font-rotulo text-[13px] font-medium uppercase tracking-[.08em] text-preto"
+                    className="pressable flex min-h-12 items-center justify-center rounded-full bg-amarelo px-6 font-rotulo text-[13px] font-medium tracking-[.08em] text-preto uppercase"
                   >
                     Agendar avaliação
                   </a>

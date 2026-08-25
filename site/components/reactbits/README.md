@@ -593,7 +593,13 @@ quatro foram vendorizados na Task 19 — as implementações à mão que os subs
 `.linha-tratamento::after`) foram removidas. O custo medido da troca (KB, chunks, first-load JS)
 está em `task-19-report.md`.
 
-### `StaggeredMenu.tsx`
+### `StaggeredMenu.tsx` — REMOVIDO na Task 23
+
+> Substituído pelo `BubbleMenu` no menu do celular, a pedido do dono do projeto. A casca que o
+> segurava (`layout/MobileMenu.tsx` — foco preso, `Escape`, retorno de foco, trava de scroll,
+> portal) não mudou uma linha: era exatamente para isso que o painel tinha virado um componente
+> controlado por `open`, e a troca provou que valeu. A régua de motion que ele estabeleceu
+> (`MOTION_GAVETA`, Task 18/B) também sobreviveu — virou `MOTION_BOLHAS`, com os mesmos tetos.
 
 - **Origem:** `src/ts-tailwind/Components/StaggeredMenu/StaggeredMenu.tsx`
 - **Histórico:** recusado na Task 6 porque o registry do shadcn estava fora do ar (a forma de
@@ -682,6 +688,53 @@ está em `task-19-report.md`.
       Por vir antes da lista no DOM, é o primeiro focável do painel: o foco inicial cai nele (como
       num diálogo) e o trap Tab/Shift+Tab continua cobrindo primeiro↔último. O hambúrguer do header
       mantém `aria-expanded`/`aria-controls` e continua recebendo o foco de volta ao fechar.
+
+### `BubbleMenu.tsx`
+
+- **Origem:** `src/ts-tailwind/Components/BubbleMenu/BubbleMenu.tsx` (branch `main`)
+- **Usado em:** Task 23 — o menu do celular, via `layout/MobileMenu.tsx`, no lugar do
+  `StaggeredMenu` (pedido do dono do projeto).
+- **Dependências que arrasta:** `gsap` (já no projeto).
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** virou a prop `reducedMotion`, alimentada por
+  `useCapability().podeAnimar`. Sob movimento reduzido as pílulas aparecem sem o estouro — o menu
+  continua abrindo e fechando.
+- **Só `transform`/`opacity`:** a animação é `scale` nas pílulas e `y`/`autoAlpha` nos rótulos.
+- **Régua de motion:** `MOTION_BOLHAS`, travada por `__tests__/bubbleMenu.test.ts`. Os defaults do
+  original ficavam TODOS fora dela — 500ms de entrada contra o teto de 300, 120ms de passo contra a
+  janela de 30-80, 860ms até o último item contra o teto de 450. A régua é do projeto (Task 18/B) e
+  é anterior a este componente; quem se ajustou foi ele.
+- **Modificações:**
+  1. `'use client'` no topo (o original não declara).
+  2. **O cabeçalho próprio (logo + hambúrguer) não veio.** O original desenha um `<nav>` fixo com a
+     logo numa bolha e o botão de abrir noutra. Este site já tem um `<Header>` de verdade, e o
+     hambúrguer dele mora em `layout/MobileMenu.tsx` junto do foco preso, do `Escape`, do retorno
+     de foco e da trava de scroll. Um segundo `<nav>` "Main navigation" ainda criaria duas
+     landmarks de navegação disputando o mesmo papel. Mesma modificação que o `StaggeredMenu`
+     levou, pela mesma razão.
+  3. **O estado de aberto/fechado saiu do componente** e virou a prop `open`. Com ele guardado
+     dentro, quem está por fora não consegue fechar o menu — nem no `Escape`, nem ao navegar.
+  4. **`role="menu"`/`role="menuitem"` removidos.** São papéis de menu de APLICAÇÃO: o leitor de
+     tela anuncia "menu" e a pessoa passa a esperar navegação por setas, que não existe aqui. São
+     links de navegação — uma lista e links dizem exatamente o que são.
+  5. **`role="dialog"` + `aria-modal` adicionados.** O painel É modal (foco preso, `Escape` fecha,
+     todo o resto da página vira `inert`); o original não declara papel nenhum, e sem isso quem usa
+     leitor de tela não recebe o anúncio de que entrou num diálogo.
+  6. **O bloco `<style>` global não veio.** O original injeta CSS com nomes de classe genéricos
+     (`.pill-list`, `.pill-link`) que vazam para a página inteira, mais um `!important` em
+     `background` e regras de `nth-child` para uma grade de três colunas que só existe acima de
+     900px — largura em que este menu nem aparece.
+  7. **`reducedMotion` virou prop** (ver acima).
+  8. **`aria-hidden`/`inert` amarrados a `open`**, painel que nunca desmonta — mesma blindagem do
+     `StaggeredMenu`.
+  9. **Tempos dentro da régua** (ver acima).
+  10. **Nenhum `ease-in`.** O original fecha com `power3.in` nas pílulas e nos rótulos; o guia do
+      projeto crava que interface nunca usa ease-IN. A saída passou a usar a mesma `--ease-gaveta`
+      do resto do site. A ENTRADA continua em `back.out` de propósito — passar do ponto e voltar é o
+      que faz uma bolha parecer bolha, e ease-out não é o que a regra proíbe.
+  11. **`height: 10` inline saiu.** O original põe altura de 10px no link e devolve o tamanho por
+      `min-height` e `padding`: funciona por acidente, e torna qualquer ajuste de espaçamento um
+      chute.
 
 ### `Silk.tsx`
 

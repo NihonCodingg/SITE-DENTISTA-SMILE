@@ -27,12 +27,19 @@ export function Footer() {
       <div className="mx-auto max-w-[1080px]">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-10">
           <div className="flex flex-col gap-4">
+            {/* `self-start` não é enfeite: o pai é `flex flex-col`, e um
+                contêiner flex alinha os filhos na transversal com `stretch`
+                por padrão — que aqui é a LARGURA. A imagem era esticada até os
+                520px da coluna, e como `h-[72px]` prende a altura, a logo saía
+                com proporção 7,22 no lugar de 1,78 (medido). `w-auto` não
+                protege disso: "auto" dentro de um stretch resolve para o
+                tamanho esticado. */}
             <Image
               src="/img/logo-branco.png"
               alt="Smile Ipiranga"
               width={LOGO_LARGURA}
               height={LOGO_ALTURA}
-              className="h-[72px] w-auto"
+              className="h-[72px] w-auto self-start"
             />
             <p className="font-rotulo text-[11px] uppercase tracking-[.28em] text-escuro-texto">
               Saúde &amp; Estética Orofacial
