@@ -236,6 +236,23 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
      enquanto montado — mesma correção que `CircularGallery` levou na Task 19. ⚠️ Não é
      verificável em jsdom: o tween (e com ele o observer) só nasce depois de o componente MEDIR o
      caminho do SVG, e o jsdom devolve zero. Ver a nota em `__tests__/ticker.test.tsx`.
+  - **CORREÇÃO NA REVISÃO DE ENTREGA (Task 25).** A pausa que este projeto acrescentou nascia
+    LIGADA (`visivel = true`) e só parava quando a primeira entrada do `IntersectionObserver`
+    chegava. Essa entrada é entregue numa tarefa posterior, que durante o carregamento entra na
+    fila atrás da hidratação — então a fita animava durante a janela em que o TBT é contado, mesmo
+    estando três telas abaixo da dobra. Cada quadro reescreve `startOffset` de dois `textPath`, o
+    que força o navegador a recalcular texto sobre curva. Agora `visivel` nasce `false` e quem liga
+    é o observador.
+
+    **O tamanho do ganho, medido direito:** ~90 a 130ms de TBT e 3 a 5 pontos de performance.
+    Lighthouse mobile, servidor de produção reiniciado do zero a cada lado, duas amostras cada:
+      com a fita animando: perf 71-73 · TBT 530-600ms
+      sem a fita:          perf 74-78 · TBT 440-470ms
+    A primeira medição que fiz desta correção dizia "TBT de 680ms para 40ms" e estava ERRADA: o
+    servidor de produção tinha sido reconstruído por baixo de um processo ainda vivo, então parte
+    dos chunks respondia 500 e o navegador executava menos JavaScript do que executaria de verdade.
+    Qualquer medição futura precisa DERRUBAR o servidor antes de reconstruir — no Windows, `pkill`
+    do Git Bash não mata o processo; é preciso `Stop-Process` do PowerShell.
 
 ### `ScrollFloat.tsx`
 

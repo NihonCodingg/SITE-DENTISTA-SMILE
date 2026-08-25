@@ -210,7 +210,17 @@ const TextLoop = ({
     // sempre enquanto montado. Mesma correção que `ScrollVelocity` e
     // `CircularGallery` levaram na Task 19: fita decorativa não gasta CPU de
     // quem não está olhando.
-    let visivel = true;
+    // Nasce PAUSADA quando há observador. Antes começava com `visivel = true`
+    // e só parava quando a primeira entrada do IntersectionObserver chegava —
+    // e essa entrada é entregue numa tarefa posterior, que durante o
+    // carregamento entra numa fila atrás da hidratação. Resultado medido no
+    // Lighthouse mobile: a fita animava durante toda a janela em que o TBT é
+    // contado, mesmo estando três telas abaixo da dobra. Cada quadro dela
+    // reescreve `startOffset` de dois `textPath`, o que força o navegador a
+    // recalcular texto sobre curva — 340 a 680ms de bloqueio por algo que
+    // ninguém estava vendo. Com o valor inicial `false`, o primeiro quadro já
+    // é parado e quem manda ligar é o observador.
+    let visivel = false;
     const avaliar = () => {
       if (visivel && !document.hidden) tween.resume();
       else tween.pause();
@@ -225,6 +235,7 @@ const TextLoop = ({
         )
       : null;
     if (io && root) io.observe(root);
+    else visivel = true; // sem observador não há quem ligue depois
     document.addEventListener('visibilitychange', avaliar);
     avaliar();
 
