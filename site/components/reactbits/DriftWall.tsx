@@ -208,46 +208,64 @@ const DriftWall = ({
       pointerDampedRef.current.y += (targetY - pointerDampedRef.current.y) * damp;
       applyPlaneTransform(pointerDampedRef.current.x, pointerDampedRef.current.y);
 
-      if (!reduced) {
-        for (let c = 0; c < trackRefs.current.length; c++) {
-          const meta = columnMeta[c];
-          if (!meta) continue;
-          const paused = wallHoveredRef.current && pauseOnHover;
-          const factor = paused || hoveredColRef.current === c ? 0 : 1;
-          const target = baseVelocities[c] * factor;
+      // MODIFICAÇÃO Nº16 (travamento no hero). No modo decorativo a deriva das
+      // colunas saiu daqui e virou animação de CSS (`estiloTrilha`, abaixo).
+      // Este laço escrevia `transform` em dez colunas a cada quadro, na thread
+      // principal, durante todo o tempo em que a parede estivesse visível — e
+      // no hero isso é a tela inteira até a seção de tratamentos.
+      if (!decorativo) {
+        if (!reduced) {
+          for (let c = 0; c < trackRefs.current.length; c++) {
+            const meta = columnMeta[c];
+            if (!meta) continue;
+            const paused = wallHoveredRef.current && pauseOnHover;
+            const factor = paused || hoveredColRef.current === c ? 0 : 1;
+            const target = baseVelocities[c] * factor;
 
-          const ease = 1 - Math.exp(-dt / (target === 0 ? 0.16 : 0.28));
-          velocitiesRef.current[c] += (target - velocitiesRef.current[c]) * ease;
-          let next = (offsetsRef.current[c] ?? 0) + velocitiesRef.current[c] * dt;
-          next = ((next % meta.copyHeight) + meta.copyHeight) % meta.copyHeight;
-          offsetsRef.current[c] = next;
+            const ease = 1 - Math.exp(-dt / (target === 0 ? 0.16 : 0.28));
+            velocitiesRef.current[c] += (target - velocitiesRef.current[c]) * ease;
+            let next = (offsetsRef.current[c] ?? 0) + velocitiesRef.current[c] * dt;
+            next = ((next % meta.copyHeight) + meta.copyHeight) % meta.copyHeight;
+            offsetsRef.current[c] = next;
 
-          const el = trackRefs.current[c];
-          if (el) el.style.transform = `translate3d(0, ${-next}px, 0)`;
-        }
-      } else {
-        for (let c = 0; c < trackRefs.current.length; c++) {
-          const el = trackRefs.current[c];
-          const meta = columnMeta[c];
-          if (el && meta) el.style.transform = `translate3d(0, ${-(offsetsRef.current[c] ?? 0)}px, 0)`;
+            const el = trackRefs.current[c];
+            if (el) el.style.transform = `translate3d(0, ${-next}px, 0)`;
+          }
+        } else {
+          for (let c = 0; c < trackRefs.current.length; c++) {
+            const el = trackRefs.current[c];
+            const meta = columnMeta[c];
+            if (el && meta) el.style.transform = `translate3d(0, ${-(offsetsRef.current[c] ?? 0)}px, 0)`;
+          }
         }
       }
 
-      // Reduzido: o quadro estático já foi aplicado acima — parar aqui, em
-      // vez de reagendar para sempre como o original fazia.
-      if (!reduced) rafRef.current = requestAnimationFrame(animate);
+      // Sem movimento a reagendar, o laço encerra: com a deriva no CSS, o
+      // único motivo para continuar é a suavização do parallax de ponteiro,
+      // e ela não existe quando `parallax` é 0 (todo aparelho de toque).
+      const precisaDeOutroQuadro = reduced ? false : !decorativo || parallax > 0;
+      if (precisaDeOutroQuadro) rafRef.current = requestAnimationFrame(animate);
       else rafRef.current = null;
     };
 
     // Pausa fora da viewport e com a aba oculta (modificação nº4) — parede
     // decorativa não gasta CPU de quem não está olhando.
     let visivel = true;
+    // Com a deriva no CSS, quem precisa parar fora da tela não é mais o rAF
+    // (que no modo decorativo já nem roda quando `parallax` é 0) e sim a
+    // animação. O navegador desacelera animação de aba oculta sozinho, mas
+    // não sabe que esta parede saiu de vista com a aba ainda aberta — e uma
+    // animação infinita mantém o compositor acordado de graça. `avaliar()`
+    // continua sendo a mesma fonte de verdade das duas coisas.
+    const trilhas = () => (decorativo ? trackRefs.current.filter(Boolean) : []);
     const ligar = () => {
+      for (const el of trilhas()) if (el) el.style.animationPlayState = 'running';
       if (rafRef.current != null) return;
       lastTsRef.current = null;
       rafRef.current = requestAnimationFrame(animate);
     };
     const desligar = () => {
+      for (const el of trilhas()) if (el) el.style.animationPlayState = 'paused';
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
       lastTsRef.current = null;
@@ -272,7 +290,7 @@ const DriftWall = ({
       io.disconnect();
       document.removeEventListener('visibilitychange', avaliar);
     };
-  }, [baseVelocities, columnMeta, pauseOnHover, parallax, reduced, applyPlaneTransform]);
+  }, [baseVelocities, columnMeta, pauseOnHover, parallax, reduced, decorativo, applyPlaneTransform]);
 
   const activate = useCallback((id: string, index: number): void => {
     activeIdRef.current = id;
@@ -356,6 +374,42 @@ const DriftWall = ({
   // O movimento não perde nada: quem anima é a COLUNA (uma camada, com
   // `will-change-transform`), e os azulejos vão junto como conteúdo pintado
   // dela. O filtro fica — ele é a aparência da parede, não custo de camada.
+  // MODIFICAÇÃO Nº16 (continuação). A deriva de cada coluna como animação de
+  // CSS, para o compositor tocar sozinho.
+  //
+  // `--dw-loop` é a altura de UMA cópia; a trilha tem duas ou mais, então
+  // andar uma cópia e reiniciar não deixa emenda. A duração sai da mesma
+  // velocidade que o laço em JS usava (`baseVelocities`, em px/s), e o
+  // deslocamento inicial de cada coluna vira `animation-delay` NEGATIVO —
+  // é assim que se começa uma animação de CSS já no meio.
+  //
+  // Metade das colunas tem velocidade negativa (o sinal alternado de
+  // `baseVelocities`) e desce em vez de subir. Como a posição se repete a
+  // cada `L`, começar em `-offset` para quem desce é o mesmo que começar em
+  // `L - offset`, e é essa a conta do atraso no ramo de baixo.
+  //
+  // Sob movimento reduzido não entra animação nenhuma: fica o mesmo quadro
+  // estático que o laço aplicava.
+  const estiloTrilha = useCallback(
+    (c: number): CSSProperties | undefined => {
+      if (!decorativo) return undefined;
+      const meta = columnMeta[c];
+      const v = baseVelocities[c];
+      if (!meta || !v) return undefined;
+      const L = meta.copyHeight;
+      const inicial = L * ((c * 0.37) % 1);
+      if (reduced) return { transform: `translate3d(0, ${-inicial}px, 0)` };
+      const modulo = Math.abs(v);
+      const paraCima = v > 0;
+      return {
+        ['--dw-loop']: `${L}px`,
+        animation: `${paraCima ? 'dw-deriva-cima' : 'dw-deriva-baixo'} ${(L / modulo).toFixed(3)}s linear infinite`,
+        animationDelay: `-${((paraCima ? inicial : L - inicial) / modulo).toFixed(3)}s`,
+      } as CSSProperties;
+    },
+    [decorativo, columnMeta, baseVelocities, reduced]
+  );
+
   const tileClass = cx(
     'group/tile relative block flex-none outline-none w-full h-[calc(var(--dw-tile-h)+var(--dw-gap))]',
     !decorativo && 'cursor-pointer [transform-style:preserve-3d]'
@@ -492,6 +546,7 @@ const DriftWall = ({
                   'flex flex-col will-change-transform',
                   !decorativo && '[transform-style:preserve-3d]'
                 )}
+                style={estiloTrilha(c)}
                 ref={el => {
                   trackRefs.current[c] = el;
                 }}
