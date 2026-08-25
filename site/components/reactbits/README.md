@@ -172,6 +172,27 @@ Commit de referência: `4e0e030193b563be6be33d928f77d0d01cefe237` (branch `main`
   retângulo JÁ ESCALADO do container (medido: 859px num card de 1022) e a escala muda a cada
   quadro. Não é problema no arranjo atual — o `Silk` não está dentro do palco.
 
+### `TextLoop.tsx`
+
+- **Origem:** `src/ts-tailwind/TextAnimations/TextLoop/TextLoop.tsx` (branch `main`)
+- **Usado em:** Task 20 — a faixa dos tratamentos (`components/sections/Ticker.tsx`). Pedido do
+  dono do projeto: a faixa reta virou uma FITA curva, com os tratamentos correndo por ela.
+  Substituiu o `ScrollVelocity`, que era o que rolava a faixa antes e saiu do projeto junto.
+- **Dependências que arrasta:** `gsap` (já no projeto). Nenhuma nova.
+- **Rede:** nenhuma chamada.
+- **`matchMedia`/reduced-motion:** o original consultava por conta própria; virou prop
+  `reducedMotion`, vinda de `useCapability().podeAnimar`.
+- **Cleanup:** o tween é morto no cleanup, junto do observer e do listener acrescentados.
+- **Só `transform`/atributo de SVG:** o texto corre mudando o `startOffset` do `<textPath>` — não
+  há propriedade de layout animada.
+- **Modificações:**
+  1. `'use client'` no topo (o original não declara).
+  2. **`reducedMotion` virou prop** em vez de `window.matchMedia` interno.
+  3. **Pausa fora da viewport e com a aba oculta.** O original roda a animação para sempre
+     enquanto montado — mesma correção que `CircularGallery` levou na Task 19. ⚠️ Não é
+     verificável em jsdom: o tween (e com ele o observer) só nasce depois de o componente MEDIR o
+     caminho do SVG, e o jsdom devolve zero. Ver a nota em `__tests__/ticker.test.tsx`.
+
 ### `Magnet.tsx`
 
 - **Origem:** `src/ts-tailwind/Animations/Magnet/Magnet.tsx`
@@ -501,7 +522,11 @@ está em `task-19-report.md`.
      (eslint-plugin-react-hooks, era do React Compiler) reprova `<algo>.prop = valor` quando
      `<algo>` remonta ao retorno direto de um hook dentro do próprio componente.
 
-### `ScrollVelocity.tsx`
+### `ScrollVelocity.tsx` — REMOVIDO na Task 20
+
+> Substituído pelo `TextLoop` na faixa dos tratamentos, que era seu único uso. O histórico abaixo
+> fica porque explica correções que o `TextLoop` herdou (pausa por viewport, tipografia por
+> cascata em vez de props).
 
 - **Origem:** `src/ts-tailwind/TextAnimations/ScrollVelocity/ScrollVelocity.tsx`
 - **Histórico:** recusado na Task 9 porque **não pausa fora da viewport nem com a aba oculta** —

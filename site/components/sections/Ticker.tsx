@@ -2,7 +2,7 @@
 
 import { TRATAMENTOS } from '@/lib/content';
 import { useCapability } from '@/lib/useCapability';
-import { ScrollVelocity } from '@/components/reactbits/ScrollVelocity';
+import TextLoop from '@/components/reactbits/TextLoop';
 
 /**
  * Faixa decorativa dos 7 tratamentos, logo abaixo do Hero. É repetida (o
@@ -13,15 +13,15 @@ import { ScrollVelocity } from '@/components/reactbits/ScrollVelocity';
  * Task 19 ("maximizar React Bits"): até aqui esta faixa era implementada à
  * mão com um `requestAnimationFrame` próprio — decisão registrada em
  * `components/reactbits/README.md`, revertida pela decisão do parceiro
- * ("forçar o máximo possível"). Agora usa o `ScrollVelocity` original do
+ * ("forçar o máximo possível"). Agora usa o `TextLoop` do
  * React Bits, vendorizado e corrigido em
- * `components/reactbits/ScrollVelocity.tsx` — a correção principal foi
+ * `components/reactbits/TextLoop.tsx` — a correção principal foi
  * ACRESCENTAR a pausa fora da viewport/aba oculta que o original não tinha
  * (mesmo padrão do antigo `TrilhaAnimada`, agora dentro do componente
  * vendorizado).
  *
  * A aceleração pela velocidade do scroll não vem mais do Lenis diretamente
- * (o `Ticker` antigo lia `lenis.on('scroll', ...)`) — o `ScrollVelocity`
+ * (o `Ticker` antigo lia `lenis.on('scroll', ...)`) — o `TextLoop`
  * calcula a própria velocidade via `useScroll`/`useVelocity` do
  * `motion/react`, que observa `window.scrollY`. Como o Lenis (`lib/motion.tsx`)
  * roda em modo "window" (anima `window.scrollTo` de verdade, não um
@@ -31,15 +31,6 @@ import { ScrollVelocity } from '@/components/reactbits/ScrollVelocity';
  */
 
 const SEPARADOR = ' ✦ ';
-const BASE_SPEED = 40; // px/s parado — calma, a marca não é nervosa
-const NUM_COPIAS = 4; // cópias lado a lado na trilha — cobre monitores ultra-wide sem buraco no loop
-
-// Mapeamento de velocidade de scroll → fator de boost. Mais conservador que
-// o default do React Bits (`input:[0,1000] output:[0,5]`, até 6x a
-// velocidade base): design-guidance.md pede motion "calmo e confiante, não
-// estalado e nervoso" — um flick de scroll rápido não deveria fazer a
-// trilha disparar 6x. Ajustado pra um teto de ~3.5x.
-const VELOCITY_MAPPING = { input: [0, 1400] as [number, number], output: [0, 2.5] as [number, number] };
 
 function textoTratamentos(): string {
   return TRATAMENTOS.map((t) => t.nome).join(SEPARADOR);
@@ -61,25 +52,31 @@ export function Ticker() {
     <div
       data-testid="ticker"
       aria-hidden="true"
-      className="mx-3 mt-1.5 overflow-hidden rounded-[16px] bg-amarelo font-rotulo text-[14px] font-medium tracking-[.22em] text-preto uppercase"
+      className={`mx-3 mt-1.5 overflow-hidden rounded-[16px] font-rotulo text-[14px] font-medium tracking-[.22em] text-preto uppercase${
+        montado && podeAnimar ? '' : ' bg-amarelo'
+      }`}
     >
       {montado && podeAnimar ? (
-        // Tipografia (font-rotulo, tamanho, tracking, uppercase, cor) não é
-        // passada por prop nenhuma pro ScrollVelocity — o componente
-        // vendorizado não força mais tamanho/peso próprios (ver
-        // components/reactbits/ScrollVelocity.tsx, modificação nº2), então
-        // os spans internos herdam tudo isso por cascata normal do CSS a
-        // partir do className já presente no <div data-testid="ticker">
-        // que envolve este componente.
-        <ScrollVelocity
-          texts={[texto]}
-          velocity={BASE_SPEED}
-          numCopies={NUM_COPIAS}
-          damping={60}
-          stiffness={300}
-          velocityMapping={VELOCITY_MAPPING}
-          className="pr-[1.5em] pl-[1.5em]"
-          parallaxClassName="py-3.5"
+        // Task 20, pedido do dono do projeto: a faixa reta virou a FITA
+        // curva do `TextLoop` (React Bits), com os tratamentos correndo por
+        // ela. A fita desenha o próprio fundo amarelo, então o `bg-amarelo`
+        // do envoltório sai neste ramo — sobrariam duas faixas amarelas, uma
+        // reta atrás da curva.
+        <TextLoop
+          text={texto}
+          shape="wave"
+          separator={SEPARADOR.trim()}
+          speed={90}
+          curviness={40}
+          fontSize={22}
+          fontWeight={600}
+          letterSpacing={3}
+          color="var(--color-preto)"
+          ribbon
+          ribbonColor="var(--color-amarelo)"
+          ribbonWidth={64}
+          reducedMotion={!podeAnimar}
+          className="w-full"
         />
       ) : (
         <TrilhaEstatica texto={texto} />

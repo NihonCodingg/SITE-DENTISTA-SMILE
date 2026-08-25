@@ -92,6 +92,7 @@ export function Hero() {
           // SplitText monta — o GSAP esconde as palavras fatiadas do leitor
           // de tela e o nome volta pelo heading, onde `aria-label` é válido
           // (Task 18, A1).
+          <div className="absolute inset-x-0 top-[28%] flex flex-col items-center gap-4">
           <SectionHeading
             as="h1"
             align="center"
@@ -99,7 +100,7 @@ export function Hero() {
             sobretitulo="Odontologia integrada no Ipiranga"
             titulo={titulo}
             tituloAriaLabel={podeAnimar ? HEADLINE : undefined}
-            className="absolute inset-x-0 top-[30%] mx-auto flex w-full flex-col"
+            className="mx-auto flex w-full flex-col"
             // Topo ANCORADO, não centralizado. Centralizado, qualquer
             // mudança de altura do bloco o desloca — e as duas fontes da
             // marca terminam de carregar depois da primeira pintura, o que
@@ -108,6 +109,18 @@ export function Hero() {
             // deslocamento é zero, e é a distância que o CLS mede.
             tituloClassName="mx-auto max-w-[min(88%,340px)] text-[clamp(28px,4.4vw,64px)]"
           />
+
+          {/* O sorriso da marca, embaixo da headline. `alt=""` porque é
+              ornamento: o nome da clínica e a headline já dizem tudo que ele
+              diz, e um leitor de tela não ganha nada ouvindo "arco". */}
+          <Image
+            src="/img/sorriso-arco.png"
+            alt=""
+            width={240}
+            height={101}
+            className="h-[clamp(22px,3vw,40px)] w-auto"
+          />
+          </div>
         }
       >
         <Magnet disabled={!magnetAtivo} padding={90} magnetStrength={3}>
