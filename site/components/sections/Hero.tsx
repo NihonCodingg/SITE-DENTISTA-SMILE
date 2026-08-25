@@ -88,7 +88,12 @@ export function Hero() {
                 <DriftWall
                   decorativo
                   items={FOTOS_PAREDE}
-                  columns={4}
+                  // 10 colunas para a parede SANGRAR a tela inteira (pedido
+                  // do dono do projeto: "pode repetir as fotos, precisa
+                  // estar a tela cheia"): 10 × (150+14) × escala 1,18 ≈
+                  // 1.935px de plano, cobrindo até ultrawide. As 12 fotos se
+                  // repetem em ciclo por coluna — repetição autorizada.
+                  columns={10}
                   tileWidth={150}
                   tileHeight={190}
                   gap={14}
