@@ -19,3 +19,10 @@ lh-*.json
 *.local-fallback
 *.frame-video
 *.claude-design-artefatos.*
+# Vínculo local com a Vercel e o token OIDC que ela grava no .env.local — o
+# token é credencial, nunca entra no repositório.
+.vercel
+.env*
+# ...mas o .env.example é DOCUMENTAÇÃO (explica NEXT_PUBLIC_SITE_URL para quem
+# for publicar) e precisa continuar versionado.
+!.env.example
